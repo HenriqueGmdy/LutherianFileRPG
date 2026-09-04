@@ -10,7 +10,7 @@
     <div class="mainFile">
         <h1>Ficha do Personagem</h1>
 
-        <!-- SEÇÃO: INFORMAÇÕES BÁSICAS -->
+        <!-- INFORMAÇÕES BÁSICAS -->
         <fieldset>
             <legend>Básico</legend>
 
@@ -24,7 +24,6 @@
                 <input type="number" id="level" min="1" max="9" value="1">
             </div>
 
-            <!-- Atributos Físicos: Altura, Peso e Idade -->
             <div class="groupCamp">
                 <label for="height">Altura (m):</label>
                 <input type="text" id="height" placeholder="Ex: 1.80">
@@ -40,7 +39,6 @@
                 <input type="number" id="age" min="1" placeholder="Ex: 25">
             </div>
 
-            <!-- Raça (Menu Suspenso - Preparado para os bônus futuros!) -->
             <div class="groupCamp">
                 <label for="race">Raça:</label>
                 <select id="race">
@@ -55,19 +53,16 @@
                 </select>
             </div>
 
-            <!-- Campo onde aparecerão as vantagens da raça escolhida -->
             <div class="raceAdvantages">
                 <strong>Vantagens da Raça:</strong>
                 <p id="raceDescription">Nenhuma raça selecionada.</p>
             </div>
 
-            <!-- Origem -->
             <div class="groupCamp">
                 <label for="origin">Origem:</label>
                 <input type="text" id="origin" placeholder="Ex: --">
             </div>
 
-            <!-- Classe e Subclasse -->
             <div class="groupCamp">
                 <label for="chaClass">Classe:</label>
                 <input type="text" id="chaClass" placeholder="Ex: Guerreiro">
@@ -80,10 +75,16 @@
 
         </fieldset>
 
-        <fieldset>
+        <fieldset> <!-- ATRIBUTOS -->
             <legend>Atributos</legend>
             <div id="attributesContainer"></div>
         </fieldset>
+
+        <fieldset><!-- CONDIÇÕES DE ATRIBUTOS -->
+            <legend>Condições de atributos</legend>
+            <div id="attributesConditionsContainer"></div>
+        </fieldset>
+
 
     </div>
 
