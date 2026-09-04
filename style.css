@@ -1,0 +1,129 @@
+/* 1. LAYOUT PRINCIPAL */
+#attributesContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+/* 2. CARDS DE GRUPOS (PARES DE ATRIBUTOS) */
+.attributeGroup {
+    flex: 1 1 300px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 12px;
+    background-color: #fafafa;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 3. LINHAS DE ATRIBUTOS (DIVIDIDO ENTRE ESQUERDA E DIREITA) */
+.attributeRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+/* Bloco da Esquerda (Nome + Input Base) */
+.attribute-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.attribute-left label {
+    width: 80px; /* Mantém o alinhamento perfeito dos nomes */
+    white-space: nowrap;
+}
+
+/* Bloco da Direita (Mod. Temporário + Input + Dado) */
+.attribute-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.attributeRow input[type="number"] {
+    width: 45px;
+    text-align: center;
+    padding: 3px;
+}
+
+.diceToRoll {
+    text-align: center;
+    font-weight: bold;
+    color: #444;
+    min-width: 30px;
+}
+
+/* 4. CAIXAS DE CONDIÇÃO */
+.conditionBox {
+    text-align: center;
+    padding: 8px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    border-top: 1px solid #ddd;
+    margin-top: 5px;
+}
+
+/* ==========================================
+   6. SEÇÃO BÁSICO (DUAS COLUNAS E ALINHAMENTO)
+   ========================================== */
+.basicContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    justify-content: space-between;
+}
+
+.basicColumn {
+    flex: 1 1 350px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Alinha perfeitamente o label e o input/select usando Grid */
+.groupCamp {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    align-items: center;
+    gap: 10px;
+}
+
+.groupCamp label {
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.groupCamp input[type="text"],
+.groupCamp input[type="number"],
+.groupCamp select {
+    width: 100%;
+    padding: 4px 6px;
+    box-sizing: border-box;
+}
+
+/* Caixa de Vantagens da Raça */
+.raceAdvantages {
+    background-color: #f4f4f4;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    margin: 5px 0;
+    font-size: 0.9rem;
+}
+
+.raceAdvantages strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.raceAdvantages p {
+    margin: 0;
+    color: #666;
+}

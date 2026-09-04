@@ -1,56 +1,78 @@
-// Lista de atributos com seus IDs e nomes
-const listaAtributos = [
-    { id: "strength", name: "Força" },
-    { id: "dexterity", name: "Destreza" },
-    { id: "constitution", name: "Constituição" },
-    { id: "charisma", name: "Carisma" },
-    { id: "psyche", name: "Psique" },
-    { id: "wisdom", name: "Sabedoria" }
+const attributeGroups = [
+    {
+        attrCondition: { id: "weakened", name: "Enfraquecido" },
+        attributes: [
+            { id: "strength", name: "Força" },
+            { id: "dexterity", name: "Destreza" }
+        ]
+    },
+    {
+        attrCondition: { id: "unwell", name: "Indisposto" },
+        attributes: [
+            { id: "constitution", name: "Constituição" },
+            { id: "charisma", name: "Carisma" }
+        ]
+    },
+    {
+        attrCondition: { id: "miserable", name: "Miserável" },
+        attributes: [
+            { id: "psyche", name: "Psique" },
+            { id: "wisdom", name: "Sabedoria" }
+        ]
+    }
 ];
 
-// Seleciona o container onde os atributos serão injetados
-const containerAtributos = document.getElementById("attributesContainer");
+const container = document.getElementById("attributesContainer");
 
-listaAtributos.forEach(attr => {
-    containerAtributos.innerHTML += `
-        <div class="attributes">
-            <label for="${attr.id}">${attr.name}:</label>
-            <input type="number" id="${attr.id}" min="-3" max="3" value="0">
+// 2. Renderiza a estrutura na tela automaticamente
+attributeGroups.forEach(group => {
+    const attr1 = group.attributes[0];
+    const attr2 = group.attributes[1];
+    const cond = group.attrCondition;
 
-            <label for="temp_${attr.id}"> mod. Temporários:</label>
-            <input type="number" id="temp_${attr.id}" min="-2" max="2" value="0">
-            
-            <span id="dices_${attr.id}" class="diceToRoll">3d6</span>
+    container.innerHTML += `
+        <div class="attributeGroup">
+            <!-- Atributo 1 -->
+            <div class="attributeRow">
+                <div class="attribute-left">
+                    <label for="${attr1.id}">${attr1.name}:</label>
+                    <input type="number" id="${attr1.id}" min="-3" max="3" value="0">
+                </div>
+                <div class="attribute-right">
+                    <label for="temp_${attr1.id}">Mod. temporário:</label>
+                    <input type="number" id="temp_${attr1.id}" min="-2" max="2" value="0">
+                    <span id="dices_${attr1.id}" class="diceToRoll">3d6</span>
+                </div>
+            </div>
+
+            <!-- Atributo 2 -->
+            <div class="attributeRow">
+                <div class="attribute-left">
+                    <label for="${attr2.id}">${attr2.name}:</label>
+                    <input type="number" id="${attr2.id}" min="-3" max="3" value="0">
+                </div>
+                <div class="attribute-right">
+                    <label for="temp_${attr2.id}">Mod. temporário:</label>
+                    <input type="number" id="temp_${attr2.id}" min="-2" max="2" value="0">
+                    <span id="dices_${attr2.id}" class="diceToRoll">3d6</span>
+                </div>
+            </div>
+
+            <!-- Condição -->
+            <div class="conditionBox">
+                <input type="checkbox" id="${cond.id}" class="conditionCheckbox">
+                <label for="${cond.id}"><strong>${cond.name}</strong></label>
+            </div>
         </div>
     `;
 });
 
-// A lista das condições e quais IDs de atributos elas afetam
-const listConditions = [
-    { id: "weakened", nome: "Enfraquecido (For. e Des.)", attrs: ["strength", "dexterity"] },
-    { id: "unwell", nome: "Indisposto (Const. e Car.)", attrs: ["constitution", "charisma"] },
-    { id: "miserable", nome: "Miserável (Psi. e Sab.)", attrs: ["psyche", "wisdom"] }
-];
-
-// Seleciona o container onde as condições serão injetadas
-const containerAttrConditions = document.getElementById("attributesConditionsContainer");
-
-listConditions.forEach(cond => {
-    containerAttrConditions.innerHTML += `
-        <div class="condition-box">
-            <input type="checkbox" id="${cond.id}" class="condition-checkbox">
-            <label for="${cond.id}">${cond.nome}</label>
-        </div>
-    `;
-});
-
-// Adiciona o evento de mudança para cada checkbox de condição
-listConditions.forEach(cond => {
-    const checkbox = document.getElementById(cond.id);
+attributeGroups.forEach(group => {
+    const checkbox = document.getElementById(group.attrCondition.id);
 
     checkbox.addEventListener("change", function() {
-        cond.attrs.forEach(attrId => {
-            const inputAttribute = document.getElementById(attrId);
+        group.attributes.forEach(attr => {
+            const inputAttribute = document.getElementById(attr.id);
             let valorAtual = parseInt(inputAttribute.value);
 
             if (checkbox.checked) {
@@ -61,3 +83,4 @@ listConditions.forEach(cond => {
         });
     });
 });
+
