@@ -113,36 +113,48 @@ document.querySelectorAll(".conditionCheckbox").forEach(checkbox => {
 });
 
 // ==========================================
-// LÓGICA DA BARRA DE ESTRESSE AVANÇADA
+// LÓGICA DA BARRA DE ESTRESSE AVANÇADA (COM INPUT EDITÁVEL)
 // ==========================================
 const stressRange = document.getElementById("stress");
-const stressValue = document.getElementById("stressValue");
+const stressNumberInput = document.getElementById("stressNumberInput");
 const stressFill = document.getElementById("stressFill");
 const afflictedCheck = document.getElementById("afflictedCheck");
 const virtuousCheck = document.getElementById("virtuousCheck");
 
-function updateStressVisual() {
-    const val = parseInt(stressRange.value) || 0;
-    stressValue.textContent = val;
+function updateStress(value) {
+    let val = parseInt(value);
+    if (isNaN(val)) val = 0;
+    if (val < 0) val = 0;
+    if (val > 200) val = 200;
 
-    // Atualiza a largura da barra preenchida (porcentagem de 0 a 200)
+    // Sincroniza os dois elementos
+    stressRange.value = val;
+    stressNumberInput.value = val;
+
     const percentage = (val / 200) * 100;
     stressFill.style.width = `${percentage}%`;
 
-    // Define a cor com base nas checkboxes ou no limiar de 100
     if (afflictedCheck.checked) {
         stressFill.style.backgroundColor = "#8b0000"; // Vermelho sangue
     } else if (virtuousCheck.checked) {
-        stressFill.style.backgroundColor = "#c0a22b"; // Amarelo radiante
+        stressFill.style.backgroundColor = "#ffcc00"; // Amarelo radiante
     } else {
-        // Abaixo de 100 é branco, acima de 100 fica um tom de alerta leve se não escolher nada
-        stressFill.style.backgroundColor = val > 100 ? "#8b0000" : "#ffffff";
+        stressFill.style.backgroundColor = val > 100 ? "#929292" : "#ffffff";
     }
 }
 
 // Ouve o arraste da barra
 if (stressRange) {
-    stressRange.addEventListener("input", updateStressVisual);
+    stressRange.addEventListener("input", function() {
+        updateStress(stressRange.value);
+    });
+}
+
+// Ouve a digitação direta no número
+if (stressNumberInput) {
+    stressNumberInput.addEventListener("input", function() {
+        updateStress(stressNumberInput.value);
+    });
 }
 
 // Lógica de exclusão mútua entre Aflito e Virtuoso
@@ -151,13 +163,13 @@ if (afflictedCheck && virtuousCheck) {
         if (afflictedCheck.checked) {
             virtuousCheck.checked = false;
         }
-        updateStressVisual();
+        updateStress(stressRange.value);
     });
 
     virtuousCheck.addEventListener("change", function() {
         if (virtuousCheck.checked) {
             afflictedCheck.checked = false;
         }
-        updateStressVisual();
+        updateStress(stressRange.value);
     });
 }

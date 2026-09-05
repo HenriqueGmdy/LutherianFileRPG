@@ -140,10 +140,12 @@
                             <input type="range" id="stress" min="0" max="200" value="0">
                         </div>
                         <div class="stressValueDisplay">
-                            <span id="stressValue">0</span> / 200
+                            <!-- Transformado em input numérico editável -->
+                            <input type="number" id="stressNumberInput" min="0" max="200" value="0">
+                            <span class="stressMaxLabel">/ 200</span>
                         </div>
                     </div>
-                    <div class="stressMarkIndicator">Marca de Pânico em 100</div>
+                    <div class="stressMarkIndicator">Quando 100 de estresse, rode d20</div>
 
                     <!-- Condições de Estresse (Aflito / Virtuoso) -->
                     <div class="stressConditions">

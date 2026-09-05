@@ -1,0 +1,58 @@
+/* 2. SEÇÃO BÁSICO, RAÇA E ORIGEM */
+.basicContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    justify-content: space-between;
+}
+
+.basicColumn {
+    flex: 1 1 350px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.groupCamp {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    align-items: center;
+    gap: 10px;
+}
+
+.groupCamp label {
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.raceTraitsContainer {
+    display: flex;
+    gap: 10px;
+    margin: 5px 0;
+}
+
+.raceTraitBox, .classTrait {
+    flex: 1;
+    background-color: #1e1e1e;
+    border: 1px dashed #444;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 0.9rem;
+    color: #e0e0e0;
+    min-height: 50px;
+}
+
+.raceTraitBox strong, .classTrait strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #ffffff;
+}
+
+.raceTraitBox p, .classTrait p {
+    margin: 0;
+    color: #b0b0b0;
+}
+
+.classTrait {
+    margin-top: 5px;
+}
