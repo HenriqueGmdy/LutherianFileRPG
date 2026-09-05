@@ -24,7 +24,6 @@ const attributeGroups = [
 
 const container = document.getElementById("attributesContainer");
 
-// 2. Renderiza a estrutura na tela automaticamente
 attributeGroups.forEach(group => {
     const attr1 = group.attributes[0];
     const attr2 = group.attributes[1];
@@ -84,3 +83,81 @@ attributeGroups.forEach(group => {
     });
 });
 
+// 4. Lógica de cálculo automático da Iniciativa com base na Destreza total
+function updateInitiative() {
+    const inputDext = document.getElementById("dexterity");
+    const inputTempDext = document.getElementById("temp_dexterity");
+    const inputIniciative = document.getElementById("initiative");
+
+    if (inputDext && inputTempDext && inputIniciative) {
+        let base = parseInt(inputDext.value) || 0;
+        let temp = parseInt(inputTempDext.value) || 0;
+        let totalDestreza = base + temp;
+
+        // Formata o sinal matemático bonitinho (ex: 3d6 + 2 ou 3d6 - 1)
+        let sinal = totalDestreza >= 0 ? `+ ${totalDestreza}` : `- ${Math.abs(totalDestreza)}`;
+        inputIniciative.value = `3d6 ${sinal}`;
+    }
+}
+
+// Ouve mudanças nos inputs de Destreza e atualiza a iniciativa em tempo real
+document.addEventListener("input", function(e) {
+    if (e.target && (e.target.id === "dexterity" || e.target.id === "temp_dexterity")) {
+        updateInitiative();
+    }
+});
+
+// Atualiza também quando as condições alterarem a destreza
+document.querySelectorAll(".conditionCheckbox").forEach(checkbox => {
+    checkbox.addEventListener("change", updateInitiative);
+});
+
+// ==========================================
+// LÓGICA DA BARRA DE ESTRESSE AVANÇADA
+// ==========================================
+const stressRange = document.getElementById("stress");
+const stressValue = document.getElementById("stressValue");
+const stressFill = document.getElementById("stressFill");
+const afflictedCheck = document.getElementById("afflictedCheck");
+const virtuousCheck = document.getElementById("virtuousCheck");
+
+function updateStressVisual() {
+    const val = parseInt(stressRange.value) || 0;
+    stressValue.textContent = val;
+
+    // Atualiza a largura da barra preenchida (porcentagem de 0 a 200)
+    const percentage = (val / 200) * 100;
+    stressFill.style.width = `${percentage}%`;
+
+    // Define a cor com base nas checkboxes ou no limiar de 100
+    if (afflictedCheck.checked) {
+        stressFill.style.backgroundColor = "#8b0000"; // Vermelho sangue
+    } else if (virtuousCheck.checked) {
+        stressFill.style.backgroundColor = "#c0a22b"; // Amarelo radiante
+    } else {
+        // Abaixo de 100 é branco, acima de 100 fica um tom de alerta leve se não escolher nada
+        stressFill.style.backgroundColor = val > 100 ? "#8b0000" : "#ffffff";
+    }
+}
+
+// Ouve o arraste da barra
+if (stressRange) {
+    stressRange.addEventListener("input", updateStressVisual);
+}
+
+// Lógica de exclusão mútua entre Aflito e Virtuoso
+if (afflictedCheck && virtuousCheck) {
+    afflictedCheck.addEventListener("change", function() {
+        if (afflictedCheck.checked) {
+            virtuousCheck.checked = false;
+        }
+        updateStressVisual();
+    });
+
+    virtuousCheck.addEventListener("change", function() {
+        if (virtuousCheck.checked) {
+            afflictedCheck.checked = false;
+        }
+        updateStressVisual();
+    });
+}

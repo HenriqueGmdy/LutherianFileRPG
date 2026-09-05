@@ -104,6 +104,114 @@
             <div id="attributesContainer"></div>
         </fieldset>
 
+    <!-- STATUS E RECURSOS -->
+    <fieldset>
+        <legend>Status</legend>
+        <div class="statusContainer">
+
+            <!-- Coluna Esquerda: Vitalidade, Vontade e Estresse -->
+            <div class="statusColumn">
+                <div class="statusGroup">
+                    <label>Vitalidade:</label>
+                    <div class="dualInput">
+                        <input type="number" id="vitalityCurrent" value="0">
+                        <span>/</span>
+                        <input type="number" id="vitalityTotal" value="0">
+                    </div>
+                </div>
+
+                <div class="statusGroup">
+                    <label>Vontade:</label>
+                    <div class="dualInput">
+                        <input type="number" id="willpowerCurrent" value="0">
+                        <span>/</span>
+                        <input type="number" id="willpowerTotal" value="0">
+                    </div>
+                </div>
+
+                <div class="statusGroup stressBoxContainer">
+                    <label for="stress">Estresse:</label>
+                    <div class="stressContent">
+                        <div class="stressWrapper">
+                            <div class="stressTrack">
+                                <div id="stressFill" class="stressFill"></div>
+                                <div class="stressMark"></div>
+                            </div>
+                            <input type="range" id="stress" min="0" max="200" value="0">
+                        </div>
+                        <div class="stressValueDisplay">
+                            <span id="stressValue">0</span> / 200
+                        </div>
+                    </div>
+                    <div class="stressMarkIndicator">Marca de Pânico em 100</div>
+
+                    <!-- Condições de Estresse (Aflito / Virtuoso) -->
+                    <div class="stressConditions">
+                        <label class="stressCheckboxLabel">
+                            <input type="checkbox" id="afflictedCheck"> Aflito
+                        </label>
+                        <label class="stressCheckboxLabel">
+                            <input type="checkbox" id="virtuousCheck"> Virtuoso
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna Direita: Defesa, Inspiração, Moral, Deslocamento, Ameaça, Tamanho e Iniciativa -->
+            <div class="statusColumn">
+                <div class="statusGroup">
+                    <label for="defense">Classe de Defesa:</label>
+                    <input type="number" id="defense" min="0" value="0">
+                </div>
+
+                <div class="statusGroup">
+                    <label for="inspiration">Inspiração:</label>
+                    <input type="number" id="inspiration" min="0" value="0">
+                </div>
+
+                <div class="statusGroup">
+                    <label for="morale">Moral:</label>
+                    <input type="number" id="morale" value="0">
+                </div>
+
+                <div class="statusGroup">
+                    <label for="speed">Deslocamento:</label>
+                    <div class="speedInput">
+                        <input type="number" id="speed" min="0" value="6">
+                        <span class="unitText">qds</span>
+                    </div>
+                </div>
+
+                <div class="statusGroup">
+                    <label for="threatLevel">Nível de Ameaça:</label>
+                    <select id="threatLevel">
+                        <option value="nulo">Nulo</option>
+                        <option value="sublime">Sublime</option>
+                        <option value="besta">Besta</option>
+                        <option value="demonio">Demônio</option>
+                        <option value="anciao">Ancião</option>
+                        <option value="radiante">Radiante</option>
+                    </select>
+                </div>
+
+                <div class="statusGroup">
+                    <label for="size">Tamanho:</label>
+                    <select id="size">
+                        <option value="pequeno">Pequeno</option>
+                        <option value="medio" selected>Médio</option>
+                        <option value="grande">Grande</option>
+                    </select>
+                </div>
+
+                <div class="statusGroup">
+                    <label for="initiative">Iniciativa:</label>
+                    <input type="text" id="initiative" value="3d6 + 0" readonly class="calculatedField">
+                </div>
+            </div>
+
+        </div>
+    </fieldset>
+
     </div>
 
     <script src="script.js"></script>
