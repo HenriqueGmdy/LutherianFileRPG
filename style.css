@@ -1,3 +1,49 @@
+/* ==========================================
+   0. MODO ESCURO (GLOBAL)
+   ========================================== */
+body {
+    background-color: #121212; /* Fundo preto/cinza bem escuro */
+    color: #e0e0e0;            /* Texto geral em tom claro */
+}
+
+/* Ajusta os fieldsets e legendas para o tema escuro */
+fieldset {
+    border-color: #444;
+}
+
+legend {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+/* Ajusta os cards dos atributos para o fundo escuro */
+.attributeGroup {
+    background-color: #1e1e1e !important;
+    border: 1px solid #333 !important;
+}
+
+/* Ajusta as caixas de condição */
+.conditionBox {
+    background-color: #2a2a2a !important;
+    border-top: 1px solid #444 !important;
+    color: #fff;
+}
+
+/* Estiliza os inputs e selects para combinarem com o fundo escuro */
+input[type="text"],
+input[type="number"],
+select {
+    background-color: #2b2b2b;
+    color: #ffffff;
+    border: 1px solid #555;
+    border-radius: 4px;
+}
+
+/* Mantém o texto dos dados legível */
+.diceToRoll {
+    color: #ffcc00; /* Um tom dourado/amarelado destaca muito bem no escuro, ou mude para #fff se preferir branco */
+}
+
 /* 1. LAYOUT PRINCIPAL */
 #attributesContainer {
     display: flex;
@@ -109,21 +155,78 @@
 
 /* Caixa de Vantagens da Raça */
 .raceAdvantages {
-    background-color: #f4f4f4;
-    border: 1px dashed #ccc;
+    background-color: #1e1e1e;
+    border: 1px dashed #444;
     border-radius: 4px;
     padding: 10px;
     margin: 5px 0;
     font-size: 0.9rem;
+    color: #e0e0e0;
 }
 
 .raceAdvantages strong {
     display: block;
     margin-bottom: 4px;
-    color: #333;
+    color: #ffffff;
 }
 
 .raceAdvantages p {
     margin: 0;
-    color: #666;
+    color: #b0b0b0;
+}
+
+/* ==========================================
+   7. VANTAGENS E MALDIÇÕES DA RAÇA (LADO A LADO)
+   ========================================== */
+.raceTraitsContainer {
+    display: flex;
+    gap: 10px;
+    margin: 5px 0;
+}
+
+.raceTraitBox {
+    flex: 1;
+    background-color: #1e1e1e;
+    border: 1px dashed #444;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 0.9rem;
+    color: #e0e0e0;
+    min-height: 50px;
+}
+
+.raceTraitBox strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #ffffff;
+}
+
+.raceTraitBox p {
+    margin: 0;
+    color: #b0b0b0;
+}
+
+/* ==========================================
+   8. HABILIDADE DE ORIGEM (CLASSTRAIT)
+   ========================================== */
+.classTrait {
+    background-color: #1e1e1e;
+    border: 1px dashed #444;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 5px;
+    font-size: 0.9rem;
+    color: #e0e0e0;
+    min-height: 50px;
+}
+
+.classTrait strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #ffffff;
+}
+
+.classTrait p {
+    margin: 0;
+    color: #b0b0b0;
 }
