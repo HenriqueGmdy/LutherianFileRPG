@@ -1,4 +1,4 @@
-import { racesData } from './racesData.js';
+import { racesData } from '../data/racesData.js';
 
 export function initRaces() {
     const raceSelect = document.getElementById("race");

@@ -1,4 +1,4 @@
-import { originsData } from './originsData.js';
+import { originsData } from '../data/originsData.js'; 
 import { updateAllSkills } from './skills.js';
 
 let lastTrainedSkills = [];

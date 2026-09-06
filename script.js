@@ -1,23 +1,26 @@
-import { renderAttributes, initAttributesListeners, updateAllAttributes } from './js/attributes.js';
-import { initStatusListeners, updateInitiative } from './js/status.js';
-import { renderSkills, initSkillsListeners, updateAllSkills } from './js/skills.js';
-import { initPersonalListeners } from './js/personal.js';
-import { initInventory } from './js/inventory.js';
-import { initOrigins } from './js/origins.js';
-import { initRaces } from './js/races.js'; // <--- 1. Importa o módulo de raças
+import { renderAttributes, initAttributesListeners, updateAllAttributes } from './js/components/attributes.js';
+import { initStatusListeners, updateInitiative } from './js/components/status.js';
+import { renderSkills, initSkillsListeners, updateAllSkills } from './js/components/skills.js';
+import { initPersonalListeners } from './js/components/personal.js';
+import { initInventory } from './js/components/inventory.js';
+import { initOrigins } from './js/components/origins.js';
+import { initRaces } from './js/components/races.js';
 
 window.addEventListener("DOMContentLoaded", () => {
+    // 1. Renderiza os componentes gerados via JS
     renderAttributes();
     renderSkills();
 
+    // 2. Inicializa os ouvintes de eventos de todos os módulos
     initAttributesListeners();
     initStatusListeners();
     initSkillsListeners();
     initPersonalListeners();
     initInventory();
     initOrigins();
-    initRaces(); // <--- 2. Inicializa o seletor de raças
+    initRaces();
 
+    // 3. Executa as sincronizações iniciais
     updateAllAttributes();
     updateInitiative();
     updateAllSkills();

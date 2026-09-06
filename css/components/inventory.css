@@ -187,7 +187,7 @@
     border: 1px solid #333;
     border-radius: 6px;
     padding: 10px;
-    box-sizing: border-box !important; /* Essencial para o padding não empurrar a borda para fora */
+    box-sizing: border-box !important; 
     resize: vertical;
     font-family: Arial, sans-serif;
     font-size: 0.9rem;
@@ -208,7 +208,7 @@
 }
 
 .notesGrid .notesTextArea {
-    flex: 1 1 280px; /* Divide em duas colunas responsivas perfeitas */
+    flex: 1 1 280px;
 }
 
 .fullWidthBlock {

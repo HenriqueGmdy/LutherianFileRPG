@@ -1,0 +1,7 @@
+@import "variables.css";
+@import "components/basics.css";
+@import "components/attributes.css";
+@import "components/attrStatus.css";
+@import "components/skills.css";
+@import "components/personal.css";
+@import "components/inventory.css";
