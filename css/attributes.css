@@ -49,11 +49,22 @@
 }
 
 .diceToRoll {
-    text-align: center;
+    text-align: right;
     font-weight: bold;
-    color: #ffcc00;
-    min-width: 30px;
+    min-width: 85px;
+    font-size: 0.9rem;
 }
+    .dice-neutral {
+        color: #a3a3a3;
+    }
+
+    .dice-positive {
+        color: #ffcc00; 
+    }
+
+    .dice-negative {
+        color: #c00101;
+    }
 
 .conditionBox {
     text-align: center;

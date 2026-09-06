@@ -35,12 +35,12 @@ attributeGroups.forEach(group => {
             <div class="attributeRow">
                 <div class="attribute-left">
                     <label for="${attr1.id}">${attr1.name}:</label>
-                    <input type="number" id="${attr1.id}" min="-3" max="3" value="0">
+                    <input type="number" id="${attr1.id}" min="-3" max="3" value="0" class="attr-input">
                 </div>
                 <div class="attribute-right">
                     <label for="temp_${attr1.id}">Mod. temporário:</label>
-                    <input type="number" id="temp_${attr1.id}" min="-2" max="2" value="0">
-                    <span id="dices_${attr1.id}" class="diceToRoll">3d6</span>
+                    <input type="number" id="temp_${attr1.id}" min="-2" max="2" value="0" class="attr-input">
+                    <span id="dices_${attr1.id}" class="diceToRoll">d20</span>
                 </div>
             </div>
 
@@ -48,12 +48,12 @@ attributeGroups.forEach(group => {
             <div class="attributeRow">
                 <div class="attribute-left">
                     <label for="${attr2.id}">${attr2.name}:</label>
-                    <input type="number" id="${attr2.id}" min="-3" max="3" value="0">
+                    <input type="number" id="${attr2.id}" min="-3" max="3" value="0" class="attr-input">
                 </div>
                 <div class="attribute-right">
                     <label for="temp_${attr2.id}">Mod. temporário:</label>
-                    <input type="number" id="temp_${attr2.id}" min="-2" max="2" value="0">
-                    <span id="dices_${attr2.id}" class="diceToRoll">3d6</span>
+                    <input type="number" id="temp_${attr2.id}" min="-2" max="2" value="0" class="attr-input">
+                    <span id="dices_${attr2.id}" class="diceToRoll">d20</span>
                 </div>
             </div>
 
@@ -64,6 +64,55 @@ attributeGroups.forEach(group => {
             </div>
         </div>
     `;
+});
+
+function updateAttributeDice(attrId) {
+    const baseInput = document.getElementById(attrId);
+    const tempInput = document.getElementById(`temp_${attrId}`);
+    const diceSpan = document.getElementById(`dices_${attrId}`);
+
+    if (baseInput && tempInput && diceSpan) {
+        let baseVal = parseInt(baseInput.value) || 0;
+        let tempVal = parseInt(tempInput.value) || 0;
+        let total = baseVal + tempVal;
+
+        if (total === 0) {
+            diceSpan.textContent = "d20";
+            diceSpan.className = "diceToRoll dice-neutral";
+        } else if (total > 0) {
+            diceSpan.textContent = `d20 + ${total}d6`;
+            diceSpan.className = "diceToRoll dice-positive";
+        } else {
+            diceSpan.textContent = `d20 - ${Math.abs(total)}d6`;
+            diceSpan.className = "diceToRoll dice-negative";
+        }
+    }
+}
+
+function updateAllAttributes() {
+    attributeGroups.forEach(group => {
+        group.attributes.forEach(attr => {
+            updateAttributeDice(attr.id);
+        });
+    });
+}
+
+document.addEventListener("input", function(e) {
+    if (e.target && e.target.classList.contains("attr-input")) {
+        let attrId = e.target.id.replace("temp_", "");
+        updateAttributeDice(attrId);
+        
+        if (attrId === "dexterity") {
+            updateInitiative();
+        }
+    }
+});
+
+document.querySelectorAll(".conditionCheckbox").forEach(checkbox => {
+    checkbox.addEventListener("change", function() {
+        // Dispara a atualização para todos para recalcular após a alteração da condição
+        setTimeout(updateAllAttributes, 10);
+    });
 });
 
 attributeGroups.forEach(group => {
@@ -83,7 +132,7 @@ attributeGroups.forEach(group => {
     });
 });
 
-// 4. Lógica de cálculo automático da Iniciativa com base na Destreza total
+// 4. Lógica de cálculo automático da Iniciativa com base na Destreza total (Sistema d20)
 function updateInitiative() {
     const inputDext = document.getElementById("dexterity");
     const inputTempDext = document.getElementById("temp_dexterity");
@@ -94,9 +143,9 @@ function updateInitiative() {
         let temp = parseInt(inputTempDext.value) || 0;
         let totalDestreza = base + temp;
 
-        // Formata o sinal matemático bonitinho (ex: 3d6 + 2 ou 3d6 - 1)
+        // Formata para o padrão d20 + valor
         let sinal = totalDestreza >= 0 ? `+ ${totalDestreza}` : `- ${Math.abs(totalDestreza)}`;
-        inputIniciative.value = `3d6 ${sinal}`;
+        inputIniciative.value = `d20 ${sinal}`;
     }
 }
 
