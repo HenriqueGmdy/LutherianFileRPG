@@ -229,6 +229,74 @@
         <div id="skillsContainer" class="skillsContainer"></div>
     </fieldset>
 
+    <!-- PESSOAL -->
+    <fieldset>
+        <legend>Pessoal</legend>
+        <div class="personalContainer">
+
+            <!-- 1. Proficiências (Lista de Strings) -->
+            <div class="personalSection">
+                <div class="personalSectionHeader">
+                    <h3>Proficiências</h3>
+                    <button type="button" class="addItemBtn" data-target="proficienciesList">+ Adicionar</button>
+                </div>
+                <div id="proficienciesList" class="dynamicList stringList"></div>
+            </div>
+
+            <!-- 2. Talentos (Nome e Descrição) -->
+            <div class="personalSection">
+                <div class="personalSectionHeader">
+                    <h3>Talentos</h3>
+                    <button type="button" class="addItemBtn" data-target="talentsList">+ Adicionar</button>
+                </div>
+                <div id="talentsList" class="dynamicList cardList"></div>
+            </div>
+
+            <!-- 3. Idiomas (Lista de Strings) -->
+            <div class="personalSection">
+                <div class="personalSectionHeader">
+                    <h3>Idiomas</h3>
+                    <button type="button" class="addItemBtn" data-target="languagesList">+ Adicionar</button>
+                </div>
+                <div id="languagesList" class="dynamicList stringList"></div>
+            </div>
+
+            <!-- 4. Doenças (Nome e Descrição) -->
+            <div class="personalSection">
+                <div class="personalSectionHeader">
+                    <h3>Doenças</h3>
+                    <button type="button" class="addItemBtn" data-target="diseasesList">+ Adicionar</button>
+                </div>
+                <div id="diseasesList" class="dynamicList cardList"></div>
+            </div>
+
+            <!-- 5. Traços e Manias (Nome e Descrição) -->
+            <div class="personalSection">
+                <div class="personalSectionHeader">
+                    <h3>Traços e Manias</h3>
+                    <button type="button" class="addItemBtn" data-target="traitsList">+ Adicionar</button>
+                </div>
+                <div id="traitsList" class="dynamicList cardList"></div>
+            </div>
+
+            <div class="personalColumnsRow">
+                <div class="personalColumnBox">
+                    <label for="scarsText">Marcas / Cicatrizes</label>
+                    <textarea id="scarsText" placeholder="Descreva marcas, cicatrizes ou características físicas marcantes..."></textarea>
+                </div>
+                <div class="personalColumnBox">
+                    <label for="idealsText">Ideais / Feitos</label>
+                    <textarea id="idealsText" placeholder="Descreva crenças, motivações ou grandes feitos..."></textarea>
+                </div>
+                <div class="personalColumnBox">
+                    <label for="bondsText">Laços</label>
+                    <textarea id="bondsText" placeholder="Descreva conexões, aliados ou promessas importantes..."></textarea>
+                </div>
+            </div>
+
+        </div>
+    </fieldset>
+
     </div> <!-- Fecha a mainFile -->
 
     <script type="module" src="script.js"></script>

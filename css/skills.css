@@ -1,6 +1,4 @@
-/* ==========================================
-   4. SEÇÃO DE PERÍCIAS (5 COLUNAS)
-   ========================================== */
+/* 4. SEÇÃO DE PERÍCIAS (5 COLUNAS) */
 .skillsContainer {
     display: flex;
     flex-wrap: wrap;
@@ -9,7 +7,7 @@
 }
 
 .skillColumn {
-    flex: 1 1 220px; /* Aumenta um pouco a largura mínima de cada coluna */
+    flex: 1 1 220px; 
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -19,10 +17,9 @@
     padding: 10px;
 }
 
-/* Redefine o grid para dar mais espaço à fórmula de rolagem à direita */
 .skillGroup {
     display: grid;
-    grid-template-columns: 1fr 32px 105px; /* Nome flexível | Input pequeno | Área larga para o cálculo */
+    grid-template-columns: 1fr 32px 105px; 
     align-items: center;
     gap: 6px;
 }
@@ -48,7 +45,7 @@
 }
 
 .skillMod {
-    text-align: right; /* Alinha o texto para a direita para ficar elegante */
+    text-align: right; 
     font-size: 0.8rem;
     font-weight: bold;
     white-space: nowrap;

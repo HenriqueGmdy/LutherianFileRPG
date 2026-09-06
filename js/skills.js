@@ -4,7 +4,7 @@ const skillColumnsData = [
         { id: "luta", name: "Luta", attr: "For", attrId: "strength" },
         { id: "limiar", name: "Limiar da morte", attr: "Con", attrId: "constitution" },
         { id: "resistencia", name: "Resistência", attr: "Con", attrId: "constitution" },
-        { id: "vontade", name: "F. de vontade", attr: "Con", attrId: "constitution" }
+        { id: "vontade", name: "Força de vontade", attr: "Con", attrId: "constitution" }
     ],
     [
         { id: "furtividade", name: "Furtividade", attr: "Des", attrId: "dexterity" },
