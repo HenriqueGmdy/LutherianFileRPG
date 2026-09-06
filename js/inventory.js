@@ -10,6 +10,7 @@ export function initInventory() {
     
     const backpackCheck = document.getElementById("backpackCheck");
     const bigBackpackCheck = document.getElementById("bigBackpackCheck");
+    const sizeSelect = document.getElementById("size");
 
     // Função para calcular a capacidade máxima e gerenciar o custo de Força da Mochila Grande
     function calculateMaxCapacity() {
@@ -63,16 +64,23 @@ export function initInventory() {
         const isOverloaded = current > max;
         const isExcessive = current >= max * 2 && max > 0;
 
-        // Atualiza o deslocamento automaticamente
+        // Define o deslocamento base de acordo com o tamanho escolhido (Pequeno: 5, Médio: 6, Grande: 7)
+        let baseSpeed = 6; // Padrão Médio
+        if (sizeSelect) {
+            if (sizeSelect.value === "pequeno") baseSpeed = 5;
+            else if (sizeSelect.value === "grande") baseSpeed = 7;
+            else baseSpeed = 6; // "medio"
+        }
+
+        // Atualiza o deslocamento automaticamente aplicando penalidades de sobrecarga se houver
         const speedInput = document.getElementById("speed");
-        let baseSpeed = 6;
         if (speedInput) {
             if (isExcessive) speedInput.value = 0;
             else if (isOverloaded) speedInput.value = Math.max(0, baseSpeed - 2);
             else speedInput.value = baseSpeed;
         }
 
-        // Força a atualização visual dos atributos e perícias (para refletir a desvantagem da mochila grande na Força e sobrecarga)
+        // Força a atualização visual dos atributos e perícias
         updateAllAttributes();
         updateAllSkills();
 
@@ -104,7 +112,7 @@ export function initInventory() {
         }
 
         const card = document.createElement("div");
-        card.className = "inventoryItemCard cardItemBox"; // <--- Usa a mesma classe padrão dos cards de Pessoal
+        card.className = "inventoryItemCard cardItemBox";
         card.innerHTML = `
             <div class="inventoryItemTop">
                 <input type="text" placeholder="Nome do item..." class="item-name-input">
@@ -134,8 +142,9 @@ export function initInventory() {
         addBtn.addEventListener("click", addInventoryItem);
     }
 
-    [backpackCheck, bigBackpackCheck].forEach(chk => {
-        if (chk) chk.addEventListener("change", updateInventoryStatus);
+    // Ouvintes de mudanças nas opções de mochilas e tamanho
+    [backpackCheck, bigBackpackCheck, sizeSelect].forEach(element => {
+        if (element) element.addEventListener("change", updateInventoryStatus);
     });
 
     document.addEventListener("input", (e) => {

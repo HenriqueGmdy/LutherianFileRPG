@@ -56,3 +56,11 @@
 .classTrait {
     margin-top: 5px;
 }
+
+#originTraitDescription {
+    white-space: pre-line;
+}
+
+.raceTraitBox p {
+    white-space: pre-line;
+}

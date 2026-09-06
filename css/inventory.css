@@ -153,3 +153,88 @@
     font-family: Arial, sans-serif;
     font-size: 0.85rem;
 }
+
+/* 8. HABILIDADES E NARRATIVA */
+.skillsNotesGrid {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.skillsNotesGrid .personalColumnBox {
+    flex: 1 1 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Garante que o bloco de Narrativa e as Textareas fiquem 100% contidos na caixa */
+.personalContainer {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.skillsNotesGrid textarea,
+.personalContainer textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 120px;
+    background-color: #1e1e1e;
+    color: #ffffff;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px;
+    box-sizing: border-box !important; /* Essencial para o padding não empurrar a borda para fora */
+    resize: vertical;
+    font-family: Arial, sans-serif;
+    font-size: 0.9rem;
+}
+
+.skillsNotesGrid textarea:focus,
+.personalContainer textarea:focus {
+    border-color: #ffcc00;
+    outline: none;
+}
+
+/* 9. BLOCOS DE TEXTO ISOLADOS */
+.notesGrid {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.notesGrid .notesTextArea {
+    flex: 1 1 280px; /* Divide em duas colunas responsivas perfeitas */
+}
+
+.fullWidthBlock {
+    width: 100%;
+    display: flex;
+}
+
+.notesTextArea {
+    width: 100%;
+    min-height: 120px;
+    background-color: #1e1e1e;
+    color: #ffffff;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px;
+    box-sizing: border-box; /* Impede o padding de estourar a caixa */
+    resize: vertical;
+    font-family: Arial, sans-serif;
+    font-size: 0.9rem;
+}
+
+.narrativeArea {
+    min-height: 160px; /* Um pouco mais alta para diários e história */
+}
+
+.notesTextArea:focus {
+    border-color: #ffcc00;
+    outline: none;
+}

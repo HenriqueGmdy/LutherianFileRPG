@@ -67,14 +67,18 @@
                         <label for="age">Idade:</label>
                         <input type="number" id="age" min="1" placeholder="Ex: 25">
                     </div>
+                    
                     <div class="groupCamp">
                         <label for="origin">Origem:</label>
-                        <input type="text" id="origin" placeholder="Ex: --">
+                        <select id="origin" class="attr-input" style="width: 100%; background-color: #2b2b2b; color: #fff; border: 1px solid #555; border-radius: 4px; padding: 4px 8px;">
+                            <option value="">Selecione uma origem...</option>
+                        </select>
                     </div>
-                    <div class="classTrait">
-                        <strong>Habilidade de Origem:</strong>
-                        <p id="originTraitDescription">Nenhuma origem especificada.</p>
-                    </div>
+
+<div class="classTrait">
+    <strong>Habilidade de Origem:</strong>
+    <p id="originTraitDescription">Nenhuma origem especificada.</p>
+</div>
                 </div>
             </div>
         </fieldset>
@@ -290,6 +294,23 @@
                 
                 <div id="inventoryItemsList" class="dynamicList"></div>
 
+            </div>
+        </fieldset>
+
+        <!-- HABILIDADES -->
+        <fieldset>
+            <legend>Habilidades</legend>
+            <div class="notesGrid">
+                <textarea class="notesTextArea" placeholder="Descreva habilidades, magias ou poderes..."></textarea>
+                <textarea class="notesTextArea" placeholder="Outras habilidades ou detalhes adicionais..."></textarea>
+            </div>
+        </fieldset>
+
+        <!-- NARRATIVA E ANOTAÇÕES -->
+        <fieldset>
+            <legend>Narrativa e Anotações</legend>
+            <div class="fullWidthBlock">
+                <textarea class="notesTextArea narrativeArea" placeholder="História, anotações de campanha, pistas e diário de missões..."></textarea>
             </div>
         </fieldset>
 
