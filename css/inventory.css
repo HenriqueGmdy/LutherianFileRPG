@@ -1,0 +1,155 @@
+/* ==========================================
+   7. SEÇÃO DE INVENTÁRIO
+   ========================================== */
+.inventoryContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.inventoryTopGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.inventoryBlock {
+    flex: 1 1 280px;
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.invTitle {
+    color: #ffcc00;
+    font-weight: bold;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.invInputWrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.invCoinsInput {
+    background-color: #2b2b2b;
+    color: #ffffff;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px 8px;
+    width: 80px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.invCapacityHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.loadDisplayValue {
+    font-weight: bold;
+    color: #e0e0e0;
+    font-size: 0.95rem;
+}
+
+.backpackOptions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-top: 1px solid #2a2a2a;
+    padding-top: 6px;
+    margin-top: 2px;
+}
+
+.encumbranceAlerts {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #ff4444;
+    background-color: #2a1515;
+    border: 1px solid #552222;
+    border-radius: 4px;
+    padding: 6px 10px;
+    display: none;
+}
+
+/* Card do Item com a cor de borda exata dos blocos superiores */
+.inventoryItemCard {
+    background-color: #1e1e1e; 
+    border: 1px solid #333;  
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.inventoryItemTop {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+}
+
+.item-name-input {
+    flex: 1;
+    background-color: #2b2b2b;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-weight: bold;
+}
+
+.item-qty-input, .item-weight-input {
+    width: 45px;
+    text-align: center;
+    background-color: #2b2b2b;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px 2px;
+}
+
+/* Botão X fixado corretamente na ponta direita sem quebrar a linha */
+.removeItemBtn {
+    background-color: #3a1a1a;
+    color: #ff4444;
+    border: 1px solid #555;
+    border-radius: 4px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.removeItemBtn:hover {
+    background-color: #5a2222;
+}
+
+.inventoryItemCard textarea {
+    width: 100%;
+    min-height: 45px;
+    background-color: #2b2b2b;
+    color: #ffffff;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 6px;
+    box-sizing: border-box;
+    resize: vertical;
+    font-family: Arial, sans-serif;
+    font-size: 0.85rem;
+}

@@ -82,6 +82,32 @@ export function updateAttributeDice(attrId) {
         let tempVal = parseInt(tempInput.value) || 0;
         let total = baseVal + tempVal;
 
+        // Soma as penalidades ativas
+        let penalty = 0;
+        const isOverloaded = typeof window.isCharacterOverloaded === 'function' && window.isCharacterOverloaded();
+        const bigBackpackActive = document.getElementById("bigBackpackCheck")?.checked || false;
+
+        // Sobrecarga aplica penalidade de -1 em Força e Destreza
+        if (isOverloaded && (attrId === "strength" || attrId === "dexterity")) {
+            penalty += 1;
+        }
+
+        // Mochila grande aplica penalidade permanente de -1 apenas em Força
+        if (bigBackpackActive && attrId === "strength") {
+            penalty += 1;
+        }
+
+        // Aplica o acumulado das penalidades subtraindo do total
+        if (penalty > 0) {
+            if (total > 0) {
+                // Se houver bônus positivo, as penalidades abatem primeiro o bônus
+                total = Math.max(0, total - penalty);
+            } else {
+                // Se já for 0 ou negativo, as penalidades empurram ainda mais para o negativo
+                total -= penalty;
+            }
+        }
+
         if (total === 0) {
             diceSpan.textContent = "d20";
             diceSpan.className = "diceToRoll dice-neutral";

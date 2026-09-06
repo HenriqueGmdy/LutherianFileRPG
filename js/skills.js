@@ -69,12 +69,30 @@ export function updateSkillModifier(skillKey) {
     if (skillInput && modSpan && attrId) {
         let skillRank = parseInt(skillInput.value) || 0;
         
-        // Pega o valor total do atributo (Base + Temp)
         let attrBase = parseInt(document.getElementById(attrId)?.value) || 0;
         let attrTemp = parseInt(document.getElementById(`temp_${attrId}`)?.value) || 0;
         let attrTotal = attrBase + attrTemp;
 
-        // Monta a string da rolagem baseada na regra do d20 + dados d6 do atributo + graduação da perícia
+        // Soma as penalidades ativas para as perícias baseadas em Força e Destreza
+        let penalty = 0;
+        const isOverloaded = typeof window.isCharacterOverloaded === 'function' && window.isCharacterOverloaded();
+        const bigBackpackActive = document.getElementById("bigBackpackCheck")?.checked || false;
+
+        if (isOverloaded && (attrId === "strength" || attrId === "dexterity")) {
+            penalty += 1;
+        }
+        if (bigBackpackActive && attrId === "strength") {
+            penalty += 1;
+        }
+
+        if (penalty > 0) {
+            if (attrTotal > 0) {
+                attrTotal = Math.max(0, attrTotal - penalty);
+            } else {
+                attrTotal -= penalty;
+            }
+        }
+
         if (attrTotal === 0) {
             if (skillRank === 0) {
                 modSpan.textContent = "d20";
