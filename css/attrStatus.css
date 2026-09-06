@@ -175,18 +175,23 @@
     cursor: pointer;
 }
 
-/* Estilização do Teste de Limiar da Morte */
 .deathSaveBoxes {
     display: flex;
-    gap: 15px;
+    gap: 25px;
     align-items: center;
+    justify-content: center;
+    width: 100%;
 }
 
 .deathCheckboxLabel {
     font-size: 0.85rem;
-    color: #ff4444; /* Um tom avermelhado para indicar perigo */
+    color: #ff4444;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     cursor: pointer;
-}   
+}
+
+.statusGroup.deathSaveGroup {
+    align-items: start;
+}

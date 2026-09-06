@@ -51,7 +51,7 @@ export function renderSkills() {
                 <div class="skillGroup">
                     <label for="skill_${skill.id}">${skill.name} <span class="skillAttr">(${skill.attr})</span></label>
                     <input type="number" id="skill_${skill.id}" value="0" class="skill-input">
-                    <span id="mod_skill_${skill.id}" class="skillMod">0</span>
+                    <span id="mod_skill_${skill.id}" class="skillMod">d20</span>
                 </div>
             `;
         });
@@ -69,12 +69,31 @@ export function updateSkillModifier(skillKey) {
     if (skillInput && modSpan && attrId) {
         let skillRank = parseInt(skillInput.value) || 0;
         
+        // Pega o valor total do atributo (Base + Temp)
         let attrBase = parseInt(document.getElementById(attrId)?.value) || 0;
         let attrTemp = parseInt(document.getElementById(`temp_${attrId}`)?.value) || 0;
         let attrTotal = attrBase + attrTemp;
 
-        let finalMod = skillRank + attrTotal;
-        modSpan.textContent = finalMod >= 0 ? `+${finalMod}` : finalMod;
+        // Monta a string da rolagem baseada na regra do d20 + dados d6 do atributo + graduação da perícia
+        if (attrTotal === 0) {
+            if (skillRank === 0) {
+                modSpan.textContent = "d20";
+                modSpan.className = "skillMod dice-neutral";
+            } else {
+                let sSign = skillRank > 0 ? `+ ${skillRank}` : `- ${Math.abs(skillRank)}`;
+                modSpan.textContent = `d20 ${sSign}`;
+                modSpan.className = "skillMod " + (skillRank > 0 ? "dice-positive" : "dice-negative");
+            }
+        } else if (attrTotal > 0) {
+            let rankPart = skillRank !== 0 ? (skillRank > 0 ? ` + ${skillRank}` : ` - ${Math.abs(skillRank)}`) : "";
+            modSpan.textContent = `d20 + ${attrTotal}d6${rankPart}`;
+            modSpan.className = "skillMod dice-positive";
+        } else {
+            let absAttr = Math.abs(attrTotal);
+            let rankPart = skillRank !== 0 ? (skillRank > 0 ? ` + ${skillRank}` : ` - ${Math.abs(skillRank)}`) : "";
+            modSpan.textContent = `d20 - ${absAttr}d6${rankPart}`;
+            modSpan.className = "skillMod dice-negative";
+        }
     }
 }
 
