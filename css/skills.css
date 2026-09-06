@@ -1,0 +1,52 @@
+/* SEÇÃO DE PERÍCIAS */
+.skillsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: space-between;
+}
+
+.skillColumn {
+    flex: 1 1 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px;
+}
+
+.skillGroup {
+    display: grid;
+    grid-template-columns: 1fr 35px 35px;
+    align-items: center;
+    gap: 4px;
+}
+
+.skillGroup label {
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #e0e0e0;
+}
+
+.skillAttr {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.skillGroup input[type="number"] {
+    width: 35px;
+    text-align: center;
+    padding: 2px;
+    font-size: 0.85rem;
+}
+
+.skillMod {
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #ffffff;
+}

@@ -104,7 +104,7 @@
             <div id="attributesContainer"></div>
         </fieldset>
 
-    <!-- STATUS E RECURSOS -->
+<!-- STATUS E RECURSOS -->
     <fieldset>
         <legend>Status</legend>
         <div class="statusContainer">
@@ -140,7 +140,6 @@
                             <input type="range" id="stress" min="0" max="200" value="0">
                         </div>
                         <div class="stressValueDisplay">
-                            <!-- Transformado em input numérico editável -->
                             <input type="number" id="stressNumberInput" min="0" max="200" value="0">
                             <span class="stressMaxLabel">/ 200</span>
                         </div>
@@ -214,7 +213,13 @@
         </div>
     </fieldset>
 
-    </div>
+    <!-- PERÍCIAS (Agora separada corretamente em seu próprio fieldset) -->
+    <fieldset>
+        <legend>Perícias</legend>
+        <div id="skillsContainer" class="skillsContainer"></div>
+    </fieldset>
+
+    </div> <!-- Fecha a div mainFile -->
 
     <script src="script.js"></script>
 </body>

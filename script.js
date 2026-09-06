@@ -222,3 +222,152 @@ if (afflictedCheck && virtuousCheck) {
         updateStress(stressRange.value);
     });
 }
+
+// ==========================================
+// GERAÇÃO DINÂMICA E LÓGICA DAS PERÍCIAS
+// ==========================================
+const skillsData = [
+    { attrName: "Força (For)", attrId: "strength", skills: [
+        { id: "atletismo", name: "Atletismo" },
+        { id: "luta", name: "Luta" }
+    ]},
+    { attrName: "Constituição (Con)", attrId: "constitution", skills: [
+        { id: "limiar", name: "Limiar da morte" },
+        { id: "resistencia", name: "Resistência" },
+        { id: "vontade", name: "F. de vontade" }
+    ]},
+    { attrName: "Destreza (Des)", attrId: "dexterity", skills: [
+        { id: "furtividade", name: "Furtividade" },
+        { id: "pontaria", name: "Pontaria" },
+        { id: "coordenacao", name: "Coordenação" },
+        { id: "navegacao", name: "Navegação" },
+        { id: "reacao", name: "Reação" }
+    ]},
+    { attrName: "Psique (Psi)", attrId: "psyche", skills: [
+        { id: "arcanismo", name: "Arcanismo" },
+        { id: "existir", name: "Existir" },
+        { id: "logica", name: "Lógica" },
+        { id: "percepcao", name: "Percepção" },
+        { id: "interacao", name: "Interação" }
+    ]},
+    { attrName: "Sabedoria (Sab)", attrId: "wisdom", skills: [
+        { id: "adestramento", name: "Adestramento" },
+        { id: "enciclopedia", name: "Enciclopédia" },
+        { id: "medicina", name: "Medicina" },
+        { id: "religiao", name: "Religião" },
+        { id: "sobrevivencia", name: "Sobrevivência" }
+    ]},
+    { attrName: "Carisma (Car)", attrId: "charisma", skills: [
+        { id: "autoridade", name: "Autoridade" },
+        { id: "compostura", name: "Compostura" },
+        { id: "drama", name: "Drama" },
+        { id: "empatia", name: "Empatia" },
+        { id: "uniao", name: "União" }
+    ]}
+];
+
+// Reorganizando em exatamente 5 colunas equilibradas se necessário, 
+// ou gerando por grupos de atributos. Como são 5 colunas pedidas, 
+// vamos mapear direto para 5 colunas lógicas:
+const skillColumnsData = [
+    // Coluna 1 (For e Con parciais)
+    [
+        { id: "atletismo", name: "Atletismo", attr: "For", attrId: "strength" },
+        { id: "luta", name: "Luta", attr: "For", attrId: "strength" },
+        { id: "limiar", name: "Limiar da morte", attr: "Con", attrId: "constitution" },
+        { id: "resistencia", name: "Resistência", attr: "Con", attrId: "constitution" },
+        { id: "vontade", name: "F. de vontade", attr: "Con", attrId: "constitution" }
+    ],
+    // Coluna 2 (Des)
+    [
+        { id: "furtividade", name: "Furtividade", attr: "Des", attrId: "dexterity" },
+        { id: "pontaria", name: "Pontaria", attr: "Des", attrId: "dexterity" },
+        { id: "coordenacao", name: "Coordenação", attr: "Des", attrId: "dexterity" },
+        { id: "navegacao", name: "Navegação", attr: "Des", attrId: "dexterity" },
+        { id: "reacao", name: "Reação", attr: "Des", attrId: "dexterity" }
+    ],
+    // Coluna 3 (Psi)
+    [
+        { id: "arcanismo", name: "Arcanismo", attr: "Psi", attrId: "psyche" },
+        { id: "existir", name: "Existir", attr: "Psi", attrId: "psyche" },
+        { id: "logica", name: "Lógica", attr: "Psi", attrId: "psyche" },
+        { id: "percepcao", name: "Percepção", attr: "Psi", attrId: "psyche" },
+        { id: "interacao", name: "Interação", attr: "Psi", attrId: "psyche" }
+    ],
+    // Coluna 4 (Sab)
+    [
+        { id: "adestramento", name: "Adestramento", attr: "Sab", attrId: "wisdom" },
+        { id: "enciclopedia", name: "Enciclopédia", attr: "Sab", attrId: "wisdom" },
+        { id: "medicina", name: "Medicina", attr: "Sab", attrId: "wisdom" },
+        { id: "religiao", name: "Religião", attr: "Sab", attrId: "wisdom" },
+        { id: "sobrevivencia", name: "Sobrevivência", attr: "Sab", attrId: "wisdom" }
+    ],
+    // Coluna 5 (Car)
+    [
+        { id: "autoridade", name: "Autoridade", attr: "Car", attrId: "charisma" },
+        { id: "compostura", name: "Compostura", attr: "Car", attrId: "charisma" },
+        { id: "drama", name: "Drama", attr: "Car", attrId: "charisma" },
+        { id: "empatia", name: "Empatia", attr: "Car", attrId: "charisma" },
+        { id: "uniao", name: "União", attr: "Car", attrId: "charisma" }
+    ]
+];
+
+const skillsContainer = document.getElementById("skillsContainer");
+const skillAttributeMap = {};
+
+// Gera o HTML das 5 colunas programaticamente
+skillColumnsData.forEach(column => {
+    let columnHTML = `<div class="skillColumn">`;
+    
+    column.forEach(skill => {
+        skillAttributeMap[skill.id] = skill.attrId; // Mapeia para o calculador
+        columnHTML += `
+            <div class="skillGroup">
+                <label for="skill_${skill.id}">${skill.name} <span class="skillAttr">(${skill.attr})</span></label>
+                <input type="number" id="skill_${skill.id}" value="0" class="skill-input">
+                <span id="mod_skill_${skill.id}" class="skillMod">0</span>
+            </div>
+        `;
+    });
+
+    columnHTML += `</div>`;
+    skillsContainer.innerHTML += columnHTML;
+});
+
+// Funções de cálculo automático das perícias
+function updateSkillModifier(skillKey) {
+    const skillInput = document.getElementById(`skill_${skillKey}`);
+    const modSpan = document.getElementById(`mod_skill_${skillKey}`);
+    const attrId = skillAttributeMap[skillKey];
+
+    if (skillInput && modSpan && attrId) {
+        let skillRank = parseInt(skillInput.value) || 0;
+        
+        let attrBase = parseInt(document.getElementById(attrId)?.value) || 0;
+        let attrTemp = parseInt(document.getElementById(`temp_${attrId}`)?.value) || 0;
+        let attrTotal = attrBase + attrTemp;
+
+        let finalMod = skillRank + attrTotal;
+        modSpan.textContent = finalMod >= 0 ? `+${finalMod}` : finalMod;
+    }
+}
+
+function updateAllSkills() {
+    Object.keys(skillAttributeMap).forEach(skillKey => {
+        updateSkillModifier(skillKey);
+    });
+}
+
+// Ouvintes de eventos para atualizar em tempo real
+document.addEventListener("input", function(e) {
+    if (e.target && e.target.classList.contains("skill-input")) {
+        let skillKey = e.target.id.replace("skill_", "");
+        updateSkillModifier(skillKey);
+    }
+    if (e.target && (e.target.classList.contains("attr-input") || e.target.classList.contains("conditionCheckbox"))) {
+        updateAllSkills();
+    }
+});
+
+// Executa na inicialização
+window.addEventListener("DOMContentLoaded", updateAllSkills);
