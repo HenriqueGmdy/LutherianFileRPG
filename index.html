@@ -120,6 +120,16 @@
                     </div>
                 </div>
 
+                <!-- Teste de Limiar da Morte (3 fracassos) -->
+                <div class="statusGroup deathSaveGroup">
+                    <label>Limiar da Morte:</label>
+                    <div class="deathSaveBoxes">
+                        <label class="deathCheckboxLabel"><input type="checkbox" id="deathFail1" class="death-fail-input"> 1</label>
+                        <label class="deathCheckboxLabel"><input type="checkbox" id="deathFail2" class="death-fail-input"> 2</label>
+                        <label class="deathCheckboxLabel"><input type="checkbox" id="deathFail3" class="death-fail-input"> 3</label>
+                    </div>
+                </div>
+
                 <div class="statusGroup">
                     <label>Vontade:</label>
                     <div class="dualInput">
@@ -213,14 +223,15 @@
         </div>
     </fieldset>
 
-    <!-- PERÍCIAS (Agora separada corretamente em seu próprio fieldset) -->
+    <!-- PERÍCIAS -->
     <fieldset>
         <legend>Perícias</legend>
         <div id="skillsContainer" class="skillsContainer"></div>
     </fieldset>
 
-    </div> <!-- Fecha a div mainFile -->
+    </div> <!-- Fecha a mainFile -->
 
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
+    
 </body>
 </html>

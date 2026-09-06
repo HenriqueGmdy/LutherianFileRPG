@@ -174,3 +174,19 @@
     gap: 5px;
     cursor: pointer;
 }
+
+/* Estilização do Teste de Limiar da Morte */
+.deathSaveBoxes {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.deathCheckboxLabel {
+    font-size: 0.85rem;
+    color: #ff4444; /* Um tom avermelhado para indicar perigo */
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}   
