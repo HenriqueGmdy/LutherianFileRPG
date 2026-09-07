@@ -58,11 +58,13 @@ export function initStatusListeners() {
         if (val < 0) val = 0;
         if (val > 200) val = 200;
 
-        if (stressRange) stressRange.value = val;
-        if (stressNumberInput) stressNumberInput.value = val;
+        if (stressRange && stressRange.value != val) stressRange.value = val;
+        if (stressNumberInput && stressNumberInput.value != val) stressNumberInput.value = val;
 
         const percentage = (val / 200) * 100;
-        if (stressFill) stressFill.style.width = `${percentage}%`;
+        if (stressFill) {
+            stressFill.style.width = `${percentage}%`;
+        }
 
         if (afflictedCheck && afflictedCheck.checked) {
             if (stressFill) stressFill.style.backgroundColor = "#8b0000";
@@ -91,6 +93,12 @@ export function initStatusListeners() {
             updateStress(stressRange ? stressRange.value : 0);
         });
     }
+
+    // DISPARA A ATUALIZAÇÃO VISUAL LOGO NA INICIALIZAÇÃO (Lendo o valor atual do input)
+    setTimeout(() => {
+        const initialValue = stressNumberInput ? stressNumberInput.value : (stressRange ? stressRange.value : 0);
+        updateStress(initialValue);
+    }, 50);
 
     // 3. OUVINTE GLOBAL DE INICIATIVA
     document.addEventListener("input", function(e) {

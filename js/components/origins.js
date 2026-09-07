@@ -10,28 +10,28 @@ export function initOrigins() {
     if (!originSelect) return;
 
     // Popula o select ordenado alfabeticamente
-    originSelect.innerHTML = `<option value="">Selecione uma origem...</option>`;
-    const sortedOrigins = Object.entries(originsData).sort((a, b) => a[1].name.localeCompare(b[1].name));
+    if (originSelect.options.length <= 1) {
+        originSelect.innerHTML = `<option value="">Selecione uma origem...</option>`;
+        const sortedOrigins = Object.entries(originsData).sort((a, b) => a[1].name.localeCompare(b[1].name));
 
-    sortedOrigins.forEach(([key, origin]) => {
-        const option = document.createElement("option");
-        option.value = key;
-        option.textContent = origin.name;
-        originSelect.appendChild(option);
-    });
-
-    // Quando o usuário selecionar uma origem
-    originSelect.addEventListener("change", function() {
-        const selectedKey = this.value;
-
-        // 1. Remove o bônus (+1) das perícias da origem anterior, se houver
-        lastTrainedSkills.forEach(skillId => {
-            const input = document.getElementById(`skill_${skillId}`);
-            if (input) {
-                input.value = parseInt(input.value || 0) - 1;
-            }
+        sortedOrigins.forEach(([key, origin]) => {
+            const option = document.createElement("option");
+            option.value = key;
+            option.textContent = origin.name;
+            originSelect.appendChild(option);
         });
-        lastTrainedSkills = [];
+    }
+
+    function applyOrigin(selectedKey, isInitialLoad = false) {
+        if (!isInitialLoad) {
+            lastTrainedSkills.forEach(skillId => {
+                const input = document.getElementById(`skill_${skillId}`);
+                if (input) {
+                    input.value = Math.max(0, parseInt(input.value || 0) - 1);
+                }
+            });
+            lastTrainedSkills = [];
+        }
 
         if (!selectedKey || !originsData[selectedKey]) {
             if (habilityDesc) {
@@ -43,25 +43,41 @@ export function initOrigins() {
 
         const origin = originsData[selectedKey];
 
-        // 2. Aplica o treino automático (+1) nas perícias fixas da nova origem
         if (origin.skills && origin.skills.length > 0) {
             origin.skills.forEach(skillId => {
                 const input = document.getElementById(`skill_${skillId}`);
                 if (input) {
-                    input.value = parseInt(input.value || 0) + 1;
+                    if (!isInitialLoad) {
+                        input.value = parseInt(input.value || 0) + 1;
+                    }
                     lastTrainedSkills.push(skillId);
                 }
             });
         }
 
-       // 3. Atualiza o bloco com uma quebra de linha limpa entre as perícias e a habilidade
         if (habilityDesc) {
             let skillsText = origin.skillsName ? origin.skillsName : "À escolha do jogador";
-            
             habilityDesc.textContent = `Perícias Treinadas: ${skillsText}\n\n${origin.campfireSkill}`;
         }
 
-        // Recarrega os modificadores da ficha
         updateAllSkills();
+    }
+
+    originSelect.addEventListener("change", function() {
+        applyOrigin(this.value, false);
     });
+
+    // Restaura automaticamente do localStorage na inicialização
+    try {
+        const savedJSON = localStorage.getItem('lutherian_character_sheet_data');
+        if (savedJSON) {
+            const data = JSON.parse(savedJSON);
+            if (data['origin'] && originsData[data['origin']]) {
+                originSelect.value = data['origin'];
+                applyOrigin(data['origin'], true); // true evita somar bônus duplicado de perícia no F5
+            }
+        }
+    } catch (e) {
+        console.error("Erro ao carregar origem:", e);
+    }
 }

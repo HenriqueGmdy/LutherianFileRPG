@@ -1,34 +1,81 @@
 export function initThemeCustomizer() {
-    // Cria a estrutura HTML do painel de customização de cores
-    const customizerHTML = `
-        <div id="themeCustomizerPanel" style="position: fixed; bottom: 20px; right: 20px; background: #1a1a1a; border: 1px solid #444; padding: 15px; border-radius: 8px; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: sans-serif; color: #fff;">
-            <h4 style="margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #333; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
-                🎨 Personalizar Tema 
-                <button type="button" id="toggleThemePanel" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 12px;">Minimizar</button>
-            </h4>
-            <div id="themeControls" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
-                <label style="display: flex; justify-content: space-between; align-items: center;">
-                    Fundo Geral: <input type="color" id="colorBgMain" value="#141414">
-                </label>
-                <label style="display: flex; justify-content: space-between; align-items: center;">
-                    Blocos (Fieldsets): <input type="color" id="colorBgFieldset" value="#1c1c1c">
-                </label>
-                <label style="display: flex; justify-content: space-between; align-items: center;">
-                    Caixas de Texto/Inputs: <input type="color" id="colorBgInputs" value="#2b2b2b">
-                </label>
-                <label style="display: flex; justify-content: space-between; align-items: center;">
-                    Texto Geral: <input type="color" id="colorText" value="#ffffff">
-                </label>
-                <label style="display: flex; justify-content: space-between; align-items: center;">
-                    Destaque (Acentos): <input type="color" id="colorAccent" value="#ffcc00">
-                </label>
-                <button type="button" id="resetThemeBtn" style="margin-top: 5px; background: #333; color: #fff; border: none; padding: 5px; border-radius: 4px; cursor: pointer;">Restaurar Padrão</button>
-            </div>
-        </div>
-    `;
+    const menuBtn = document.getElementById('optionsMenuBtn');
+    const dropdown = document.getElementById('optionsDropdown');
+    const themePanel = document.getElementById('themeCustomizerPanel');
+    const themeOptBtn = document.getElementById('menuOptTheme');
+    const backBtn = document.getElementById('backToMenuBtn');
+    
+    // Elementos do Modal de Reset
+    const resetOptBtn = document.getElementById('menuOptReset');
+    const resetModal = document.getElementById('resetConfirmModal');
+    const cancelResetBtn = document.getElementById('cancelResetBtn');
+    const confirmResetBtn = document.getElementById('confirmResetBtn');
 
-    // Injeta o painel no body da página
-    document.body.insertAdjacentHTML('beforeend', customizerHTML);
+    if (!menuBtn || !dropdown || !themePanel) return;
+
+    // Abre/fecha o menu principal de opções ao clicar nas três bolinhas
+    menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = dropdown.style.display === 'block' || themePanel.style.display === 'block';
+        if (isOpen) {
+            dropdown.style.display = 'none';
+            themePanel.style.display = 'none';
+        } else {
+            dropdown.style.display = 'block';
+        }
+    });
+
+    // Clicar em "Personalizar Tema" esconde o menu principal e abre o painel de cores
+    themeOptBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.style.display = 'none';
+        themePanel.style.display = 'block';
+    });
+
+    // Clicar em "Resetar Ficha" fecha o menu e abre o Modal de Aviso
+    if (resetOptBtn && resetModal) {
+        resetOptBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.style.display = 'none';
+            resetModal.style.display = 'flex';
+        });
+    }
+
+    // Botão Cancelar do Modal
+    if (cancelResetBtn && resetModal) {
+        cancelResetBtn.addEventListener('click', () => {
+            resetModal.style.display = 'none';
+        });
+    }
+
+    // Botão Confirmar do Modal (Apaga tudo e reinicia)
+    if (confirmResetBtn) {
+        confirmResetBtn.addEventListener('click', () => {
+            // Limpa todos os dados salvos da ficha e abas no localStorage
+            localStorage.clear();
+            // Recarrega a página para o estado inicial/zerado
+            location.reload();
+        });
+    }
+
+    // Botão de "Voltar" dentro do painel de cores retorna ao menu de opções
+    if (backBtn) {
+        backBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            themePanel.style.display = 'none';
+            dropdown.style.display = 'block';
+        });
+    }
+
+    // Fecha tudo se clicar em qualquer lugar fora do menu (exceto se o modal estiver aberto)
+    document.addEventListener('click', (e) => {
+        if (resetModal && resetModal.style.display === 'flex') return; // Não fecha se o modal estiver ativo
+
+        if (!dropdown.contains(e.target) && !themePanel.contains(e.target) && e.target !== menuBtn) {
+            dropdown.style.display = 'none';
+            themePanel.style.display = 'none';
+        }
+    });
 
     const rootStyles = document.documentElement.style;
 
@@ -55,7 +102,7 @@ export function initThemeCustomizer() {
         document.getElementById('colorAccent').value = savedTheme.accentColor;
     }
 
-    // Eventos de mudança de cor
+    // Eventos de mudança de cor em tempo real
     const updateColor = (property, value, key) => {
         rootStyles.setProperty(property, value);
         savedTheme[key] = value;
@@ -68,22 +115,30 @@ export function initThemeCustomizer() {
     document.getElementById('colorText').addEventListener('input', (e) => updateColor('--text-color', e.target.value, 'textColor'));
     document.getElementById('colorAccent').addEventListener('input', (e) => updateColor('--accent-color', e.target.value, 'accentColor'));
 
-    // Botão de restaurar padrão
+    // Botão de restaurar padrão (limpa storage do tema, remove inline styles e reseta os inputs)
     document.getElementById('resetThemeBtn').addEventListener('click', () => {
         localStorage.removeItem('lutherian_theme');
-        location.reload(); // Recarrega para voltar aos valores padrão
-    });
+        
+        rootStyles.removeProperty('--bg-main');
+        rootStyles.removeProperty('--bg-fieldset');
+        rootStyles.removeProperty('--bg-inputs');
+        rootStyles.removeProperty('--text-color');
+        rootStyles.removeProperty('--accent-color');
 
-    // Botão de minimizar painel para não atrapalhar a jogatina
-    const controls = document.getElementById('themeControls');
-    const toggleBtn = document.getElementById('toggleThemePanel');
-    toggleBtn.addEventListener('click', () => {
-        if (controls.style.display === 'none') {
-            controls.style.display = 'flex';
-            toggleBtn.textContent = 'Minimizar';
-        } else {
-            controls.style.display = 'none';
-            toggleBtn.textContent = 'Expandir';
-        }
+        const defaultColors = {
+            colorBgMain: '#141414',
+            colorBgFieldset: '#1c1c1c',
+            colorBgInputs: '#2b2b2b',
+            colorText: '#ffffff',
+            colorAccent: '#ffffff'
+        };
+
+        Object.keys(defaultColors).forEach(id => {
+            const input = document.getElementById(id);
+            if (input) input.value = defaultColors[id];
+        });
+
+        themePanel.style.display = 'none';
+        dropdown.style.display = 'block';
     });
 }

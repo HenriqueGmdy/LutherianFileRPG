@@ -10,6 +10,64 @@
 
     <div class="mainFile">
 
+    <!-- MENU FLUTUANTE DE OPÇÕES (Canto Superior Direito) -->
+    <div class="optionsMenuWrapper" style="position: absolute; top: 20px; right: 20px; z-index: 1000;">
+        <button type="button" id="optionsMenuBtn" style="background: var(--bg-fieldset, #1c1c1c); border: 1px solid #444; color: var(--text-color, #fff); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4);" title="Opções">
+            ⋮
+        </button>
+        
+        <!-- Menu Principal de Opções -->
+        <div id="optionsDropdown" style="display: none; position: absolute; right: 0; top: 45px; background: #1a1a1a; border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: sans-serif; color: #fff; width: 200px; padding: 6px 0;">
+            <button type="button" id="menuOptTheme" style="width: 100%; text-align: left; background: none; border: none; color: #fff; padding: 10px 15px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                ✎ Personalizar Tema
+            </button>
+            
+            <button type="button" id="menuOptReset" style="width: 100%; text-align: left; background: none; border: none; color: #ff4d4d; padding: 10px 15px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px solid #333;">
+                🗑️ Resetar Ficha
+            </button>
+        </div>
+
+        <!-- Modal de Confirmação de Reset -->
+        <div id="resetConfirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; font-family: sans-serif;">
+            <div style="background: #1a1a1a; border: 1px solid #555; padding: 25px; border-radius: 8px; max-width: 380px; width: 90%; text-align: center; color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+                <h3 style="margin-top: 0; color: #ff4d4d; font-size: 18px;">⚠️ Atenção</h3>
+                <p style="font-size: 14px; color: #ccc; line-height: 1.5; margin-bottom: 20px;">
+                    Ao confirmar, você apagará todas as informações da ficha para sempre!
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button type="button" id="cancelResetBtn" style="background: #333; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px;">Cancelar</button>
+                    <button type="button" id="confirmResetBtn" style="background: #d9534f; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold;">Confirmar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sub-tela de Customização de Cores (Abre ao clicar na opção acima) -->
+        <div id="themeCustomizerPanel" style="display: none; position: absolute; right: 0; top: 45px; background: #1a1a1a; border: 1px solid #444; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: sans-serif; color: #fff; width: 220px;">
+            <h4 style="margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #333; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                ✏  Cores do Tema
+                <button type="button" id="backToMenuBtn" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 12px;">Voltar</button>
+            </h4>
+            <div id="themeControls" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
+                <label style="display: flex; justify-content: space-between; align-items: center;">
+                    Fundo Geral: <input type="color" id="colorBgMain" value="#141414">
+                </label>
+                <label style="display: flex; justify-content: space-between; align-items: center;">
+                    Blocos (Fieldsets): <input type="color" id="colorBgFieldset" value="#1c1c1c">
+                </label>
+                <label style="display: flex; justify-content: space-between; align-items: center;">
+                    Caixas de Texto: <input type="color" id="colorBgInputs" value="#2b2b2b">
+                </label>
+                <label style="display: flex; justify-content: space-between; align-items: center;">
+                    Texto Geral: <input type="color" id="colorText" value="#ffffff">
+                </label>
+                <label style="display: flex; justify-content: space-between; align-items: center;">
+                    Destaque: <input type="color" id="colorAccent" value="#ffffff">
+                </label>
+                <button type="button" id="resetThemeBtn" style="margin-top: 5px; background: #333; color: #fff; border: none; padding: 6px; border-radius: 4px; cursor: pointer;">Restaurar Padrão</button>
+            </div>
+        </div>
+    </div>
+
         <div class="characterTabsWrapper">
             <!-- BOTÕES DAS ABAS -->
             <div class="characterTabsHeader">
@@ -205,10 +263,10 @@
                 <!-- HABILIDADES -->
                 <fieldset>
                     <legend>Habilidades</legend>
-                    <div class="notesGrid">
-                        <textarea class="notesTextArea" placeholder="Descreva habilidades, magias ou poderes..."></textarea>
-                        <textarea class="notesTextArea" placeholder="Outras habilidades ou detalhes adicionais..."></textarea>
-                    </div>
+                        <div class="notesGrid">
+                        <textarea id="abilityMainDesc" class="notesTextArea" placeholder="Descreva habilidades, magias ou poderes..."></textarea>
+                        <textarea id="abilityExtraDesc" class="notesTextArea" placeholder="Outras habilidades ou detalhes adicionais..."></textarea>
+                        </div>
                 </fieldset>
             </div>
 
@@ -319,7 +377,7 @@
                 <fieldset>
                     <legend>Narrativa e Anotações</legend>
                     <div class="fullWidthBlock">
-                        <textarea class="notesTextArea narrativeArea" placeholder="História, anotações de campanha, pistas e diário de missões..."></textarea>
+                        <textarea id="narrativeNotes" class="notesTextArea narrativeArea" placeholder="História, anotações de campanha, pistas e diário de missões..."></textarea>
                     </div>
                 </fieldset>
 
