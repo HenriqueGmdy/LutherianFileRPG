@@ -34,11 +34,14 @@ export function initInventory() {
 
     function calculateCurrentLoad() {
         let currentLoad = 0;
+        if (!itemsContainer) return currentLoad;
         const itemCards = itemsContainer.querySelectorAll(".inventoryItemCard");
 
         itemCards.forEach(card => {
-            const qty = parseFloat(card.querySelector(".item-qty-input").value) || 0;
-            const weight = parseFloat(card.querySelector(".item-weight-input").value) || 0;
+            const qtyInput = card.querySelector(".item-qty-input");
+            const weightInput = card.querySelector(".item-weight-input");
+            const qty = parseFloat(qtyInput?.value) || 0;
+            const weight = parseFloat(weightInput?.value) || 0;
             currentLoad += qty * weight;
         });
 
@@ -103,6 +106,11 @@ export function initInventory() {
         }
     }
 
+    // Expõe globalmente para o storage acionar logo após recarregar os dados no F5
+    window.updateInventoryStatusGlobal = function() {
+        updateInventoryStatus();
+    };
+
     function addInventoryItem() {
         if (itemsContainer.children.length >= MAX_ITEMS) {
             alert("Limite máximo de itens atingido.");
@@ -152,4 +160,4 @@ export function initInventory() {
     });
 
     updateInventoryStatus();
-}
+} 

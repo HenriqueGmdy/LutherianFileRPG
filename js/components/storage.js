@@ -4,9 +4,10 @@ export function initLocalStorage() {
 
     let isInitializing = true;
 
+    // 1. Salvar campos estáticos normais
     document.addEventListener('input', (e) => {
         if (isInitializing) return;
-        if (e.target.matches('input, select, textarea')) {
+        if (e.target.matches('input, select, textarea') && !e.target.closest('.dynamicList') && !e.target.closest('#inventoryItemsList')) {
             saveStaticData();
         }
     });
@@ -38,6 +39,7 @@ export function initLocalStorage() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
+    // 2. Salvar todas as listas dinâmicas e o inventário (Com captura universal de nome/texto)
     window.saveAllDynamicLists = function() {
         if (isInitializing) return;
         
@@ -48,8 +50,10 @@ export function initLocalStorage() {
             if (!containerId) return;
 
             const rowsData = [];
+
             container.querySelectorAll('.stringItemRow, .cardItemBox, .inventoryItemCard').forEach(row => {
-                const textInput = row.querySelector('input[type="text"], .personal-input, .item-name-input');
+                // Captura universal do texto/nome em qualquer tipo de input de texto do card
+                const textInput = row.querySelector('input[type="text"]');
                 const numberInputs = row.querySelectorAll('input[type="number"]');
                 const textarea = row.querySelector('textarea');
 
@@ -79,26 +83,83 @@ export function initLocalStorage() {
         }
     });
 
+    // 3. Carregar e reconstruir os dados ao iniciar
     function loadData() {
         const savedJSON = localStorage.getItem(STORAGE_KEY);
         const savedListsJSON = localStorage.getItem(DYNAMIC_LISTS_KEY);
 
         try {
-            // 1. PRIMEIRO CARREGA RAÇA E ORIGEM (Para estruturar os selects e textos visuais)
+            if (savedListsJSON) {
+                const listsData = JSON.parse(savedListsJSON);
+                
+                Object.keys(listsData).forEach(containerId => {
+                    const container = document.getElementById(containerId);
+                    if (!container) return;
+
+                    container.innerHTML = "";
+                    const items = listsData[containerId];
+
+                    items.forEach(itemData => {
+                        const itemDiv = document.createElement("div");
+                        // Garante que o texto recuperado não venha como undefined
+                        const safeText = itemData.text !== undefined && itemData.text !== null ? itemData.text : "";
+                        const safeDesc = itemData.desc !== undefined && itemData.desc !== null ? itemData.desc : "";
+
+                        if (containerId === "inventoryItemsList") {
+                            itemDiv.className = "inventoryItemCard cardItemBox";
+                            itemDiv.innerHTML = `
+                                <div class="inventoryItemTop">
+                                    <input type="text" placeholder="Nome do item..." class="item-name-input" value="${safeText}">
+                                    <label style="font-size:0.75rem; color:#aaa;">Qtd:</label>
+                                    <input type="number" value="${itemData.qty || 1}" min="0" class="item-qty-input">
+                                    <label style="font-size:0.75rem; color:#aaa;">Peso:</label>
+                                    <input type="number" value="${itemData.weight || 0}" min="0" step="0.5" class="item-weight-input">
+                                    <button type="button" class="removeItemBtn" title="Excluir">X</button>
+                                </div>
+                                <textarea placeholder="Descrição do item...">${safeDesc}</textarea>
+                            `;
+                        } else {
+                            const isCard = container.classList.contains("cardList");
+
+                            if (isCard) {
+                                itemDiv.className = "cardItemBox";
+                                itemDiv.innerHTML = `
+                                    <div class="cardItemTop">
+                                        <input type="text" placeholder="Nome / Título..." class="personal-input" value="${safeText}">
+                                        <button type="button" class="removeItemBtn" title="Remover">X</button>
+                                    </div>
+                                    <textarea placeholder="Descrição...">${safeDesc}</textarea>
+                                `;
+                            } else {
+                                itemDiv.className = "stringItemRow";
+                                itemDiv.innerHTML = `
+                                    <input type="text" placeholder="Digite o nome..." class="personal-input" value="${safeText}">
+                                    <button type="button" class="removeItemBtn" title="Remover">X</button>
+                                `;
+                            }
+                        }
+
+                        const removeBtn = itemDiv.querySelector(".removeItemBtn");
+                        if (removeBtn) {
+                            removeBtn.addEventListener("click", () => {
+                                itemDiv.remove();
+                                window.saveAllDynamicLists();
+                            });
+                        }
+
+                        // Garante que qualquer alteração nos campos recriados volte a salvar imediatamente
+                        itemDiv.querySelectorAll("input, textarea").forEach(input => {
+                            input.addEventListener("input", () => window.saveAllDynamicLists());
+                        });
+
+                        container.appendChild(itemDiv);
+                    });
+                });
+            }
+
             if (savedJSON) {
                 const data = JSON.parse(savedJSON);
-
-                if (data['race'] && typeof window.applyRaceFromStorage === 'function') {
-                    window.applyRaceFromStorage(data['race']);
-                }
-                if (data['origin'] && typeof window.applyOriginFromStorage === 'function') {
-                    window.applyOriginFromStorage(data['origin']);
-                }
-
-                // 2. DEPOIS CARREGA O RESTANTE DOS CAMPOS ESTÁTICOS
                 Object.keys(data).forEach(identifier => {
-                    if (identifier === 'race' || identifier === 'origin') return; // Já tratados acima
-
                     const field = document.getElementById(identifier) || document.querySelector(`[name="${identifier}"]`);
                     if (!field) return;
 
@@ -116,34 +177,15 @@ export function initLocalStorage() {
                 });
             }
 
-            // 3. CARREGA LISTAS DINÂMICAS E ITENS
-            // Carrega campos estáticos normais (exceto race e origin, que se autogerenciam)
-            if (savedJSON) {
-                const data = JSON.parse(savedJSON);
-                Object.keys(data).forEach(identifier => {
-                    if (identifier === 'race' || identifier === 'origin') return; 
-
-                    const field = document.getElementById(identifier) || document.querySelector(`[name="${identifier}"]`);
-                    if (!field) return;
-
-                    if (field.type === 'checkbox') {
-                        field.checked = data[identifier];
-                        field.dispatchEvent(new Event('change', { bubbles: true }));
-                    } else if (field.tagName === 'SELECT') {
-                        field.value = data[identifier];
-                        field.dispatchEvent(new Event('change', { bubbles: true }));
-                    } else {
-                        field.value = data[identifier];
-                        field.dispatchEvent(new Event('input', { bubbles: true }));
-                        field.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                });
-            }
-
-            console.log("Ficha totalmente carregada sem conflitos!");
+            console.log("Ficha totalmente restaurada sem erros de nome!");
         } catch (e) {
-            console.error("Erro ao carregar dados:", e);
+            console.error("Erro ao carregar dados do storage:", e);
         } finally {
+            // Garante que o inventário recalcule a carga atual com os itens recriados
+            if (typeof window.updateInventoryStatusGlobal === 'function') {
+                window.updateInventoryStatusGlobal();
+            }
+
             setTimeout(() => {
                 isInitializing = false;
             }, 300);
