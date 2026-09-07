@@ -26,7 +26,6 @@ export function initInventory() {
 
         let maxSlots = totalStr <= 0 ? 3 : totalStr * 6;
 
-        // Bônus de espaço das mochilas
         if (backpackCheck && backpackCheck.checked) maxSlots += 10;
         if (bigBackpackCheck && bigBackpackCheck.checked) maxSlots += 22;
 
@@ -72,7 +71,6 @@ export function initInventory() {
             else baseSpeed = 6; // "medio"
         }
 
-        // Atualiza o deslocamento automaticamente aplicando penalidades de sobrecarga se houver
         const speedInput = document.getElementById("speed");
         if (speedInput) {
             if (isExcessive) speedInput.value = 0;

@@ -1,6 +1,4 @@
-/* ==========================================
-   5. SEÇÃO PESSOAL (PROFICIÊNCIAS, TALENTOS, ETC.)
-   ========================================== */
+/* 5. SEÇÃO PESSOAL */
 .personalContainer {
     display: flex;
     flex-direction: column;
@@ -8,10 +6,11 @@
 }
 
 .personalSection {
-    background-color: #1e1e1e;
+    background-color: var(--bg-fieldset);
     border: 1px solid #333;
     border-radius: 6px;
     padding: 12px;
+    color: var(--text-color);
 }
 
 .personalSectionHeader {
@@ -26,13 +25,13 @@
 .personalSectionHeader h3 {
     margin: 0;
     font-size: 1rem;
-    color: #ffffff;
+    color: var(--text-color);
 }
 
 /* Botão de Adicionar */
 .addItemBtn {
-    background-color: #2b2b2b;
-    color: #ffcc00;
+    background-color: var(--bg-inputs);
+    color: var(--accent-color);
     border: 1px solid #555;
     border-radius: 4px;
     padding: 3px 8px;
@@ -63,17 +62,22 @@
 .stringItemRow input {
     flex: 1;
     padding: 4px 8px;
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #555;
+    border-radius: 4px;
 }
 
 /* Itens em Bloco/Card (Talentos, Doenças, Traços) */
 .cardItemBox {
-    background-color: #252525;
+    background-color: var(--bg-inputs);
     border: 1px solid #444;
     border-radius: 4px;
     padding: 8px;
     display: flex;
     flex-direction: column;
     gap: 6px;
+    color: var(--text-color);
 }
 
 .cardItemTop {
@@ -86,13 +90,17 @@
     flex: 1;
     padding: 4px 8px;
     font-weight: bold;
+    background-color: var(--bg-fieldset);
+    color: var(--text-color);
+    border: 1px solid #555;
+    border-radius: 4px;
 }
 
 .cardItemBox textarea {
     width: 100%;
     min-height: 45px;
-    background-color: #2b2b2b;
-    color: #ffffff;
+    background-color: var(--bg-fieldset);
+    color: var(--text-color);
     border: 1px solid #555;
     border-radius: 4px;
     padding: 6px;
@@ -102,7 +110,6 @@
     font-size: 0.85rem;
 }
 
-/* Botão de Excluir Item individual */
 .removeItemBtn {
     background-color: #3a1a1a;
     color: #ff4444;
@@ -132,26 +139,27 @@
 
 .personalColumnBox {
     flex: 1 1 250px;
-    background-color: #1e1e1e;
+    background-color: var(--bg-fieldset);
     border: 1px solid #333;
     border-radius: 6px;
     padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    color: var(--text-color);
 }
 
 .personalColumnBox label {
     font-size: 0.9rem;
     font-weight: bold;
-    color: #ffffff;
+    color: var(--text-color);
 }
 
 .personalColumnBox textarea {
     width: 100%;
     min-height: 100px; 
-    background-color: #2b2b2b;
-    color: #ffffff;
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
     border: 1px solid #555;
     border-radius: 4px;
     padding: 8px;

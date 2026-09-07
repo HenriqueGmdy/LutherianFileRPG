@@ -23,6 +23,16 @@
 .groupCamp label {
     white-space: nowrap;
     font-weight: 500;
+    color: var(--text-color);
+}
+
+.groupCamp input,
+.groupCamp select {
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px 8px;
 }
 
 .raceTraitsContainer {
@@ -33,24 +43,25 @@
 
 .raceTraitBox, .classTrait {
     flex: 1;
-    background-color: #1e1e1e;
+    background-color: var(--bg-inputs);
     border: 1px dashed #444;
     border-radius: 4px;
     padding: 10px;
     font-size: 0.9rem;
-    color: #e0e0e0;
+    color: var(--text-color);
     min-height: 50px;
 }
 
 .raceTraitBox strong, .classTrait strong {
     display: block;
     margin-bottom: 4px;
-    color: #ffffff;
+    color: var(--accent-color); /* Destaque integrado */
 }
 
 .raceTraitBox p, .classTrait p {
     margin: 0;
-    color: #b0b0b0;
+    color: var(--text-color);
+    opacity: 0.85;
 }
 
 .classTrait {

@@ -1,8 +1,16 @@
 /* 0. MODO ESCURO E VARIÁVEIS GLOBAIS   */
+:root {
+    /* Cores padrão */
+    --bg-main: #141414;
+    --bg-fieldset: #1c1c1c;
+    --bg-inputs: #2b2b2b;
+    --text-color: #ffffff;
+    --accent-color: #ffcc00;
+}
 
 body {
-    background-color: #121212;
-    color: #e0e0e0;
+    background-color: var(--bg-main); 
+    color: var(--text-color);         
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 20px;
@@ -16,7 +24,7 @@ fieldset {
 }
 
 legend {
-    color: #ffffff;
+    color: var(--accent-color);
     font-weight: bold;
     padding: 0 5px;
 }
@@ -24,8 +32,8 @@ legend {
 input[type="text"],
 input[type="number"],
 select {
-    background-color: #2b2b2b;
-    color: #ffffff;
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
     border: 1px solid #555;
     border-radius: 4px;
     padding: 4px 6px;

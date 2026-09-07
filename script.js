@@ -5,13 +5,17 @@ import { initPersonalListeners } from './js/components/personal.js';
 import { initInventory } from './js/components/inventory.js';
 import { initOrigins } from './js/components/origins.js';
 import { initRaces } from './js/components/races.js';
+import { initTabs } from './js/components/tabs.js';
+import { initThemeCustomizer } from './js/components/themeCustomizer.js';
 
 window.addEventListener("DOMContentLoaded", () => {
     // 1. Renderiza os componentes gerados via JS
     renderAttributes();
     renderSkills();
+    initThemeCustomizer();
 
     // 2. Inicializa os ouvintes de eventos de todos os módulos
+    initTabs();
     initAttributesListeners();
     initStatusListeners();
     initSkillsListeners();

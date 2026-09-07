@@ -11,7 +11,8 @@
     border: 1px solid #333 !important;
     border-radius: 6px;
     padding: 12px;
-    background-color: #1e1e1e !important;
+    background-color: var(--bg-fieldset) !important; 
+    color: var(--text-color);
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -34,6 +35,7 @@
 .attribute-left label {
     width: 80px;
     white-space: nowrap;
+    color: var(--text-color);
 }
 
 .attribute-right {
@@ -46,6 +48,10 @@
     width: 45px;
     text-align: center;
     padding: 3px;
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #444;
+    border-radius: 4px;
 }
 
 .diceToRoll {
@@ -53,13 +59,15 @@
     font-weight: bold;
     min-width: 85px;
     font-size: 0.9rem;
+    color: var(--accent-color);
 }
+
     .dice-neutral {
         color: #a3a3a3;
     }
 
     .dice-positive {
-        color: #ffcc00; 
+        color: var(--accent-color);
     }
 
     .dice-negative {
@@ -69,9 +77,9 @@
 .conditionBox {
     text-align: center;
     padding: 8px;
-    background-color: #2a2a2a !important;
+    background-color: var(--bg-inputs) !important;
     border-radius: 4px;
     border-top: 1px solid #444 !important;
-    color: #fff;
+    color: var(--text-color);
     margin-top: 5px;
 }
