@@ -29,7 +29,7 @@
 .attribute-left {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 16px;
 }
 
 .attribute-left label {

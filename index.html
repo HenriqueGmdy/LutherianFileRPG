@@ -77,159 +77,198 @@
 
             <!-- ABA 1: PERSONAGEM -->
             <div id="tab-personagem" class="tabContent active">
-                <!-- INFORMAÇÕES BÁSICAS -->
-                <fieldset>
-                    <legend>Básico</legend>
-                    <div class="basicContainer">
-                        <div class="basicColumn">
-                            <div class="groupCamp">
-                                <label for="name">Nome:</label>
-                                <input type="text" id="name" placeholder="Nome do personagem">
-                            </div>
-                            <div class="groupCamp">
-                                <label for="level">Nível:</label>
-                                <input type="number" id="level" min="1" max="9" value="1">
-                            </div>
-                            <div class="groupCamp">
-                                <label for="race">Raça:</label>
-                                <select id="race">
-                                    <option value="">Selecione a Raça...</option>
-                                    <option value="human">Humano</option>
-                                    <option value="basilisk">Basilisco</option>
-                                    <option value="gray">Cinzento</option>
-                                    <option value="constructs">Constructo</option>
-                                    <option value="goblins">Goblin</option>
-                                    <option value="resonant">Ressonante</option>
-                                </select>
-                            </div>
-                            <div class="raceTraitsContainer">
-                                <div class="raceTraitBox">
-                                    <strong>Vantagem:</strong>
-                                    <p id="raceAdvantageDescription">Nenhuma raça selecionada.</p>
-                                </div>
-                                <div class="raceTraitBox">
-                                    <strong>Maldição:</strong>
-                                    <p id="raceCurseDescription">Nenhuma raça selecionada.</p>
-                                </div>
-                            </div>
-                            <div class="groupCamp">
-                                <label for="chaClass">Classe:</label>
-                                <input type="text" id="chaClass" placeholder="Ex: Guerreiro">
-                            </div>
-                            <div class="groupCamp">
-                                <label for="chaSubclass">Subclasse:</label>
-                                <input type="text" id="chaSubclass" placeholder="Ex: Mestre de Armas">
-                            </div>
+                
+                <!-- CABEÇALHO (Nome, Classe e Subclasse invisíveis) -->
+                <div class="characterHeaderArea">
+                    <div class="charNameRow">
+                        <span class="icon-pencil">✎</span>
+                        <input type="text" id="name" class="invisibleInput titleFont" placeholder="Nome do Personagem">
+                    </div>
+                    <div class="charClassRow">
+                        <span class="icon-sword">⚔️</span>
+                        <input type="text" id="chaClass" class="invisibleInput subFont" placeholder="Classe">
+                        <input type="text" id="chaSubclass" class="invisibleInput subFont" placeholder="Subclasse">
+                    </div>
+                    <hr class="headerDivider">
+                </div>
+
+                <!-- BLOCO SUPERIOR DIVIDIDO (30% Esquerda / 70% Direita) -->
+                <div class="topSplitContainer">
+                    
+                    <!-- 30% ESQUERDA (Nível, Ameaça, Estresse Visual, Retrato) -->
+                    <div class="leftProfileColumn">
+                        <!-- Círculo de Nível -->
+                        <div class="levelCircleWrapper">
+                            <input type="number" id="level" min="1" max="9" value="1" class="levelInputCircle">
                         </div>
-                        <div class="basicColumn">
-                            <div class="groupCamp">
-                                <label for="height">Altura (m):</label>
-                                <input type="text" id="height" placeholder="Ex: 1.80">
-                            </div>
-                            <div class="groupCamp">
-                                <label for="weight">Peso (kg):</label>
-                                <input type="text" id="weight" placeholder="Ex: 80">
-                            </div>
-                            <div class="groupCamp">
-                                <label for="age">Idade:</label>
-                                <input type="number" id="age" min="1" placeholder="Ex: 25">
-                            </div>
-                            
-                            <div class="groupCamp">
-                                <label for="origin">Origem:</label>
-                                    <select id="origin" class="attr-input">
+                        
+                        <!-- Medidor de Ameaça Visual (Preenchido via JS dps) -->
+                        <div id="threatMeterVisual" class="threatMeterBar"></div>
+                        
+                        <!-- 10 Caixinhas de Estresse -->
+                        <div id="stressSquaresVisual" class="stressSquaresContainer">
+                            <div class="stressSquare"></div><div class="stressSquare"></div>
+                            <div class="stressSquare"></div><div class="stressSquare"></div>
+                            <div class="stressSquare"></div><div class="stressSquare"></div>
+                            <div class="stressSquare"></div><div class="stressSquare"></div>
+                            <div class="stressSquare"></div><div class="stressSquare"></div>
+                        </div>
+                        
+                        <!-- Texto da Condição de Estresse Automático -->
+                        <div id="headerStressCondition" class="stressConditionHeader">Normal</div>
+
+                        <!-- Espaço da Imagem -->
+                        <div class="characterImageBox" id="imageUploadBox" title="Clique para enviar a imagem do personagem">
+                            <img id="charImageDisplay" src="" alt="Imagem" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                            <span id="imagePlaceholderText" style="color: #555; font-size: 12px; pointer-events: none;">IMAGEM</span>
+                            <!-- Input de arquivo invisível acionado ao clicar na caixa -->
+                            <input type="file" id="charImageInput" accept="image/*" style="display: none;">
+                        </div>
+                    </div>
+
+                    <!-- 70% DIREITA (BÁSICO) -->
+                    <div class="rightBasicColumn">
+                        <div class="sectionTitleWrapper">
+                            <hr class="titleLine"><h2 class="sectionTitle titleFont">BÁSICO</h2><hr class="titleLine">
+                        </div>
+                        
+                        <div class="basicSplitColumns">
+                            <!-- Coluna Esquerda do Básico (60%) -->
+                            <div class="basicSubLeft">
+                                <div class="groupCamp lineStyle">
+                                    <label for="race">Raça:</label>
+                                    <select id="race" class="invisibleSelect">
+                                        <option value="">Selecione a Raça...</option>
+                                        <option value="human">Humano</option>
+                                        <option value="basilisk">Basilisco</option>
+                                        <option value="gray">Cinzento</option>
+                                        <option value="constructs">Constructo</option>
+                                        <option value="goblins">Goblin</option>
+                                        <option value="resonant">Ressonante</option>
+                                    </select>
+                                </div>
+                                <div class="raceTraitsContainer">
+                                    <div class="raceTraitBox">
+                                        <strong>Vantagem:</strong> <p id="raceAdvantageDescription">Nenhuma.</p>
+                                    </div>
+                                    <div class="raceTraitBox">
+                                        <strong>Maldição:</strong> <p id="raceCurseDescription">Nenhuma.</p>
+                                    </div>
+                                </div>
+
+                                <div class="groupCamp lineStyle" style="margin-top: 10px;">
+                                    <label for="origin">Origem:</label>
+                                    <select id="origin" class="invisibleSelect">
                                         <option value="">Selecione uma origem...</option>
                                     </select>
+                                </div>
+                                <div class="classTrait">
+                                    <p id="originTraitDescription">Nenhuma origem especificada.</p>
+                                </div>
                             </div>
 
-                            <div class="classTrait">
-                                <strong>Habilidade de Origem:</strong>
-                                <p id="originTraitDescription">Nenhuma origem especificada.</p>
+                            <!-- Coluna Direita do Básico (40%) -->
+                            <div class="basicSubRight">
+                                <div class="inlineDataGroup">
+                                    <label for="height">Altura:</label>
+                                    <input type="text" id="height" class="smallBoxInput"> <span class="unit">m</span>
+                                </div>
+                                <div class="inlineDataGroup">
+                                    <label for="weight">Peso:</label>
+                                    <input type="text" id="weight" class="smallBoxInput"> <span class="unit">kg</span>
+                                </div>
+                                <div class="inlineDataGroup">
+                                    <label for="age">Idade:</label>
+                                    <input type="number" id="age" min="1" class="smallBoxInput"> <span class="unit">anos</span>
+                                </div>
+
+                                <!-- Nova Habilidade de Fogueira da Classe -->
+                                <div class="classCampfireBox" style="margin-top: 15px;">
+                                    <strong>Hab. Fogueira (Classe):</strong>
+                                    <textarea id="classCampfireSkill" placeholder="Descreva a habilidade..." class="invisibleTextarea"></textarea>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </fieldset>
+                </div>
 
-                <!-- ATRIBUTOS -->
-                <fieldset>
-                    <legend>Atributos</legend>
+                <!-- ATRIBUTOS (Fica logo abaixo, 100% de largura) -->
+                <div class="sectionTitleWrapper" style="margin-top: 20px;">
+                    <hr class="titleLine"><h2 class="sectionTitle titleFont">ATRIBUTOS</h2><hr class="titleLine">
+                </div>
+                <fieldset style="border:none; padding:0; margin:0;">
                     <div id="attributesContainer"></div>
                 </fieldset>
 
                 <!-- STATUS E RECURSOS -->
-                <fieldset>
-                    <legend>Status</legend>
-                    <div class="statusContainer">
-                        <div class="statusColumn">
-                            <div class="statusGroup">
-                                <label>Vitalidade:</label>
-                                <div class="dualInput">
-                                    <input type="number" id="vitalityCurrent" value="0">
-                                    <span>/</span>
-                                    <input type="number" id="vitalityTotal" value="0">
-                                </div>
+                <!-- ========================================== -->
+                <!-- BLOCO DE STATUS E RECURSOS                 -->
+                <!-- ========================================== -->
+                <div class="sectionTitleWrapper" style="margin-top: 20px;">
+                    <hr class="titleLine"><h2 class="sectionTitle titleFont">STATUS</h2><hr class="titleLine">
+                </div>
+                
+                <div class="statusSplitColumns">
+                    
+                    <!-- COLUNA ESQUERDA (Vitalidade, Morte, Estresse, Infos) -->
+                    <div class="statusLeftColumn">
+                        
+                        <!-- Barra de Vitalidade -->
+                        <div class="resourceBlock">
+                            <h3 class="resourceTitle">Vitalidade</h3>
+                            <div class="resourceBarContainer vitalityBarContainer">
+                                <div id="vitalityBarFill" class="vitalityFill"></div>
                             </div>
-                            <div class="statusGroup deathSaveGroup">
-                                <label>Limiar da Morte:</label>
-                                <div class="deathSaveBoxes">
-                                    <label class="deathCheckboxLabel"><input type="checkbox" id="deathFail1" class="death-fail-input"> 1</label>
-                                    <label class="deathCheckboxLabel"><input type="checkbox" id="deathFail2" class="death-fail-input"> 2</label>
-                                    <label class="deathCheckboxLabel"><input type="checkbox" id="deathFail3" class="death-fail-input"> 3</label>
-                                </div>
-                            </div>
-                            <div class="statusGroup">
-                                <label>Vontade:</label>
-                                <div class="dualInput">
-                                    <input type="number" id="willpowerCurrent" value="0">
-                                    <span>/</span>
-                                    <input type="number" id="willpowerTotal" value="0">
-                                </div>
-                            </div>
-                            <div class="statusGroup stressBoxContainer">
-                                <label for="stress">Estresse:</label>
-                                <div class="stressContent">
-                                    <div class="stressWrapper">
-                                        <div class="stressTrack">
-                                            <div id="stressFill" class="stressFill"></div>
-                                            <div class="stressMark"></div>
-                                        </div>
-                                        <input type="range" id="stress" min="0" max="200" value="0">
-                                    </div>
-                                    <div class="stressValueDisplay">
-                                        <input type="number" id="stressNumberInput" min="0" max="200" value="0">
-                                        <span class="stressMaxLabel">/ 200</span>
-                                    </div>
-                                </div>
-                                <div class="stressMarkIndicator">Quando 100 de estresse, rode d20</div>
-                                <div class="stressConditions">
-                                    <label class="stressCheckboxLabel"><input type="checkbox" id="afflictedCheck"> Aflito</label>
-                                    <label class="stressCheckboxLabel"><input type="checkbox" id="virtuousCheck"> Virtuoso</label>
-                                </div>
+                            <div class="resourceCounter">
+                                <input type="number" id="vitalityCurrent" value="0" class="invisibleInput resourceInput">
+                                <span>/</span>
+                                <input type="number" id="vitalityTotal" value="0" class="invisibleInput resourceInput">
                             </div>
                         </div>
-                        <div class="statusColumn">
-                            <div class="statusGroup">
-                                <label for="defense">Classe de Defesa:</label>
-                                <input type="number" id="defense" min="0" value="0">
+
+                        <!-- Limiar da Morte -->
+                        <div class="deathThresholdBlock">
+                            <h3 class="resourceTitle">Limiar da Morte</h3>
+                            <div class="deathSaveBoxes">
+                                <input type="checkbox" id="deathFail1" class="death-fail-input">
+                                <input type="checkbox" id="deathFail2" class="death-fail-input">
+                                <input type="checkbox" id="deathFail3" class="death-fail-input">
                             </div>
-                            <div class="statusGroup">
-                                <label for="inspiration">Inspiração:</label>
-                                <input type="number" id="inspiration" min="0" value="0">
+                        </div>
+
+                        <!-- Barra de Estresse -->
+                        <div class="resourceBlock stressBlock">
+                            <h3 class="resourceTitle">Estresse</h3>
+                            <div class="resourceBarContainer stressBarContainer">
+                                <div class="stressMark100"></div> <!-- Marcação do meio (100) -->
+                                <div id="stressFill" class="stressFill"></div>
+                                <!-- Input range para arrastar e alterar o valor de forma fluida -->
+                                <input type="range" id="stressRange" min="0" max="200" value="0" class="stressRangeSlider">
                             </div>
-                            <div class="statusGroup">
-                                <label for="morale">Moral:</label>
-                                <input type="number" id="morale" value="0">
+                            <!-- Contador numérico de Estresse (Atual / 200) -->
+                            <div class="resourceCounter">
+                                <input type="number" id="stress" min="0" max="200" value="0" class="invisibleInput resourceInput">
+                                <span>/ 200</span>
                             </div>
-                            <div class="statusGroup">
+                        </div>
+
+                        <!-- Campos Inferiores (Tamanho, Deslocamento, Ameaça) -->
+                        <div class="statusBottomFields">
+                            <div class="inlineDataGroup">
+                                <label for="size">Tamanho:</label>
+                                <select id="size" class="invisibleSelect">
+                                    <option value="pequeno">Pequeno</option>
+                                    <option value="medio" selected>Médio</option>
+                                    <option value="grande">Grande</option>
+                                </select>
+                            </div>
+                            <div class="inlineDataGroup">
                                 <label for="speed">Deslocamento:</label>
-                                <div class="speedInput">
-                                    <input type="number" id="speed" min="0" value="6">
-                                    <span class="unitText">qds</span>
-                                </div>
+                                <input type="number" id="speed" min="0" value="6" class="smallBoxInput"> <span class="unit">qds</span>
                             </div>
-                            <div class="statusGroup">
+                            <div class="inlineDataGroup">
                                 <label for="threatLevel">Nível de Ameaça:</label>
-                                <select id="threatLevel">
+                                <select id="threatLevel" class="invisibleSelect">
                                     <option value="nulo">Nulo</option>
                                     <option value="sublime">Sublime</option>
                                     <option value="besta">Besta</option>
@@ -238,37 +277,89 @@
                                     <option value="radiante">Radiante</option>
                                 </select>
                             </div>
-                            <div class="statusGroup">
-                                <label for="size">Tamanho:</label>
-                                <select id="size">
-                                    <option value="pequeno">Pequeno</option>
-                                    <option value="medio" selected>Médio</option>
-                                    <option value="grande">Grande</option>
-                                </select>
+                        </div>
+                    </div>
+
+                    <!-- COLUNA DIREITA (Vontade, Inspiração, Condição, Defesa/Moral) -->
+                    <div class="statusRightColumn">
+                        
+                        <!-- Barra de Vontade -->
+                        <div class="resourceBlock">
+                            <h3 class="resourceTitle">Vontade</h3>
+                            <div class="resourceBarContainer willpowerBarContainer">
+                                <div id="willpowerBarFill" class="willpowerFill"></div>
                             </div>
-                            <div class="statusGroup">
-                                <label for="initiative">Iniciativa:</label>
-                                <input type="text" id="initiative" value="d20 + 0" readonly class="calculatedField">
+                            <div class="resourceCounter">
+                                <input type="number" id="willpowerCurrent" value="0" class="invisibleInput resourceInput">
+                                <span>/</span>
+                                <input type="number" id="willpowerTotal" value="0" class="invisibleInput resourceInput">
+                            </div>
+                        </div>
+
+                        <!-- Inspiração (Agora é uma bolinha/checkbox, mas mantemos o ID para o storage funcionar) -->
+                        <div class="inspirationBlock">
+                            <h3 class="resourceTitle">Inspiração</h3>
+                            <div class="inspirationCheckboxWrapper">
+                                <input type="checkbox" id="inspiration" class="inspiration-check">
+                            </div>
+                        </div>
+
+                        <!-- Condições de Estresse e Dado D20 -->
+                        <div class="stressConditionBlock">
+                            <button type="button" id="rollStressBtn" class="d20Button" title="Rolar Condição de Estresse">🎲</button>
+                            <div id="stressConditionBox" class="stressConditionBox">
+                                <h4 id="stressConditionName">Condições de Estresse</h4>
+                                <p id="stressConditionDesc">Nenhuma condição ativa.</p>
+                                
+                                <!-- Checkboxes antigos ocultos para não quebrar a matemática JS atual -->
+                                <div style="display:none;">
+                                    <input type="checkbox" id="afflictedCheck">
+                                    <input type="checkbox" id="virtuousCheck">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Defesa e Moral (Escudo e Mãos) -->
+                        <div class="defMoraleBlock">
+                            <div class="shieldContainer" title="Classe de Defesa">
+                                <!-- Placeholder do ícone do escudo -->
+                                <span class="icon-shield">🛡️</span>
+                                <input type="number" id="defense" min="0" value="0" class="invisibleInput shieldInput">
+                            </div>
+                            <div class="moraleContainer" title="Moral">
+                                <!-- Placeholder do ícone de aperto de mãos -->
+                                <span class="icon-handshake">🤝</span>
+                                <input type="number" id="morale" value="0" class="invisibleInput moraleInput">
                             </div>
                         </div>
                     </div>
-                </fieldset>
+                </div>
 
-                <!-- PERÍCIAS -->
-                <fieldset>
-                    <legend>Perícias</legend>
+                <!-- ========================================== -->
+                <!-- BLOCO DE PERÍCIAS                          -->
+                <!-- ========================================== -->
+                <div class="sectionTitleWrapper" style="margin-top: 20px;">
+                    <hr class="titleLine"><h2 class="sectionTitle titleFont">PERÍCIAS</h2><hr class="titleLine">
+                </div>
+                <!-- O container de perícias renderizado pelo JS precisa estar dentro de um fieldset sem bordas para não quebrar seu script -->
+                <fieldset style="border:none; padding:0; margin:0;">
                     <div id="skillsContainer" class="skillsContainer"></div>
                 </fieldset>
 
-                <!-- HABILIDADES -->
-                <fieldset>
-                    <legend>Habilidades</legend>
-                        <div class="notesGrid">
+                <!-- ========================================== -->
+                <!-- BLOCO DE HABILIDADES (Antigo, logo abaixo) -->
+                <!-- ========================================== -->
+                <div class="sectionTitleWrapper" style="margin-top: 20px;">
+                    <hr class="titleLine"><h2 class="sectionTitle titleFont">HABILIDADES</h2><hr class="titleLine">
+                </div>
+                <fieldset style="border:none; padding:0; margin:0;">
+                    <div class="notesGrid">
                         <textarea id="abilityMainDesc" class="notesTextArea" placeholder="Descreva habilidades, magias ou poderes..."></textarea>
                         <textarea id="abilityExtraDesc" class="notesTextArea" placeholder="Outras habilidades ou detalhes adicionais..."></textarea>
-                        </div>
+                    </div>
                 </fieldset>
-            </div>
+
+            </div> <!-- FIM DA ABA PERSONAGEM -->
 
             <!-- ABA 2: DETALHES (Pessoal, Inventário, Narrativa) -->
             <div id="tab-detalhes" class="tabContent" style="display: none;">

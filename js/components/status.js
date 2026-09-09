@@ -13,12 +13,14 @@ export function updateInitiative() {
     }
 }
 
-export function initStatusListeners() {
-    // 1. LÓGICA DO LIMIAR DA MORTE (FALHAS)
+export function initStatus() {
+    // 1. LIMIAR DA MORTE (FALHAS)
     const deathFail1 = document.getElementById("deathFail1");
     const deathFail2 = document.getElementById("deathFail2");
     const deathFail3 = document.getElementById("deathFail3");
     const vitalityCurrentInput = document.getElementById("vitalityCurrent");
+    const vitalityTotalInput = document.getElementById("vitalityTotal");
+    const vitalityBarFill = document.getElementById("vitalityBarFill");
 
     function checkDeathSaves() {
         if (deathFail1 && deathFail2 && deathFail3 && vitalityCurrentInput) {
@@ -42,21 +44,83 @@ export function initStatusListeners() {
             if (deathFail1?.checked && deathFail2?.checked && deathFail3?.checked) {
                 vitalityCurrentInput.value = 0;
             }
+            updateVitalityBar();
         });
     }
 
-    // 2. LÓGICA DA BARRA DE ESTRESSE AVANÇADA
-    const stressRange = document.getElementById("stress");
-    const stressNumberInput = document.getElementById("stressNumberInput");
+    if (vitalityTotalInput) {
+        vitalityTotalInput.addEventListener("input", updateVitalityBar);
+    }
+
+    function updateVitalityBar() {
+        const current = parseFloat(vitalityCurrentInput?.value) || 0;
+        const total = parseFloat(vitalityTotalInput?.value) || 1;
+        let percentage = (current / total) * 100;
+        percentage = Math.max(0, Math.min(100, percentage));
+        if (vitalityBarFill) {
+            vitalityBarFill.style.width = `${percentage}%`;
+        }
+    }
+
+    // 2. BARRA DE VONTADE
+    const willpowerCurrentInput = document.getElementById("willpowerCurrent");
+    const willpowerTotalInput = document.getElementById("willpowerTotal");
+    const willpowerBarFill = document.getElementById("willpowerBarFill");
+
+    function updateWillpowerBar() {
+        const current = parseFloat(willpowerCurrentInput?.value) || 0;
+        const total = parseFloat(willpowerTotalInput?.value) || 1;
+        let percentage = (current / total) * 100;
+        percentage = Math.max(0, Math.min(100, percentage));
+        if (willpowerBarFill) {
+            willpowerBarFill.style.width = `${percentage}%`;
+        }
+    }
+
+    [willpowerCurrentInput, willpowerTotalInput].forEach(el => {
+        if (el) el.addEventListener("input", updateWillpowerBar);
+    });
+
+    // 3. BARRA DE ESTRESSE E CAIXINHAS DO TOPO
+    const stressRange = document.getElementById("stressRange");
+    const stressNumberInput = document.getElementById("stress"); // Input numérico (0/200)
     const stressFill = document.getElementById("stressFill");
-    const afflictedCheck = document.getElementById("afflictedCheck");
-    const virtuousCheck = document.getElementById("virtuousCheck");
+    const stressSquares = document.querySelectorAll(".stressSquare");
+    const headerStressCondition = document.getElementById("headerStressCondition");
+
+    // Botão D20 e Caixa de Condições
+    const rollStressBtn = document.getElementById("rollStressBtn");
+    const stressConditionBox = document.getElementById("stressConditionBox");
+    const stressConditionName = document.getElementById("stressConditionName");
+    const stressConditionDesc = document.getElementById("stressConditionDesc");
+
+    const conditionsList = [
+        { name: "Com medo", desc: "Você adquire desvantagem em todos os testes e sofre o dobro de estresse de todas as fontes.", type: "afflicted" },
+        { name: "Sem esperança", desc: "No início de seu turno você profere palavras que desmotivam e causam 2d12 de estresse nos seus aliados.", type: "afflicted" },
+        { name: "Inabalável", desc: "Você se torna imune a efeitos de estresse dos inimigos e alivia 1d10 de estresse aos seus aliados por rodada.", type: "virtuous" },
+        { name: "Egoísta", desc: "Você se torna incapaz de realizar testes de União. Sempre que auxiliar um aliado, deve ser bem-sucedido em Força de Vontade DT14 ou perde a ação.", type: "afflicted" },
+        { name: "Esperançoso", desc: "Você adquire vantagem em todos os testes.", type: "virtuous" },
+        { name: "Masoquista", desc: "A cada turno, realiza um teste de Força de Vontade. Se falhar, usa a arma para se atacar, reduzindo 3d12 de estresse.", type: "afflicted" },
+        { name: "Abusivo", desc: "Você deve escolher atacar ou difamar um aliado no alcance para reduzir 6d6 de estresse na rodada, causando o mesmo nele.", type: "afflicted" },
+        { name: "Paranóico", desc: "Existe um traidor entre vocês, e você deve encontrá-lo a todo custo (O personagem escolhe quem).", type: "afflicted" },
+        { name: "Irracional", desc: "No início de todo turno, role um teste de Existir. Se falhar, gasta 1d2 ações fazendo coisas desconexas.", type: "afflicted" },
+        { name: "Corajoso", desc: "Você ganha vantagem em testes de Luta e Arcanismo, e recupera 2d10 de estresse a cada acerto.", type: "virtuous" },
+        { name: "Paralisado", desc: "No início de todo turno lance um d20+Sabedoria. Se menor que 8, perde ações e causa 2d10 de estresse a aliados.", type: "afflicted" },
+        { name: "Errante", desc: "Fica Enfraquecido e Indisposto, sofrendo 2d12 de estresse ao errar ataques/falhar em resistências, sem conseguir críticos.", type: "afflicted" },
+        { name: "Tanatofóbico", desc: "A partir da metade da vitalidade, recebe 2d10 de estresse por golpe recebido. Ao cair morrendo, já tem uma falha garantida.", type: "afflicted" },
+        { name: "Obstinado", desc: "Se cair morrendo, role d20+Constituição (>9 retorna sem penalidade e com 3d4 vit). Ao cair morrendo pela 1ª vez, possui um sucesso.", type: "virtuous" },
+        { name: "Ansioso", desc: "Você perde todas as condições positivas em si e suas habilidades perdem suas palavras-chave.", type: "afflicted" },
+        { name: "Suicida", desc: "Ganhou condição permanente de Marcado. Com vitalidade <10, recebe +1 em testes (exceto Limiar da Morte e Resistência).", type: "afflicted" },
+        { name: "Imortal", desc: "No início de cada turno, regenera vitalidade com base na soma de todos seus modificadores.", type: "virtuous" },
+        { name: "Robusto", desc: "Você se torna imune a doenças e efeitos contínuos negativos até o fim dessa virtude.", type: "virtuous" },
+        { name: "Imunidade baixa", desc: "Você adquire uma doença imediatamente, e causa 3d10 de estresse nos aliados.", type: "afflicted" },
+        { name: "Depressivo", desc: "Seu turno passa a ser o último da rodada. Errar uma ação profere palavras que causam desvantagem ao aliado mais perto.", type: "afflicted" }
+    ];  
 
     function updateStress(value) {
         let val = parseInt(value);
         if (isNaN(val)) val = 0;
-        if (val < 0) val = 0;
-        if (val > 200) val = 200;
+        val = Math.max(0, Math.min(200, val));
 
         if (stressRange && stressRange.value != val) stressRange.value = val;
         if (stressNumberInput && stressNumberInput.value != val) stressNumberInput.value = val;
@@ -66,12 +130,33 @@ export function initStatusListeners() {
             stressFill.style.width = `${percentage}%`;
         }
 
-        if (afflictedCheck && afflictedCheck.checked) {
-            if (stressFill) stressFill.style.backgroundColor = "#8b0000";
-        } else if (virtuousCheck && virtuousCheck.checked) {
-            if (stressFill) stressFill.style.backgroundColor = "#ffcc00";
-        } else {
-            if (stressFill) stressFill.style.backgroundColor = val > 100 ? "#929292" : "#ffffff";
+        // Ativa as 10 caixinhas do topo (1 a cada 10 pontos)
+        const activeBoxesCount = Math.floor(val / 10);
+        stressSquares.forEach((square, index) => {
+            if (index < activeBoxesCount) {
+                square.classList.add("active");
+            } else {
+                square.classList.remove("active");
+            }
+        });
+
+        // Brilho do botão D20 ao atingir 100+ de estresse
+        if (rollStressBtn) {
+            if (val >= 100) {
+                rollStressBtn.classList.add("glow-ready");
+            } else {
+                rollStressBtn.classList.remove("glow-ready");
+                if (val < 100 && stressConditionBox) {
+                    stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
+                }
+            }
+        }
+
+        if (val === 0) {
+            if (stressConditionName) stressConditionName.textContent = "Condições de Estresse";
+            if (stressConditionDesc) stressConditionDesc.textContent = "Nenhuma condição ativa.";
+            if (headerStressCondition) headerStressCondition.textContent = "";
+            if (stressConditionBox) stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
         }
     }
 
@@ -82,28 +167,70 @@ export function initStatusListeners() {
         stressNumberInput.addEventListener("input", () => updateStress(stressNumberInput.value));
     }
 
-    if (afflictedCheck && virtuousCheck) {
-        afflictedCheck.addEventListener("change", function() {
-            if (afflictedCheck.checked) virtuousCheck.checked = false;
-            updateStress(stressRange ? stressRange.value : 0);
-        });
+    // 4. BOTÃO D20 (SORTEIO DE CONDIÇÃO DE ESTRESSE)
+    if (rollStressBtn) {
+        rollStressBtn.addEventListener("click", () => {
+            const currentStress = parseInt(stressNumberInput?.value) || 0;
 
-        virtuousCheck.addEventListener("change", function() {
-            if (virtuousCheck.checked) afflictedCheck.checked = false;
-            updateStress(stressRange ? stressRange.value : 0);
+            if (currentStress < 100) {
+                const charName = document.getElementById("name")?.value || "o personagem";
+                alert(`Por sorte, ${charName} não está estressado(a) o suficiente…`);
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * conditionsList.length);
+            const chosen = conditionsList[randomIndex];
+
+            if (stressConditionName) stressConditionName.textContent = chosen.name;
+            if (stressConditionDesc) stressConditionDesc.textContent = chosen.desc;
+            if (headerStressCondition) headerStressCondition.textContent = chosen.name;
+
+            if (stressConditionBox) {
+                stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
+                if (chosen.type === "virtuous") {
+                    stressConditionBox.classList.add("is-virtuous");
+                } else {
+                    stressConditionBox.classList.add("is-afflicted");
+                }
+            }
         });
     }
 
-    // DISPARA A ATUALIZAÇÃO VISUAL LOGO NA INICIALIZAÇÃO (Lendo o valor atual do input)
-    setTimeout(() => {
-        const initialValue = stressNumberInput ? stressNumberInput.value : (stressRange ? stressRange.value : 0);
-        updateStress(initialValue);
-    }, 50);
+    // 5. MEDIDOR DE AMEAÇA
+    const threatLevelSelect = document.getElementById("threatLevel");
+    const threatMeterVisual = document.getElementById("threatMeterVisual");
 
-    // 3. OUVINTE GLOBAL DE INICIATIVA
+    function updateThreatMeter() {
+        const selectedThreat = threatLevelSelect?.value;
+        if (!threatMeterVisual) return;
+
+        const threatHeights = {
+            "nulo": "0%",
+            "sublime": "20%",
+            "besta": "40%",
+            "demonio": "60%",
+            "anciao": "80%",
+            "radiante": "100%"
+        };
+
+        threatMeterVisual.style.background = `linear-gradient(to top, #ff4d4d ${threatHeights[selectedThreat] || "0%"}, #111 ${threatHeights[selectedThreat] || "0%"})`;
+    }
+
+    if (threatLevelSelect) {
+        threatLevelSelect.addEventListener("change", updateThreatMeter);
+    }
+
+    // OUVINTE DE INICIATIVA
     document.addEventListener("input", function(e) {
         if (e.target && (e.target.id === "dexterity" || e.target.id === "temp_dexterity")) {
             updateInitiative();
         }
     });
+
+    // INICIALIZAÇÃO
+    updateVitalityBar();
+    updateWillpowerBar();
+    updateStress(stressNumberInput ? stressNumberInput.value : 0);
+    updateThreatMeter();
+    updateInitiative();
 }
