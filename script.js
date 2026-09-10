@@ -1,37 +1,32 @@
-import { renderAttributes, initAttributesListeners, updateAllAttributes } from './js/components/attributes.js';
-import { renderSkills, initSkillsListeners, updateAllSkills } from './js/components/skills.js';
-import { initPersonalListeners } from './js/components/personal.js';
-import { initInventory } from './js/components/inventory.js';
-import { initOrigins } from './js/components/origins.js';
-import { initRaces } from './js/components/races.js';
-import { initTabs } from './js/components/tabs.js';
-import { initThemeCustomizer } from './js/components/themeCustomizer.js';
-import { initLocalStorage } from './js/components/storage.js';
-//nova modularização
-import { initStatus } from './js/components/status.js';
-import { initImageHandler } from './js/components/imageHandler.js';
+// Importações do Core
+import { initThemeEngine } from './core/themeEngine.js';
+import { initTabs } from './core/router.js';
 
-window.addEventListener("DOMContentLoaded", () => {
-    // 1. Renderiza os componentes gerados via JS
-    renderAttributes();
-    renderSkills();
-    initThemeCustomizer();
-    initLocalStorage();
+// Importações dos Módulos
+import { initAttributes } from './modules/attributes/attributes.js';
+import { initSkills } from './modules/attributes/skills.js';
 
-    // 2. Inicializa os ouvintes de eventos de todos os módulos
+import { initRaces } from './modules/background/races.js';
+import { initOrigins } from './modules/background/origins.js';
+
+import { initImageHandler } from './modules/header/imageHandler.js';
+
+import { initInventory } from './modules/inventory/inventory.js';
+import { initStatus } from './modules/status/status.js';
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Inicializações de infraestrutura
+    initThemeEngine();
     initTabs();
-    initAttributesListeners();
-    initSkillsListeners();
-    initPersonalListeners();
-    initInventory();
-    initOrigins();
-    initRaces();
     
-    // novos inits
-    initStatus();
+    // Inicializações de componentes da ficha
     initImageHandler();
+    initAttributes(); // Agora vai funcionar perfeitamente!
+    initSkills();
+    initStatus();
+    initInventory();
+    initRaces();
+    initOrigins();
 
-    // 3. Executa as sincronizações iniciais
-    updateAllAttributes();
-    updateAllSkills();
+    console.log("Ficha Lutherian 100% operante na nova arquitetura!");
 });

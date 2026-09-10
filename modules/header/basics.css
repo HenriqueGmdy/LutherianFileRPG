@@ -95,6 +95,8 @@
     display: flex;
     gap: 20px;
     align-items: flex-start;
+    padding-right: 15px; /* Cria o pequeno espaço simétrico na direita do bloco Básico */
+    box-sizing: border-box;
 }
 .leftProfileColumn {
     flex: 0 0 30%;
@@ -105,6 +107,9 @@
 }
 .rightBasicColumn {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
 .levelCircleWrapper {
@@ -219,6 +224,7 @@
     color: var(--text-color, #fff);
     resize: none;
     border-radius: 4px;
+    box-sizing: border-box;
 }
 /* Restaura as caixas de Vantagem, Maldição e Origem */
 .raceTraitsContainer {

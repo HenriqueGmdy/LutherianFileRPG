@@ -129,3 +129,10 @@ export function initSkillsListeners() {
         }
     });
 }
+
+// Função principal de inicialização exigida pelo script.js
+export function initSkills() {
+    renderSkills();
+    initSkillsListeners();
+    updateAllSkills();
+}

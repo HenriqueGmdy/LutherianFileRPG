@@ -1,0 +1,22 @@
+/* Importa as variáveis globais e fontes da mesma pasta */
+@import url('variables.css');
+/* Importações dos Componentes vindos de modules/ (usando ../ para sair da pasta styles) */
+
+@import url('../modules/attributes/attributes.css');
+@import url('../modules/attributes/skills.css');
+
+@import url('../modules/header/basics.css');
+
+@import url('../modules/inventory/inventory.css');
+
+@import url('../modules/status/attrStatus.css');
+
+/* Resets e Layout Base (Ficha centralizada a 85% com margem à direita) */
+body {
+    background-color: var(--bg-main, #141414);
+    color: var(--text-color, #ffffff);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    font-family: var(--font-body, 'Arial', sans-serif);
+}

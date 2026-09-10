@@ -1,5 +1,5 @@
-import { updateAllAttributes } from './attributes.js';
-import { updateAllSkills } from './skills.js';
+import { updateAllAttributes } from '../attributes/attributes.js';
+import { updateAllSkills } from '../attributes/skills.js';
 
 export function initInventory() {
     const MAX_ITEMS = 50;

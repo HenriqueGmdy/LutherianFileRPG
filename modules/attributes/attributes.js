@@ -22,12 +22,15 @@ export const attributeGroups = [
     }
 ];
 
-import { updateInitiative } from './status.js';
+import { updateInitiative } from '../status/status.js';
 import { updateAllSkills } from './skills.js';
 
 export function renderAttributes() {
     const container = document.getElementById("attributesContainer");
     if (!container) return;
+
+    // Limpa o container antes de renderizar para evitar duplicações
+    container.innerHTML = "";
 
     attributeGroups.forEach(group => {
         const attr1 = group.attributes[0];
@@ -168,4 +171,11 @@ export function initAttributesListeners() {
             });
         }
     });
+}
+
+// Função principal que faltava e agora é exportada para o script.js
+export function initAttributes() {
+    renderAttributes();
+    initAttributesListeners();
+    updateAllAttributes();
 }

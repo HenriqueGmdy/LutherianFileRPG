@@ -108,9 +108,9 @@ export function initStatus() {
         { name: "Paralisado", desc: "No início de todo turno lance um d20+Sabedoria. Se menor que 8, perde ações e causa 2d10 de estresse a aliados.", type: "afflicted" },
         { name: "Errante", desc: "Fica Enfraquecido e Indisposto, sofrendo 2d12 de estresse ao errar ataques/falhar em resistências, sem conseguir críticos.", type: "afflicted" },
         { name: "Tanatofóbico", desc: "A partir da metade da vitalidade, recebe 2d10 de estresse por golpe recebido. Ao cair morrendo, já tem uma falha garantida.", type: "afflicted" },
-        { name: "Obstinado", desc: "Se cair morrendo, role d20+Constituição (>9 retorna sem penalidade e com 3d4 vit). Ao cair morrendo pela 1ª vez, possui um sucesso.", type: "virtuous" },
+        { name: "Obstinado", desc: "Se cair morrendo, role d20+Constituição (DT9 retorna sem penalidade e com 3d4 vit). Ao cair morrendo pela 1ª vez, possui um sucesso.", type: "virtuous" },
         { name: "Ansioso", desc: "Você perde todas as condições positivas em si e suas habilidades perdem suas palavras-chave.", type: "afflicted" },
-        { name: "Suicida", desc: "Ganhou condição permanente de Marcado. Com vitalidade <10, recebe +1 em testes (exceto Limiar da Morte e Resistência).", type: "afflicted" },
+        { name: "Suicida", desc: "Ganhou condição permanente de Marcado. Com vitalidade menor que 10, recebe +1 em testes (exceto Limiar da Morte e Resistência).", type: "afflicted" },
         { name: "Imortal", desc: "No início de cada turno, regenera vitalidade com base na soma de todos seus modificadores.", type: "virtuous" },
         { name: "Robusto", desc: "Você se torna imune a doenças e efeitos contínuos negativos até o fim dessa virtude.", type: "virtuous" },
         { name: "Imunidade baixa", desc: "Você adquire uma doença imediatamente, e causa 3d10 de estresse nos aliados.", type: "afflicted" },
@@ -155,7 +155,7 @@ export function initStatus() {
         if (val === 0) {
             if (stressConditionName) stressConditionName.textContent = "Condições de Estresse";
             if (stressConditionDesc) stressConditionDesc.textContent = "Nenhuma condição ativa.";
-            if (headerStressCondition) headerStressCondition.textContent = "";
+            if (headerStressCondition) headerStressCondition.textContent = " ";
             if (stressConditionBox) stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
         }
     }

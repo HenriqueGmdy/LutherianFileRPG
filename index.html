@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Ficha Lutherian</title>
-    <link rel="stylesheet" href="css/style.css">
+    <!-- Ajustado para apontar para a nova pasta styles/ -->
+    <link rel="stylesheet" href="styles/global.css">
 </head>
 <body>
 
@@ -44,7 +45,7 @@
         <!-- Sub-tela de Customização de Cores (Abre ao clicar na opção acima) -->
         <div id="themeCustomizerPanel" style="display: none; position: absolute; right: 0; top: 45px; background: #1a1a1a; border: 1px solid #444; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: sans-serif; color: #fff; width: 220px;">
             <h4 style="margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #333; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
-                ✏  Cores do Tema
+                ✏ Cores do Tema
                 <button type="button" id="backToMenuBtn" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 12px;">Voltar</button>
             </h4>
             <div id="themeControls" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
@@ -82,7 +83,7 @@
                 <div class="characterHeaderArea">
                     <div class="charNameRow">
                         <span class="icon-pencil">✎</span>
-                        <input type="text" id="name" class="invisibleInput titleFont" placeholder="Nome do Personagem">
+                        <input type="text" id="name" class="invisibleInput titleFont" placeholder="Nome do Personagem" autocomplete="off">
                     </div>
                     <div class="charClassRow">
                         <span class="icon-sword">⚔️</span>
