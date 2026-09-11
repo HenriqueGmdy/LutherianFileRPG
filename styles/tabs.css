@@ -9,6 +9,7 @@
     margin-bottom: 0;
     position: relative;
     z-index: 2;
+    flex-wrap: wrap; 
 }
 
 .tabBtn {
@@ -16,12 +17,12 @@
     color: #777;
     border: 1px solid #333;
     border-bottom: none;
-    padding: 8px 22px;
+    padding: 8px 18px; 
     border-radius: 6px 6px 0 0;
     cursor: pointer;
     font-weight: bold;
-    font-size: 1rem;
-    font-family: var(--font-sub); /* Subtítulo nas abas */
+    font-size: 0.95rem;
+    font-family: var(--font-sub);
     transition: background-color 0.2s, color 0.2s;
     outline: none;
 }

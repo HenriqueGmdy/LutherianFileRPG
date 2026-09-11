@@ -68,7 +68,6 @@ export function initThemeEngine() {
         });
     }
 
-    // Fecha tudo se clicar em qualquer lugar fora do menu
     document.addEventListener('click', (e) => {
         if (resetModal && resetModal.style.display === 'flex') return;
 
@@ -84,15 +83,17 @@ export function initThemeEngine() {
 
     // VALORES PADRÃO
     const defaultColors = {
-        colorBgMain: '#141414',      // Fundo preto customizável
-        colorBgFieldset: '#1c1c1c',  // Interior das caixas (um tom acima do preto)
-        colorBgInputs: '#2b2b2b',    // Fundo de inputs
-        colorText: '#ffffff',        // Textos comuns e subtítulos brancos por padrão
-        colorAccent: '#ffcc00'       // Nomes e Títulos amarelados por padrão
+        colorBgMain: '#141414',
+        colorBgFieldset: '#1c1c1c',
+        colorBgInputs: '#2b2b2b',
+        colorText: '#ffffff',
+        colorAccent: '#ffcc00',
+        colorNegative: '#c00101',
+        colorPositive: '#ffcc00',
+        colorLines: '#ffffff'
     };
 
-    // Carrega cores salvas anteriormente no navegador (localStorage) ou usa o padrão
-    const savedTheme = JSON.parse(localStorage.getItem('lutherian_theme')) || {};
+    let savedTheme = JSON.parse(localStorage.getItem('lutherian_theme')) || {};
     
     const applyColor = (key, cssVar, defaultVal) => {
         const val = savedTheme[key] || defaultVal;
@@ -101,13 +102,19 @@ export function initThemeEngine() {
         if (input) input.value = val;
     };
 
-    applyColor('colorBgMain', '--bg-main', defaultColors.colorBgMain);
-    applyColor('colorBgFieldset', '--bg-fieldset', defaultColors.colorBgFieldset);
-    applyColor('colorBgInputs', '--bg-inputs', defaultColors.colorBgInputs);
-    applyColor('colorText', '--text-color', defaultColors.colorText);
-    applyColor('colorAccent', '--accent-color', defaultColors.colorAccent);
+    const applyAllColors = (themeSource) => {
+        applyColor('colorBgMain', '--bg-main', themeSource.colorBgMain || defaultColors.colorBgMain);
+        applyColor('colorBgFieldset', '--bg-fieldset', themeSource.colorBgFieldset || defaultColors.colorBgFieldset);
+        applyColor('colorBgInputs', '--bg-inputs', themeSource.colorBgInputs || defaultColors.colorBgInputs);
+        applyColor('colorText', '--text-color', themeSource.colorText || defaultColors.colorText);
+        applyColor('colorAccent', '--accent-color', themeSource.colorAccent || defaultColors.colorAccent);
+        applyColor('colorNegative', '--negative-color', themeSource.colorNegative || defaultColors.colorNegative);
+        applyColor('colorPositive', '--positive-color', themeSource.colorPositive || defaultColors.colorPositive);
+        applyColor('colorLines', '--line-color', themeSource.colorLines || defaultColors.colorLines);
+    };
 
-    // Eventos de mudança de cor em tempo real
+    applyAllColors(savedTheme);
+
     const updateColor = (property, value, key) => {
         rootStyles.setProperty(property, value);
         savedTheme[key] = value;
@@ -126,26 +133,17 @@ export function initThemeEngine() {
     bindColorInput('colorBgInputs', '--bg-inputs', 'colorBgInputs');
     bindColorInput('colorText', '--text-color', 'colorText');
     bindColorInput('colorAccent', '--accent-color', 'colorAccent');
+    bindColorInput('colorNegative', '--negative-color', 'colorNegative');
+    bindColorInput('colorPositive', '--positive-color', 'colorPositive');
+    bindColorInput('colorLines', '--line-color', 'colorLines');
 
-    // Botão de restaurar padrão
     const resetThemeBtn = document.getElementById('resetThemeBtn');
     if (resetThemeBtn) {
         resetThemeBtn.addEventListener('click', () => {
             localStorage.removeItem('lutherian_theme');
-            
-            Object.keys(defaultColors).forEach(key => {
-                const cssVar = `--${key.replace('color', '').toLowerCase()}`; 
-                rootStyles.removeProperty(cssVar);
-                const input = document.getElementById(key);
-                if (input) input.value = defaultColors[key];
-            });
+            savedTheme = {};
 
-            // Reaplica os padrões imediatamente
-            applyColor('colorBgMain', '--bg-main', defaultColors.colorBgMain);
-            applyColor('colorBgFieldset', '--bg-fieldset', defaultColors.colorBgFieldset);
-            applyColor('colorBgInputs', '--bg-inputs', defaultColors.colorBgInputs);
-            applyColor('colorText', '--text-color', defaultColors.colorText);
-            applyColor('colorAccent', '--accent-color', defaultColors.colorAccent);
+            applyAllColors(defaultColors);
 
             if (themePanel && dropdown) {
                 themePanel.style.display = 'none';

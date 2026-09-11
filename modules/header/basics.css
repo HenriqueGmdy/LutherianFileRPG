@@ -62,11 +62,13 @@
     width: 40%;
     color: var(--text-color, #ffffff);
 }
-.headerDivider {
-    margin-top: 15px;
+
+.titleLine, .headerDivider {
+    width: 100%;
     border: 0;
     height: 1px;
-    background: var(--bg-fieldset, #444);
+    background: var(--line-color, #ffffff) !important;
+    margin: 0;
 }
 
 /* TÍTULOS DE SEÇÃO COM LINHAS HORIZONTAIS */
@@ -178,7 +180,7 @@
 }
 .characterImageBox {
     width: 85%;
-    max-width: 180px;
+    max-width: 290px;
     aspect-ratio: 0.85;
     border: 2px dashed #555;
     background: var(--bg-fieldset, rgba(0,0,0,0.3));
@@ -193,7 +195,14 @@
     gap: 20px;
 }
 .basicSubLeft { flex: 0 0 55%; }
-.basicSubRight { flex: 1; }
+
+.basicSubRight {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    margin-top: 35px; 
+}
 
 .smallBoxInput {
     background: var(--bg-inputs, #2b2b2b);
@@ -243,3 +252,106 @@
     color: var(--text-color, #fff);
     
 }
+
+/* Container empilhado e compacto */
+.inlineDataCompactGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+/* Cada linha se comporta como um grid fixo para alinhar perfeitamente */
+.inlineDataCompactGroup .inlineDataGroup {
+    display: grid;
+    grid-template-columns: 75px 50px 45px; /* Rótulo fixo (75px), Input fixo (50px), Unidade (45px) */
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0;
+    padding: 6px 12px;
+    background: var(--bg-fieldset, #1c1c1c);
+    border: 1px solid #333;
+    border-radius: 4px;
+    width: fit-content;
+}
+
+.inlineDataCompactGroup .inlineDataGroup label {
+    text-align: left;
+    white-space: nowrap;
+}
+
+.inlineDataCompactGroup .smallBoxInput {
+    width: 100%; /* Ocupa os 50px reservados na coluna do grid */
+    text-align: center;
+}
+
+.inlineDataCompactGroup .unit {
+    font-size: 0.85rem;
+    color: var(--text-color);
+    opacity: 0.8;
+    text-align: left;
+}
+
+/* CABEÇALHO AJUSTADO */
+.characterHeaderArea {
+    margin-bottom: 25px;
+}
+
+.charNameRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-color, #ffffff);
+}
+
+.charNameInput {
+    width: 50% !important;
+    font-size: 2rem;
+    text-align: left;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    color: var(--text-color, #ffffff);
+    padding: 0;
+}
+
+.charNameInput:focus {
+    border-bottom: 1px dashed #666 !important;
+}
+
+.charClassRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 2.5rem;
+    margin-top: 8px;
+}
+
+/* Estilo individual dos inputs de classe e subclasse (metade da largura anterior) */
+.classInput, .subclassInput {
+    width: 120px !important;
+    font-size: 1.1rem;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    color: var(--text-color, #ffffff);
+    padding: 0;
+}
+
+.subclassInput {
+    width: 180px !important;
+    font-size: 1.1rem;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    color: var(--text-color, #ffffff);
+    padding: 0;
+}
+
+.classInput:focus, .subclassInput:focus {
+    border-bottom: 1px dashed #666 !important;
+}
+
+

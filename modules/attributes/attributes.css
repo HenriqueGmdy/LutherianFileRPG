@@ -81,3 +81,10 @@
     margin-top: 5px;
     font-family: var(--font-sub);
 }
+
+.diceToRoll.dice-negative {
+    color: var(--negative-color, #c00101);
+}
+.diceToRoll.dice-positive {
+    color: var(--positive-color, #ffcc00);
+}

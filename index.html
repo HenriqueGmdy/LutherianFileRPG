@@ -10,7 +10,7 @@
     <div class="mainFile">
 
         <!-- MENU FLUTUANTE DE OPÇÕES (Canto Superior Direito) -->
-        <div class="optionsMenuWrapper" style="position: absolute; top: 20px; right: 20px; z-index: 1000;">
+        <div class="optionsMenuWrapper" style="position: absolute; top: 0px; right: -200px; z-index: 1000;">
             <button type="button" id="optionsMenuBtn" style="background: var(--bg-fieldset, #1c1c1c); border: 1px solid #444; color: var(--text-color, #fff); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4);" title="Opções">
                 ⋮
             </button>
@@ -48,10 +48,13 @@
                 </h4>
                 <div id="themeControls" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
                     <label style="display: flex; justify-content: space-between; align-items: center;">
-                        Fundo Geral: <input type="color" id="colorBgMain" value="#141414">
+                        Fundo: <input type="color" id="colorBgMain" value="#141414">
                     </label>
                     <label style="display: flex; justify-content: space-between; align-items: center;">
-                        Blocos (Fieldsets): <input type="color" id="colorBgFieldset" value="#1c1c1c">
+                        Blocos: <input type="color" id="colorBgFieldset" value="#1c1c1c">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Linhas: <input type="color" id="colorLines" value="#ffffff">
                     </label>
                     <label style="display: flex; justify-content: space-between; align-items: center;">
                         Caixas de Texto: <input type="color" id="colorBgInputs" value="#2b2b2b">
@@ -60,7 +63,13 @@
                         Texto Geral: <input type="color" id="colorText" value="#ffffff">
                     </label>
                     <label style="display: flex; justify-content: space-between; align-items: center;">
-                        Destaque: <input type="color" id="colorAccent" value="#ffffff">
+                        Destaques: <input type="color" id="colorAccent" value="#ffffff">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Desvantagens: <input type="color" id="colorNegative" value="#c00101">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Vantagens: <input type="color" id="colorPositive" value="#ffcc00">
                     </label>
                     <button type="button" id="resetThemeBtn" style="margin-top: 5px; background: #333; color: #fff; border: none; padding: 6px; border-radius: 4px; cursor: pointer;">Restaurar Padrão</button>
                 </div>
@@ -71,6 +80,7 @@
             <!-- BOTÕES DAS ABAS -->
             <div class="characterTabsHeader">
                 <button type="button" class="tabBtn active" data-tab="tab-personagem">Personagem</button>
+                <button type="button" class="tabBtn" data-tab="tab-habilidades">Habilidades</button>
                 <button type="button" class="tabBtn" data-tab="tab-detalhes">Detalhes</button>
             </div>
 
@@ -81,12 +91,14 @@
                 <div class="characterHeaderArea">
                     <div class="charNameRow">
                         <span class="icon-pencil">✎</span>
-                        <input type="text" id="name" class="invisibleInput titleFont" placeholder="Nome do Personagem" autocomplete="off">
+                        <input type="text" id="name" class="invisibleInput titleFont charNameInput" placeholder="Nome do Personagem" autocomplete="off">
                     </div>
                     <div class="charClassRow">
                         <span class="icon-sword">⚔️</span>
-                        <input type="text" id="chaClass" class="invisibleInput subFont" placeholder="Classe">
-                        <input type="text" id="chaSubclass" class="invisibleInput subFont" placeholder="Subclasse">
+                        <div class="classSubclassWrapper">
+                            <input type="text" id="chaClass" class="invisibleInput subFont classInput" placeholder="Classe">
+                            <input type="text" id="chaSubclass" class="invisibleInput subFont subclassInput" placeholder="Subclasse">
+                        </div>
                     </div>
                     <hr class="headerDivider">
                 </div>
@@ -149,17 +161,19 @@
                                 </div>
                             </div>
                             <div class="basicSubRight">
-                                <div class="inlineDataGroup">
-                                    <label for="height">Altura:</label>
-                                    <input type="text" id="height" class="smallBoxInput"> <span class="unit">m</span>
-                                </div>
-                                <div class="inlineDataGroup">
-                                    <label for="weight">Peso:</label>
-                                    <input type="text" id="weight" class="smallBoxInput"> <span class="unit">kg</span>
-                                </div>
-                                <div class="inlineDataGroup">
-                                    <label for="age">Idade:</label>
-                                    <input type="number" id="age" min="1" class="smallBoxInput"> <span class="unit">anos</span>
+                                <div class="inlineDataCompactGroup">
+                                    <div class="inlineDataGroup">
+                                        <label for="height">Altura:</label>
+                                        <input type="text" id="height" class="smallBoxInput"> <span class="unit">m</span>
+                                    </div>
+                                    <div class="inlineDataGroup">
+                                        <label for="weight">Peso:</label>
+                                        <input type="text" id="weight" class="smallBoxInput"> <span class="unit">kg</span>
+                                    </div>
+                                    <div class="inlineDataGroup">
+                                        <label for="age">Idade:</label>
+                                        <input type="number" id="age" min="1" class="smallBoxInput"> <span class="unit">anos</span>
+                                    </div>
                                 </div>
                                 <div class="classCampfireBox" style="margin-top: 15px;">
                                     <strong>Hab. Fogueira (Classe):</strong>
@@ -296,19 +310,28 @@
                     <div id="skillsContainer" class="skillsContainer"></div>
                 </fieldset>
 
-                <div class="sectionTitleWrapper" style="margin-top: 20px;">
-                    <hr class="titleLine"><h2 class="sectionTitle titleFont">HABILIDADES</h2><hr class="titleLine">
-                </div>
-                <fieldset style="border:none; padding:0; margin:0;">
-                    <div class="notesGrid">
+            </div>
+
+            <!-- ABA 2: HABILIDADES -->
+            <div id="tab-habilidades" class="tabContent" style="display: none;">
+                <fieldset>
+                    <legend>Habilidades, Magias e Poderes</legend>
+                    <div class="notesGrid" style="margin-bottom: 20px;">
                         <textarea id="abilityMainDesc" class="notesTextArea" placeholder="Descreva habilidades, magias ou poderes..."></textarea>
                         <textarea id="abilityExtraDesc" class="notesTextArea" placeholder="Outras habilidades ou detalhes adicionais..."></textarea>
                     </div>
                 </fieldset>
 
+                <!-- Espaço livre caso queira adicionar listas dinâmicas de magias/talentos de classe depois -->
+                <fieldset>
+                    <legend>Notas de Combate e Poderes Especiais</legend>
+                    <div class="fullWidthBlock">
+                        <textarea id="combatAbilitiesNotes" class="notesTextArea narrativeArea" placeholder="Detalhes de conjuração, efeitos ativos ou restrições..."></textarea>
+                    </div>
+                </fieldset>
             </div>
 
-            <!-- ABA 2: DETALHES -->
+            <!-- ABA 3: DETALHES -->
             <div id="tab-detalhes" class="tabContent" style="display: none;">
                 <fieldset>
                     <legend>Pessoal</legend>

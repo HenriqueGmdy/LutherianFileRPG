@@ -62,9 +62,9 @@
 }
 
 .skillMod.dice-positive {
-    color: var(--accent-color); /* Respeita a cor de destaque escolhida no painel */
+    color: var(--positive-color, #ffcc00);
 }
 
 .skillMod.dice-negative {
-    color: #c00101; /* Vermelho para penalidades */
+    color: var(--negative-color, #c00101); 
 }

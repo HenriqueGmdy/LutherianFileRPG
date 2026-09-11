@@ -28,10 +28,13 @@
     --bg-inputs: #2b2b2b;
     --text-color: #ffffff;
     --accent-color: #ffcc00;
+    --negative-color: #c00101;
+    --positive-color: #ffcc00;
+    --line-color: #ffffff;
 
     --font-body: 'FjallaOne', Arial, sans-serif;          
     --font-sub: 'GermaniaOne', Arial, sans-serif;         
-    --font-title: 'Quintessential', Georgia, serif;       /* Nova fonte de títulos */
+    --font-title: 'Quintessential', Georgia, serif;
 }
 
 body, input, select, textarea, button {

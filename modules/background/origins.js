@@ -57,7 +57,7 @@ export function initOrigins() {
 
         if (habilityDesc) {
             let skillsText = origin.skillsName ? origin.skillsName : "À escolha do jogador";
-            habilityDesc.textContent = `Perícias Treinadas: ${skillsText}\n\n${origin.campfireSkill}`;
+            habilityDesc.innerHTML = `Perícias Treinadas: ${skillsText}<br><br>${origin.campfireSkill}`;
         }
 
         updateAllSkills();
