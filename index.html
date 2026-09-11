@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Ficha Lutherian</title>
+    <link rel="icon" type="image/png" href="assets/icons/page.icon.png">
     <link rel="stylesheet" href="styles/global.css">
+    <link rel="stylesheet" href="modules/level/level.css">
 </head>
 <body>
 
@@ -78,23 +80,28 @@
 
         <div class="characterTabsWrapper">
             <!-- BOTÕES DAS ABAS -->
-            <div class="characterTabsHeader">
-                <button type="button" class="tabBtn active" data-tab="tab-personagem">Personagem</button>
-                <button type="button" class="tabBtn" data-tab="tab-habilidades">Habilidades</button>
-                <button type="button" class="tabBtn" data-tab="tab-detalhes">Detalhes</button>
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="personagem" title="Personagem"></button>
+                <button class="tab-btn" data-tab="habilidades" title="Habilidades"></button>
+                <button class="tab-btn" data-tab="detalhes" title="Detalhes e Inventário"></button>
             </div>
 
             <!-- ABA 1: PERSONAGEM -->
-            <div id="tab-personagem" class="tabContent active">
+            <div id="personagem" class="tabContent active">
                 
+                <!-- CABEÇALHO -->
                 <!-- CABEÇALHO -->
                 <div class="characterHeaderArea">
                     <div class="charNameRow">
-                        <span class="icon-pencil">✎</span>
+                        <button type="button" class="headerIconBtn" onclick="document.getElementById('name').focus();" title="Focar no Nome">
+                            <img src="assets/images/pageChar/name.png" alt="Nome" class="headerIconImg">
+                        </button>
                         <input type="text" id="name" class="invisibleInput titleFont charNameInput" placeholder="Nome do Personagem" autocomplete="off">
                     </div>
                     <div class="charClassRow">
-                        <span class="icon-sword">⚔️</span>
+                        <button type="button" class="headerIconBtn" onclick="document.getElementById('chaClass').focus();" title="Focar na Classe">
+                            <img src="assets/images/pageChar/class.png" alt="Classe" class="headerIconImg">
+                        </button>
                         <div class="classSubclassWrapper">
                             <input type="text" id="chaClass" class="invisibleInput subFont classInput" placeholder="Classe">
                             <input type="text" id="chaSubclass" class="invisibleInput subFont subclassInput" placeholder="Subclasse">
@@ -105,8 +112,8 @@
 
                 <div class="topSplitContainer">
                     <div class="leftProfileColumn">
-                        <div class="levelCircleWrapper">
-                            <input type="number" id="level" min="1" max="9" value="1" class="levelInputCircle">
+                        <div class="levelEmblemWrapper" id="levelEmblemContainer">
+                            <input type="number" id="level" min="1" max="9" value="1" class="levelInputEmblem">
                         </div>
                         <div id="threatMeterVisual" class="threatMeterBar"></div>
                         <div id="stressSquaresVisual" class="stressSquaresContainer">
@@ -125,8 +132,8 @@
                     </div>
 
                     <div class="rightBasicColumn">
-                        <div class="sectionTitleWrapper">
-                            <hr class="titleLine"><h2 class="sectionTitle titleFont">BÁSICO</h2><hr class="titleLine">
+                        <div class="sectionTitleWrapper themedTitleFrame" style="display: flex; align-items: center; justify-content: center;">
+                            <h2 class="sectionTitle titleFont" style="color: #141414; margin: 0; text-shadow: none;">BÁSICO</h2>
                         </div>
                         <div class="basicSplitColumns">
                             <div class="basicSubLeft">
@@ -313,7 +320,7 @@
             </div>
 
             <!-- ABA 2: HABILIDADES -->
-            <div id="tab-habilidades" class="tabContent" style="display: none;">
+            <div id="habilidades" class="tabContent" style="display: none;">
                 <fieldset>
                     <legend>Habilidades, Magias e Poderes</legend>
                     <div class="notesGrid" style="margin-bottom: 20px;">
@@ -332,7 +339,7 @@
             </div>
 
             <!-- ABA 3: DETALHES -->
-            <div id="tab-detalhes" class="tabContent" style="display: none;">
+            <div id="detalhes" class="tabContent" style="display: none;">
                 <fieldset>
                     <legend>Pessoal</legend>
                     <div class="personalContainer">

@@ -1,0 +1,34 @@
+
+.levelEmblemWrapper {
+    width: 95px;
+    height: 95px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.levelInputEmblem::-webkit-inner-spin-button, 
+.levelInputEmblem::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+}
+
+.levelInputEmblem {
+    -moz-appearance: textfield;
+    padding: 0;
+    width: 60%;
+    height: 60%;
+    box-sizing: border-box;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    font-size: 30px;
+    font-weight: bold;
+    text-align: center;
+    text-shadow: none !important;     /* Remove a sombra branca/preta ao redor para o número ficar chapado em preto, ou ajuste se preferir */
+}

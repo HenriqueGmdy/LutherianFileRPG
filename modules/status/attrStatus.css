@@ -26,31 +26,31 @@
 
 .resourceBarContainer {
     width: 100%;
-    height: 24px;
+    height: 16px;
     background: #0d0d0d;
     border: 2px solid #333;
     position: relative;
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
 }
 .vitalityFill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #590000 0%, #a60000 100%);
-    box-shadow: 0 0 8px rgba(255,0,0,0.5);
+    background:#860202;
+    box-shadow: 0 0 4px rgba(255,0,0,0.25);
     transition: width 0.3s ease;
 }
 .willpowerFill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #001a4d 0%, #004080 100%);
-    box-shadow: 0 0 8px rgba(0, 102, 204, 0.5);
+    background:#001a4d;
+    box-shadow: 0 0 4px rgba(0, 102, 204, 0.25); 
     transition: width 0.3s ease;
 }
 .stressFill {
     height: 100%;
     width: 0%;
     background: #e6e6e6;
-    box-shadow: 0 0 8px rgba(255,255,255,0.4);
+    box-shadow: 0 0 4px rgba(255,255,255,0.2); 
     transition: width 0.3s ease, background 0.3s ease;
 }
 .stressMark100 {

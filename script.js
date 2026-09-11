@@ -13,6 +13,7 @@ import { initPersonalListeners } from './modules/personal/personal.js';
 import { initInventory } from './modules/inventory/inventory.js';
 import { initNarrative } from './modules/narrative/narrative.js';
 import { initStatus } from './modules/status/status.js';
+import { initLevelEmblem } from './modules/level/levelManager.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     // Função para blindar a inicialização. Se um módulo quebrar, o resto sobrevive.
@@ -39,6 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
     safeInit("Races", initRaces);
     safeInit("Origins", initOrigins);
     safeInit("Narrative", initNarrative);
+    safeInit("LevelEmblem", initLevelEmblem);
 
     console.log("Ficha Lutherian iniciada com sistema anti-crash ativado!");
 });

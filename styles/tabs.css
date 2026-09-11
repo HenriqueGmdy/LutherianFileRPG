@@ -69,3 +69,52 @@
     color: var(--accent-color);
     letter-spacing: 1px;
 }
+
+/* Container unificado das abas com ícones de fundo inteiros */
+.tabs-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 0;
+    padding-left: 2px;
+}
+
+.tab-btn {
+    background-color: transparent;
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    width: 55px;
+    height: 45px;
+    padding: 0;
+    position: relative;
+    opacity: 0.55;
+    filter: brightness(0.65);
+    transition: all 0.2s ease;
+}
+
+.tab-btn[data-tab="personagem"] {
+    background-image: url('../assets/icons/char.icon.png');
+}
+
+.tab-btn[data-tab="habilidades"] {
+    background-image: url('../assets/icons/habilities.icon.png');
+}
+
+.tab-btn[data-tab="detalhes"] {
+    background-image: url('../assets/icons/inventory.icon.png');
+}
+
+.tab-btn:hover {
+    opacity: 0.85;
+    filter: brightness(0.9);
+    transform: translateY(-2px);
+}
+
+.tab-btn.active {
+    opacity: 1;
+    filter: brightness(1.15);
+    transform: translateY(-4px);
+}

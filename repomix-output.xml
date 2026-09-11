@@ -46,6 +46,33 @@ assets/
     GermaniaOne-Regular.ttf
     Quintessential-Regular.ttf
     Schmale Halbfette Fraktur.ttf
+  icons/
+    char.icon.png
+    habilities.icon.png
+    inventory.icon.png
+    page.icon.png
+  images/
+    general/
+      he_icon_idle.png
+      he_icon_selected.png
+      heirloom_exchange.arrow_down.png
+      heirloom_exchange.arrow_up.png
+      menu.check_box.png
+      menu.check_mark.png
+      remove_quirk_positive.png
+      removequirk.png
+    levels/
+      level1_2.png
+      level3.png
+      level4.png
+      level5.png
+      level6.png
+      level7.png
+      level8.png
+      level9.png
+    pageChar/
+      class.png
+      name.png
 core/
   config.js
   router.js
@@ -69,6 +96,9 @@ modules/
     inventory.css
     inventory.js
     itemsData.js
+  level/
+    level.css
+    levelManager
   narrative/
     narrative.css
     narrative.js
@@ -90,9 +120,78 @@ script.js
 <files>
 This section contains the contents of the repository's files.
 
+<file path="modules/level/level.css">
+.levelEmblemWrapper {
+    width: 75px;
+    height: 75px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+}
+
+.levelInputEmblem::-webkit-inner-spin-button, 
+.levelInputEmblem::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+}
+
+.levelInputEmblem {
+    -moz-appearance: textfield;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    background: transparent;
+    border: none;
+    color: var(--accent-color, #ffcc00);
+    font-size: 26px;
+    font-weight: bold;
+    font-family: var(--font-title);
+    text-align: center;
+    outline: none;
+    text-shadow: 2px 2px 4px #000, -1px -1px 0 #000;
+}
+</file>
+
+<file path="modules/level/levelManager">
+export function initLevelEmblem() {
+    const levelInput = document.getElementById('level');
+    const container = document.getElementById('levelEmblemContainer');
+
+    if (!levelInput || !container) return;
+
+    function updateEmblem(val) {
+        const num = parseInt(val) || 1;
+        let fileName = 'level1_2.png';
+
+        if (num >= 3 && num <= 9) {
+            fileName = `level${num}.png`;
+        } else {
+            fileName = 'level1_2.png';
+        }
+
+        // Caminho atualizado apontando para a pasta assets/levels/
+        container.style.backgroundImage = `url('assets/levels/${fileName}')`;
+    }
+
+    // Ouve alterações no input
+    levelInput.addEventListener('input', (e) => {
+        updateEmblem(e.target.value);
+    });
+
+    // Sincroniza ao carregar a página
+    updateEmblem(levelInput.value);
+}
+</file>
+
 <file path="core/router.js">
 export function initTabs() {
-    const tabButtons = document.querySelectorAll(".tabBtn");
+    const tabButtons = document.querySelectorAll(".tab-btn");
     const tabContents = document.querySelectorAll(".tabContent");
 
     if (tabButtons.length === 0) return;
@@ -322,79 +421,6 @@ export function initAttributes() {
 }
 </file>
 
-<file path="modules/attributes/skills.css">
-/* 4. SEÇÃO DE PERÍCIAS (5 COLUNAS) */
-.skillsContainer {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: space-between;
-}
-
-.skillColumn {
-    flex: 1 1 220px; 
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    background-color: var(--bg-fieldset);
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 10px;
-    color: var(--text-color);
-}
-
-.skillGroup {
-    display: grid;
-    grid-template-columns: 1fr 32px 105px; 
-    align-items: center;
-    gap: 6px;
-}
-
-.skillGroup label {
-    font-size: 0.8rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--text-color);
-}
-
-.skillAttr {
-    font-size: 0.7rem;
-    color: #888;
-}
-
-.skillGroup input[type="number"] {
-    width: 32px;
-    text-align: center;
-    padding: 2px;
-    font-size: 0.85rem;
-    background-color: var(--bg-inputs);
-    color: var(--text-color);
-    border: 1px solid #555;
-    border-radius: 4px;
-}
-
-.skillMod {
-    text-align: right; 
-    font-size: 0.8rem;
-    font-weight: bold;
-    white-space: nowrap;
-}
-
-/* Estados dinâmicos dos dados nas perícias (igual aos atributos) */
-.skillMod.dice-neutral {
-    color: #a3a3a3;
-}
-
-.skillMod.dice-positive {
-    color: var(--accent-color); /* Respeita a cor de destaque escolhida no painel */
-}
-
-.skillMod.dice-negative {
-    color: #c00101; /* Vermelho para penalidades */
-}
-</file>
-
 <file path="modules/attributes/skills.js">
 const skillColumnsData = [
     [
@@ -533,92 +559,6 @@ export function initSkills() {
     renderSkills();
     initSkillsListeners();
     updateAllSkills();
-}
-</file>
-
-<file path="modules/background/origins.js">
-import { originsData } from '../background/originsData.js'; 
-import { updateAllSkills } from '../attributes/skills.js';
-
-let lastTrainedSkills = [];
-
-export function initOrigins() {
-    const originSelect = document.getElementById("origin");
-    const habilityDesc = document.getElementById("originTraitDescription");
-
-    if (!originSelect) return;
-
-    // Popula o select ordenado alfabeticamente
-    if (originSelect.options.length <= 1) {
-        originSelect.innerHTML = `<option value="">Selecione uma origem...</option>`;
-        const sortedOrigins = Object.entries(originsData).sort((a, b) => a[1].name.localeCompare(b[1].name));
-
-        sortedOrigins.forEach(([key, origin]) => {
-            const option = document.createElement("option");
-            option.value = key;
-            option.textContent = origin.name;
-            originSelect.appendChild(option);
-        });
-    }
-
-    function applyOrigin(selectedKey, isInitialLoad = false) {
-        if (!isInitialLoad) {
-            lastTrainedSkills.forEach(skillId => {
-                const input = document.getElementById(`skill_${skillId}`);
-                if (input) {
-                    input.value = Math.max(0, parseInt(input.value || 0) - 1);
-                }
-            });
-            lastTrainedSkills = [];
-        }
-
-        if (!selectedKey || !originsData[selectedKey]) {
-            if (habilityDesc) {
-                habilityDesc.textContent = "Nenhuma origem especificada.";
-            }
-            updateAllSkills();
-            return;
-        }
-
-        const origin = originsData[selectedKey];
-
-        if (origin.skills && origin.skills.length > 0) {
-            origin.skills.forEach(skillId => {
-                const input = document.getElementById(`skill_${skillId}`);
-                if (input) {
-                    if (!isInitialLoad) {
-                        input.value = parseInt(input.value || 0) + 1;
-                    }
-                    lastTrainedSkills.push(skillId);
-                }
-            });
-        }
-
-        if (habilityDesc) {
-            let skillsText = origin.skillsName ? origin.skillsName : "À escolha do jogador";
-            habilityDesc.textContent = `Perícias Treinadas: ${skillsText}\n\n${origin.campfireSkill}`;
-        }
-
-        updateAllSkills();
-    }
-
-    originSelect.addEventListener("change", function() {
-        applyOrigin(this.value, false);
-    });
-
-    // Restaura automaticamente do localStorage na inicialização
-    try {
-        const savedJSON = localStorage.getItem('lutherian_character_sheet_data');
-        if (savedJSON) {
-            const data = JSON.parse(savedJSON);
-            if (data['origin'] && originsData[data['origin']]) {
-                originSelect.value = data['origin'];
-                applyOrigin(data['origin'], true); // true evita somar bônus duplicado de perícia no F5
-            }
-        }
-    } catch (e) {
-        console.error("Erro ao carregar origem:", e);
-    }
 }
 </file>
 
@@ -1822,496 +1762,162 @@ export function initLocalStorage() {
 }
 </file>
 
-<file path="core/themeEngine.js">
-export function initThemeEngine() {
-    const menuBtn = document.getElementById('optionsMenuBtn');
-    const dropdown = document.getElementById('optionsDropdown');
-    const themePanel = document.getElementById('themeCustomizerPanel');
-    const themeOptBtn = document.getElementById('menuOptTheme');
-    const backBtn = document.getElementById('backToMenuBtn');
-    
-    // Elementos do Modal de Reset
-    const resetOptBtn = document.getElementById('menuOptReset');
-    const resetModal = document.getElementById('resetConfirmModal');
-    const cancelResetBtn = document.getElementById('cancelResetBtn');
-    const confirmResetBtn = document.getElementById('confirmResetBtn');
-
-    // Abre/fecha o menu principal de opções ao clicar nas três bolinhas
-    if (menuBtn && dropdown && themePanel) {
-        menuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isOpen = dropdown.style.display === 'block' || themePanel.style.display === 'block';
-            if (isOpen) {
-                dropdown.style.display = 'none';
-                themePanel.style.display = 'none';
-            } else {
-                dropdown.style.display = 'block';
-                themePanel.style.display = 'none';
-            }
-        });
-    }
-
-    // Clicar em "Personalizar Tema" esconde o menu principal e abre o painel de cores
-    if (themeOptBtn && dropdown && themePanel) {
-        themeOptBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            dropdown.style.display = 'none';
-            themePanel.style.display = 'block';
-        });
-    }
-
-    // Clicar em "Resetar Ficha" fecha o menu e abre o Modal de Aviso
-    if (resetOptBtn && resetModal && dropdown) {
-        resetOptBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            dropdown.style.display = 'none';
-            resetModal.style.display = 'flex';
-        });
-    }
-
-    // Botão Cancelar do Modal
-    if (cancelResetBtn && resetModal) {
-        cancelResetBtn.addEventListener('click', () => {
-            resetModal.style.display = 'none';
-        });
-    }
-
-    // Botão Confirmar do Modal (Apaga tudo e reinicia)
-    if (confirmResetBtn) {
-        confirmResetBtn.addEventListener('click', () => {
-            localStorage.clear();
-            location.reload();
-        });
-    }
-
-    // Botão de "Voltar" dentro do painel de cores retorna ao menu de opções
-    if (backBtn && themePanel && dropdown) {
-        backBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            themePanel.style.display = 'none';
-            dropdown.style.display = 'block';
-        });
-    }
-
-    // Fecha tudo se clicar em qualquer lugar fora do menu
-    document.addEventListener('click', (e) => {
-        if (resetModal && resetModal.style.display === 'flex') return;
-
-        if (dropdown && themePanel && menuBtn) {
-            if (!dropdown.contains(e.target) && !themePanel.contains(e.target) && e.target !== menuBtn) {
-                dropdown.style.display = 'none';
-                themePanel.style.display = 'none';
-            }
-        }
-    });
-
-    const rootStyles = document.documentElement.style;
-
-    // VALORES PADRÃO
-    const defaultColors = {
-        colorBgMain: '#141414',      // Fundo preto customizável
-        colorBgFieldset: '#1c1c1c',  // Interior das caixas (um tom acima do preto)
-        colorBgInputs: '#2b2b2b',    // Fundo de inputs
-        colorText: '#ffffff',        // Textos comuns e subtítulos brancos por padrão
-        colorAccent: '#ffcc00'       // Nomes e Títulos amarelados por padrão
-    };
-
-    // Carrega cores salvas anteriormente no navegador (localStorage) ou usa o padrão
-    const savedTheme = JSON.parse(localStorage.getItem('lutherian_theme')) || {};
-    
-    const applyColor = (key, cssVar, defaultVal) => {
-        const val = savedTheme[key] || defaultVal;
-        rootStyles.setProperty(cssVar, val);
-        const input = document.getElementById(key);
-        if (input) input.value = val;
-    };
-
-    applyColor('colorBgMain', '--bg-main', defaultColors.colorBgMain);
-    applyColor('colorBgFieldset', '--bg-fieldset', defaultColors.colorBgFieldset);
-    applyColor('colorBgInputs', '--bg-inputs', defaultColors.colorBgInputs);
-    applyColor('colorText', '--text-color', defaultColors.colorText);
-    applyColor('colorAccent', '--accent-color', defaultColors.colorAccent);
-
-    // Eventos de mudança de cor em tempo real
-    const updateColor = (property, value, key) => {
-        rootStyles.setProperty(property, value);
-        savedTheme[key] = value;
-        localStorage.setItem('lutherian_theme', JSON.stringify(savedTheme));
-    };
-
-    const bindColorInput = (id, cssVar, key) => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('input', (e) => updateColor(cssVar, e.target.value, key));
-        }
-    };
-
-    bindColorInput('colorBgMain', '--bg-main', 'colorBgMain');
-    bindColorInput('colorBgFieldset', '--bg-fieldset', 'colorBgFieldset');
-    bindColorInput('colorBgInputs', '--bg-inputs', 'colorBgInputs');
-    bindColorInput('colorText', '--text-color', 'colorText');
-    bindColorInput('colorAccent', '--accent-color', 'colorAccent');
-
-    // Botão de restaurar padrão
-    const resetThemeBtn = document.getElementById('resetThemeBtn');
-    if (resetThemeBtn) {
-        resetThemeBtn.addEventListener('click', () => {
-            localStorage.removeItem('lutherian_theme');
-            
-            Object.keys(defaultColors).forEach(key => {
-                const cssVar = `--${key.replace('color', '').toLowerCase()}`; 
-                rootStyles.removeProperty(cssVar);
-                const input = document.getElementById(key);
-                if (input) input.value = defaultColors[key];
-            });
-
-            // Reaplica os padrões imediatamente
-            applyColor('colorBgMain', '--bg-main', defaultColors.colorBgMain);
-            applyColor('colorBgFieldset', '--bg-fieldset', defaultColors.colorBgFieldset);
-            applyColor('colorBgInputs', '--bg-inputs', defaultColors.colorBgInputs);
-            applyColor('colorText', '--text-color', defaultColors.colorText);
-            applyColor('colorAccent', '--accent-color', defaultColors.colorAccent);
-
-            if (themePanel && dropdown) {
-                themePanel.style.display = 'none';
-                dropdown.style.display = 'block';
-            }
-        });
-    }
-}
-</file>
-
-<file path="modules/attributes/attributes.css">
-#attributesContainer {
+<file path="modules/attributes/skills.css">
+/* 4. SEÇÃO DE PERÍCIAS (5 COLUNAS) */
+.skillsContainer {
     display: flex;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: 12px;
     justify-content: space-between;
 }
 
-.attributeGroup {
-    flex: 1 1 300px;
-    border: 1px solid #333 !important;
-    border-radius: 6px;
-    padding: 12px;
-    background-color: var(--bg-fieldset) !important; 
-    color: var(--text-color);
+.skillColumn {
+    flex: 1 1 220px; 
     display: flex;
     flex-direction: column;
-    gap: 8px;
-}
-
-.attributeRow {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-}
-
-.attribute-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.attribute-left label {
-    width: 90px;
-    white-space: nowrap;
+    gap: 6px;
+    background-color: var(--bg-fieldset);
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px;
     color: var(--text-color);
-    font-family: var(--font-sub); /* Subtítulo nos nomes dos atributos */
-    font-size: 0.95rem;
 }
 
-.attribute-right {
-    display: flex;
+.skillGroup {
+    display: grid;
+    grid-template-columns: 1fr 32px 105px; 
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
-.attribute-right label {
-    font-family: var(--font-body);
+.skillGroup label {
     font-size: 0.8rem;
-    color: #ccc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-color);
 }
 
-.attributeRow input[type="number"] {
-    width: 45px;
+.skillAttr {
+    font-size: 0.7rem;
+    color: #888;
+}
+
+.skillGroup input[type="number"] {
+    width: 32px;
     text-align: center;
-    padding: 3px;
+    padding: 2px;
+    font-size: 0.85rem;
     background-color: var(--bg-inputs);
     color: var(--text-color);
-    border: 1px solid #444;
+    border: 1px solid #555;
     border-radius: 4px;
-    font-family: var(--font-body);
 }
 
-.diceToRoll {
-    text-align: right;
+.skillMod {
+    text-align: right; 
+    font-size: 0.8rem;
     font-weight: bold;
-    min-width: 85px;
-    font-size: 0.9rem;
-    color: var(--accent-color);
-    font-family: var(--font-body);
+    white-space: nowrap;
 }
 
-.conditionBox {
-    text-align: center;
-    padding: 8px;
-    background-color: var(--bg-inputs) !important;
-    border-radius: 4px;
-    border-top: 1px solid #444 !important;
-    color: var(--text-color);
-    margin-top: 5px;
-    font-family: var(--font-sub);
+/* Estados dinâmicos dos dados nas perícias (igual aos atributos) */
+.skillMod.dice-neutral {
+    color: #a3a3a3;
+}
+
+.skillMod.dice-positive {
+    color: var(--positive-color, #ffcc00);
+}
+
+.skillMod.dice-negative {
+    color: var(--negative-color, #c00101); 
 }
 </file>
 
-<file path="modules/header/basics.css">
-/* TIPOGRAFIA E CAMPOS INVISÍVEIS DO TOPO */
-.titleFont {
-    font-family: var(--font-title);
-    color: var(--accent-color, #ffcc00);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-size: 1.4rem;
-}
+<file path="modules/background/origins.js">
+import { originsData } from '../background/originsData.js'; 
+import { updateAllSkills } from '../attributes/skills.js';
 
-.subFont {
-    font-family: var(--font-sub);
-    color: var(--text-color, #ffffff);
-}
-.invisibleInput, .invisibleSelect, .invisibleTextarea {
-    background: transparent;
-    border: none;
-    outline: none;
-    color: inherit;
-    font-family: inherit;
-}
-.invisibleInput:focus, .invisibleSelect:focus, .invisibleTextarea:focus {
-    border-bottom: 1px dashed #666;
-}
-.invisibleInput[type="number"]::-webkit-inner-spin-button, 
-.invisibleInput[type="number"]::-webkit-outer-spin-button { 
-    -webkit-appearance: none; margin: 0; 
-}
-.invisibleInput[type="number"] { -moz-appearance: textfield; }
+let lastTrainedSkills = [];
 
-.invisibleSelect option {
-    background-color: var(--bg-inputs, #2b2b2b);
-    color: var(--text-color, #ffffff);
-}
+export function initOrigins() {
+    const originSelect = document.getElementById("origin");
+    const habilityDesc = document.getElementById("originTraitDescription");
 
-/* CABEÇALHO */
-.characterHeaderArea {
-    margin-bottom: 25px;
-}
-.charNameRow {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 2rem;
-    font-weight: bold;
-    color: var(--text-color, #ffffff);
-}
-.charNameRow input {
-    width: 100%;
-    font-size: 2rem;
-    text-align: left;
-    color: var(--text-color, #ffffff);
-}
-.charClassRow {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-left: 2.5rem;
-    margin-top: 5px;
-}
-.charClassRow input {
-    font-size: 1.1rem;
-    width: 40%;
-    color: var(--text-color, #ffffff);
-}
-.headerDivider {
-    margin-top: 15px;
-    border: 0;
-    height: 1px;
-    background: var(--bg-fieldset, #444);
-}
+    if (!originSelect) return;
 
-/* TÍTULOS DE SEÇÃO COM LINHAS HORIZONTAIS */
-.sectionTitleWrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    margin-bottom: 15px;
-    width: 100%;
-}
-.titleLine {
-    width: 100%;
-    border: 0;
-    height: 1px;
-    background: var(--bg-fieldset, #555);
-    margin: 0;
-}
-.sectionTitle {
-    margin: 5px 0;
-    font-size: 1.3rem;
-    font-family: var(--font-title);
-}
+    // Popula o select ordenado alfabeticamente
+    if (originSelect.options.length <= 1) {
+        originSelect.innerHTML = `<option value="">Selecione uma origem...</option>`;
+        const sortedOrigins = Object.entries(originsData).sort((a, b) => a[1].name.localeCompare(b[1].name));
 
-/* BLOCO SUPERIOR (30% / 70%) */
-.topSplitContainer {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
-    padding-right: 15px; /* Cria o pequeno espaço simétrico na direita do bloco Básico */
-    box-sizing: border-box;
-}
-.leftProfileColumn {
-    flex: 0 0 30%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-}
-.rightBasicColumn {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
-}
+        sortedOrigins.forEach(([key, origin]) => {
+            const option = document.createElement("option");
+            option.value = key;
+            option.textContent = origin.name;
+            originSelect.appendChild(option);
+        });
+    }
 
-.levelCircleWrapper {
-    width: 60px;
-    height: 60px;
-    border: 2px solid var(--accent-color, #ffcc00);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-fieldset, #1c1c1c);
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
-}
-.levelInputCircle::-webkit-inner-spin-button, 
-.levelInputCircle::-webkit-outer-spin-button { 
-    -webkit-appearance: none; margin: 0; 
-}
-.levelInputCircle {
-    -moz-appearance: textfield;
-    padding: 0;
-    width: 50%;
-    height: 80%;
-    box-sizing: border-box;
-    background: transparent;
-    border: none;
-    color: var(--accent-color, #ffcc00);
-    font-size: 28px;
-    font-weight: bold;
-    text-align: center;
-    outline: none;
-}
-.threatMeterBar {
-    width: 12px;
-    height: 60px;
-    background: #111;
-    border: 1px solid var(--bg-fieldset, #444);
-    border-top: none;
-    border-radius: 0 0 4px 4px;
-    margin-top: -10px;
-}
-.stressSquaresContainer {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    gap: 4px;
-    margin-top: 2px;
-}
-.stressSquare {
-    width: 12px;
-    height: 12px;
-    background: #111;
-    border: 1px solid #555;
-    transition: background 0.3s ease;
-}
-.stressSquare.active {
-    background: #fff;
-    box-shadow: 0 0 5px #fff;
-}
-.stressConditionHeader {
-    font-size: 12px;
-    font-weight: bold;
-    color: var(--text-color, #aaa);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-.characterImageBox {
-    width: 85%;
-    max-width: 180px;
-    aspect-ratio: 0.85;
-    border: 2px dashed #555;
-    background: var(--bg-fieldset, rgba(0,0,0,0.3));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 15px;
-}
+    function applyOrigin(selectedKey, isInitialLoad = false) {
+        if (!isInitialLoad) {
+            lastTrainedSkills.forEach(skillId => {
+                const input = document.getElementById(`skill_${skillId}`);
+                if (input) {
+                    input.value = Math.max(0, parseInt(input.value || 0) - 1);
+                }
+            });
+            lastTrainedSkills = [];
+        }
 
-.basicSplitColumns {
-    display: flex;
-    gap: 20px;
-}
-.basicSubLeft { flex: 0 0 55%; }
-.basicSubRight { flex: 1; }
+        if (!selectedKey || !originsData[selectedKey]) {
+            if (habilityDesc) {
+                habilityDesc.textContent = "Nenhuma origem especificada.";
+            }
+            updateAllSkills();
+            return;
+        }
 
-.smallBoxInput {
-    background: var(--bg-inputs, #2b2b2b);
-    border: 1px solid #444;
-    color: var(--text-color, #fff);
-    width: 45px;
-    text-align: center;
-    padding: 3px;
-    border-radius: 3px;
-}
-.inlineDataGroup {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    background: var(--bg-fieldset, #1c1c1c);
-    border: 1px solid #333;
-    padding: 5px 10px;
-    border-radius: 4px;
-    color: var(--text-color, #fff);
-}
-.classCampfireBox textarea {
-    width: 100%;
-    height: 80px;
-    margin-top: 5px;
-    background: var(--bg-inputs, #2b2b2b);
-    border: 1px solid #444;
-    padding: 8px;
-    color: var(--text-color, #fff);
-    resize: none;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
-/* Restaura as caixas de Vantagem, Maldição e Origem */
-.raceTraitsContainer {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 10px;
-}
+        const origin = originsData[selectedKey];
 
-.raceTraitBox, .classTrait {
-    background: var(--bg-fieldset, #1c1c1c);
-    border: 1px solid #333;
-    padding: 10px;
-    border-radius: 4px;
-    color: var(--text-color, #fff);
-    
+        if (origin.skills && origin.skills.length > 0) {
+            origin.skills.forEach(skillId => {
+                const input = document.getElementById(`skill_${skillId}`);
+                if (input) {
+                    if (!isInitialLoad) {
+                        input.value = parseInt(input.value || 0) + 1;
+                    }
+                    lastTrainedSkills.push(skillId);
+                }
+            });
+        }
+
+        if (habilityDesc) {
+            let skillsText = origin.skillsName ? origin.skillsName : "À escolha do jogador";
+            habilityDesc.innerHTML = `Perícias Treinadas: ${skillsText}<br><br>${origin.campfireSkill}`;
+        }
+
+        updateAllSkills();
+    }
+
+    originSelect.addEventListener("change", function() {
+        applyOrigin(this.value, false);
+    });
+
+    // Restaura automaticamente do localStorage na inicialização
+    try {
+        const savedJSON = localStorage.getItem('lutherian_character_sheet_data');
+        if (savedJSON) {
+            const data = JSON.parse(savedJSON);
+            if (data['origin'] && originsData[data['origin']]) {
+                originSelect.value = data['origin'];
+                applyOrigin(data['origin'], true); // true evita somar bônus duplicado de perícia no F5
+            }
+        }
+    } catch (e) {
+        console.error("Erro ao carregar origem:", e);
+    }
 }
 </file>
 
@@ -2502,31 +2108,31 @@ export function initThemeEngine() {
 
 .resourceBarContainer {
     width: 100%;
-    height: 24px;
+    height: 16px;
     background: #0d0d0d;
     border: 2px solid #333;
     position: relative;
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
 }
 .vitalityFill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #590000 0%, #a60000 100%);
-    box-shadow: 0 0 8px rgba(255,0,0,0.5);
+    background:#860202;
+    box-shadow: 0 0 4px rgba(255,0,0,0.25);
     transition: width 0.3s ease;
 }
 .willpowerFill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #001a4d 0%, #004080 100%);
-    box-shadow: 0 0 8px rgba(0, 102, 204, 0.5);
+    background:#001a4d;
+    box-shadow: 0 0 4px rgba(0, 102, 204, 0.25); 
     transition: width 0.3s ease;
 }
 .stressFill {
     height: 100%;
     width: 0%;
     background: #e6e6e6;
-    box-shadow: 0 0 8px rgba(255,255,255,0.4);
+    box-shadow: 0 0 4px rgba(255,255,255,0.2); 
     transition: width 0.3s ease, background 0.3s ease;
 }
 .stressMark100 {
@@ -2725,6 +2331,637 @@ body {
 }
 </file>
 
+<file path="styles/utilities.css">
+/* Alinhamentos rápidos */
+.text-center { text-align: center !important; }
+.text-left { text-align: left !important; }
+.text-right { text-align: right !important; }
+
+/* Flexbox helpers */
+.flex { display: flex !important; }
+.flex-column { flex-direction: column !important; }
+.items-center { align-items: center !important; }
+.justify-between { justify-content: space-between !important; }
+.gap-10 { gap: 10px !important; }
+
+/* Visibilidade */
+.hidden { display: none !important; }
+
+/* Margens utilitárias rápidas */
+.mt-10 { margin-top: 10px !important; }
+.mt-20 { margin-top: 20px !important; }
+.mb-10 { margin-bottom: 10px !important; }
+</file>
+
+<file path="core/themeEngine.js">
+export function initThemeEngine() {
+    const menuBtn = document.getElementById('optionsMenuBtn');
+    const dropdown = document.getElementById('optionsDropdown');
+    const themePanel = document.getElementById('themeCustomizerPanel');
+    const themeOptBtn = document.getElementById('menuOptTheme');
+    const backBtn = document.getElementById('backToMenuBtn');
+    
+    // Elementos do Modal de Reset
+    const resetOptBtn = document.getElementById('menuOptReset');
+    const resetModal = document.getElementById('resetConfirmModal');
+    const cancelResetBtn = document.getElementById('cancelResetBtn');
+    const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+    // Abre/fecha o menu principal de opções ao clicar nas três bolinhas
+    if (menuBtn && dropdown && themePanel) {
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = dropdown.style.display === 'block' || themePanel.style.display === 'block';
+            if (isOpen) {
+                dropdown.style.display = 'none';
+                themePanel.style.display = 'none';
+            } else {
+                dropdown.style.display = 'block';
+                themePanel.style.display = 'none';
+            }
+        });
+    }
+
+    // Clicar em "Personalizar Tema" esconde o menu principal e abre o painel de cores
+    if (themeOptBtn && dropdown && themePanel) {
+        themeOptBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.style.display = 'none';
+            themePanel.style.display = 'block';
+        });
+    }
+
+    // Clicar em "Resetar Ficha" fecha o menu e abre o Modal de Aviso
+    if (resetOptBtn && resetModal && dropdown) {
+        resetOptBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.style.display = 'none';
+            resetModal.style.display = 'flex';
+        });
+    }
+
+    // Botão Cancelar do Modal
+    if (cancelResetBtn && resetModal) {
+        cancelResetBtn.addEventListener('click', () => {
+            resetModal.style.display = 'none';
+        });
+    }
+
+    // Botão Confirmar do Modal (Apaga tudo e reinicia)
+    if (confirmResetBtn) {
+        confirmResetBtn.addEventListener('click', () => {
+            localStorage.clear();
+            location.reload();
+        });
+    }
+
+    // Botão de "Voltar" dentro do painel de cores retorna ao menu de opções
+    if (backBtn && themePanel && dropdown) {
+        backBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            themePanel.style.display = 'none';
+            dropdown.style.display = 'block';
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (resetModal && resetModal.style.display === 'flex') return;
+
+        if (dropdown && themePanel && menuBtn) {
+            if (!dropdown.contains(e.target) && !themePanel.contains(e.target) && e.target !== menuBtn) {
+                dropdown.style.display = 'none';
+                themePanel.style.display = 'none';
+            }
+        }
+    });
+
+    const rootStyles = document.documentElement.style;
+
+    // VALORES PADRÃO
+    const defaultColors = {
+        colorBgMain: '#141414',
+        colorBgFieldset: '#1c1c1c',
+        colorBgInputs: '#2b2b2b',
+        colorText: '#ffffff',
+        colorAccent: '#ffcc00',
+        colorNegative: '#c00101',
+        colorPositive: '#ffcc00',
+        colorLines: '#ffffff'
+    };
+
+    let savedTheme = JSON.parse(localStorage.getItem('lutherian_theme')) || {};
+    
+    const applyColor = (key, cssVar, defaultVal) => {
+        const val = savedTheme[key] || defaultVal;
+        rootStyles.setProperty(cssVar, val);
+        const input = document.getElementById(key);
+        if (input) input.value = val;
+    };
+
+    const applyAllColors = (themeSource) => {
+        applyColor('colorBgMain', '--bg-main', themeSource.colorBgMain || defaultColors.colorBgMain);
+        applyColor('colorBgFieldset', '--bg-fieldset', themeSource.colorBgFieldset || defaultColors.colorBgFieldset);
+        applyColor('colorBgInputs', '--bg-inputs', themeSource.colorBgInputs || defaultColors.colorBgInputs);
+        applyColor('colorText', '--text-color', themeSource.colorText || defaultColors.colorText);
+        applyColor('colorAccent', '--accent-color', themeSource.colorAccent || defaultColors.colorAccent);
+        applyColor('colorNegative', '--negative-color', themeSource.colorNegative || defaultColors.colorNegative);
+        applyColor('colorPositive', '--positive-color', themeSource.colorPositive || defaultColors.colorPositive);
+        applyColor('colorLines', '--line-color', themeSource.colorLines || defaultColors.colorLines);
+    };
+
+    applyAllColors(savedTheme);
+
+    const updateColor = (property, value, key) => {
+        rootStyles.setProperty(property, value);
+        savedTheme[key] = value;
+        localStorage.setItem('lutherian_theme', JSON.stringify(savedTheme));
+    };
+
+    const bindColorInput = (id, cssVar, key) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', (e) => updateColor(cssVar, e.target.value, key));
+        }
+    };
+
+    bindColorInput('colorBgMain', '--bg-main', 'colorBgMain');
+    bindColorInput('colorBgFieldset', '--bg-fieldset', 'colorBgFieldset');
+    bindColorInput('colorBgInputs', '--bg-inputs', 'colorBgInputs');
+    bindColorInput('colorText', '--text-color', 'colorText');
+    bindColorInput('colorAccent', '--accent-color', 'colorAccent');
+    bindColorInput('colorNegative', '--negative-color', 'colorNegative');
+    bindColorInput('colorPositive', '--positive-color', 'colorPositive');
+    bindColorInput('colorLines', '--line-color', 'colorLines');
+
+    const resetThemeBtn = document.getElementById('resetThemeBtn');
+    if (resetThemeBtn) {
+        resetThemeBtn.addEventListener('click', () => {
+            localStorage.removeItem('lutherian_theme');
+            savedTheme = {};
+
+            applyAllColors(defaultColors);
+
+            if (themePanel && dropdown) {
+                themePanel.style.display = 'none';
+                dropdown.style.display = 'block';
+            }
+        });
+    }
+}
+</file>
+
+<file path="modules/attributes/attributes.css">
+#attributesContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+.attributeGroup {
+    flex: 1 1 300px;
+    border: 1px solid #333 !important;
+    border-radius: 6px;
+    padding: 12px;
+    background-color: var(--bg-fieldset) !important; 
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.attributeRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.attribute-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.attribute-left label {
+    width: 90px;
+    white-space: nowrap;
+    color: var(--text-color);
+    font-family: var(--font-sub); /* Subtítulo nos nomes dos atributos */
+    font-size: 0.95rem;
+}
+
+.attribute-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.attribute-right label {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    color: #ccc;
+}
+
+.attributeRow input[type="number"] {
+    width: 45px;
+    text-align: center;
+    padding: 3px;
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #444;
+    border-radius: 4px;
+    font-family: var(--font-body);
+}
+
+.diceToRoll {
+    text-align: right;
+    font-weight: bold;
+    min-width: 85px;
+    font-size: 0.9rem;
+    color: var(--accent-color);
+    font-family: var(--font-body);
+}
+
+.conditionBox {
+    text-align: center;
+    padding: 8px;
+    background-color: var(--bg-inputs) !important;
+    border-radius: 4px;
+    border-top: 1px solid #444 !important;
+    color: var(--text-color);
+    margin-top: 5px;
+    font-family: var(--font-sub);
+}
+
+.diceToRoll.dice-negative {
+    color: var(--negative-color, #c00101);
+}
+.diceToRoll.dice-positive {
+    color: var(--positive-color, #ffcc00);
+}
+</file>
+
+<file path="modules/header/basics.css">
+/* TIPOGRAFIA E CAMPOS INVISÍVEIS DO TOPO */
+.titleFont {
+    font-family: var(--font-title);
+    color: var(--accent-color, #ffcc00);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 1.4rem;
+}
+
+.subFont {
+    font-family: var(--font-sub);
+    color: var(--text-color, #ffffff);
+}
+.invisibleInput, .invisibleSelect, .invisibleTextarea {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: inherit;
+    font-family: inherit;
+}
+.invisibleInput:focus, .invisibleSelect:focus, .invisibleTextarea:focus {
+    border-bottom: 1px dashed #666;
+}
+.invisibleInput[type="number"]::-webkit-inner-spin-button, 
+.invisibleInput[type="number"]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; margin: 0; 
+}
+.invisibleInput[type="number"] { -moz-appearance: textfield; }
+
+.invisibleSelect option {
+    background-color: var(--bg-inputs, #2b2b2b);
+    color: var(--text-color, #ffffff);
+}
+
+/* CABEÇALHO */
+.characterHeaderArea {
+    margin-bottom: 25px;
+}
+.charNameRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-color, #ffffff);
+}
+.charNameRow input {
+    width: 100%;
+    font-size: 2rem;
+    text-align: left;
+    color: var(--text-color, #ffffff);
+}
+.charClassRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 2.5rem;
+    margin-top: 5px;
+}
+.charClassRow input {
+    font-size: 1.1rem;
+    width: 40%;
+    color: var(--text-color, #ffffff);
+}
+
+.titleLine, .headerDivider {
+    width: 100%;
+    border: 0;
+    height: 1px;
+    background: var(--line-color, #ffffff) !important;
+    margin: 0;
+}
+
+/* TÍTULOS DE SEÇÃO COM LINHAS HORIZONTAIS */
+.sectionTitleWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 15px;
+    width: 100%;
+}
+.titleLine {
+    width: 100%;
+    border: 0;
+    height: 1px;
+    background: var(--bg-fieldset, #555);
+    margin: 0;
+}
+.sectionTitle {
+    margin: 5px 0;
+    font-size: 1.3rem;
+    font-family: var(--font-title);
+}
+
+/* BLOCO SUPERIOR (30% / 70%) */
+.topSplitContainer {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    padding-right: 15px; /* Cria o pequeno espaço simétrico na direita do bloco Básico */
+    box-sizing: border-box;
+}
+.leftProfileColumn {
+    flex: 0 0 30%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+.rightBasicColumn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.levelCircleWrapper {
+    width: 60px;
+    height: 60px;
+    border: 2px solid var(--accent-color, #ffcc00);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-fieldset, #1c1c1c);
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+.levelInputCircle::-webkit-inner-spin-button, 
+.levelInputCircle::-webkit-outer-spin-button { 
+    -webkit-appearance: none; margin: 0; 
+}
+.levelInputCircle {
+    -moz-appearance: textfield;
+    padding: 0;
+    width: 50%;
+    height: 80%;
+    box-sizing: border-box;
+    background: transparent;
+    border: none;
+    color: var(--accent-color, #ffcc00);
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+    outline: none;
+}
+
+.threatMeterBar {
+    width: 12px;
+    height: 60px;
+    background: #111;
+    border: 1px solid var(--bg-fieldset, #444);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    margin-top: -10px;
+}
+.stressSquaresContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+.stressSquare {
+    width: 12px;
+    height: 12px;
+    background: #111;
+    border: 1px solid #555;
+    transition: background 0.3s ease;
+}
+.stressSquare.active {
+    background: #fff;
+    box-shadow: 0 0 5px #fff;
+}
+.stressConditionHeader {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--text-color, #aaa);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.characterImageBox {
+    width: 85%;
+    max-width: 290px;
+    aspect-ratio: 0.85;
+    border: 2px dashed #555;
+    background: var(--bg-fieldset, rgba(0,0,0,0.3));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.basicSplitColumns {
+    display: flex;
+    gap: 20px;
+}
+.basicSubLeft { flex: 0 0 55%; }
+
+.basicSubRight {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    margin-top: 35px; 
+}
+
+.smallBoxInput {
+    background: var(--bg-inputs, #2b2b2b);
+    border: 1px solid #444;
+    color: var(--text-color, #fff);
+    width: 45px;
+    text-align: center;
+    padding: 3px;
+    border-radius: 3px;
+}
+.inlineDataGroup {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    background: var(--bg-fieldset, #1c1c1c);
+    border: 1px solid #333;
+    padding: 5px 10px;
+    border-radius: 4px;
+    color: var(--text-color, #fff);
+}
+.classCampfireBox textarea {
+    width: 100%;
+    height: 80px;
+    margin-top: 5px;
+    background: var(--bg-inputs, #2b2b2b);
+    border: 1px solid #444;
+    padding: 8px;
+    color: var(--text-color, #fff);
+    resize: none;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+/* Restaura as caixas de Vantagem, Maldição e Origem */
+.raceTraitsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.raceTraitBox, .classTrait {
+    background: var(--bg-fieldset, #1c1c1c);
+    border: 1px solid #333;
+    padding: 10px;
+    border-radius: 4px;
+    color: var(--text-color, #fff);
+    
+}
+
+/* Container empilhado e compacto */
+.inlineDataCompactGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+/* Cada linha se comporta como um grid fixo para alinhar perfeitamente */
+.inlineDataCompactGroup .inlineDataGroup {
+    display: grid;
+    grid-template-columns: 75px 50px 45px; /* Rótulo fixo (75px), Input fixo (50px), Unidade (45px) */
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0;
+    padding: 6px 12px;
+    background: var(--bg-fieldset, #1c1c1c);
+    border: 1px solid #333;
+    border-radius: 4px;
+    width: fit-content;
+}
+
+.inlineDataCompactGroup .inlineDataGroup label {
+    text-align: left;
+    white-space: nowrap;
+}
+
+.inlineDataCompactGroup .smallBoxInput {
+    width: 100%; /* Ocupa os 50px reservados na coluna do grid */
+    text-align: center;
+}
+
+.inlineDataCompactGroup .unit {
+    font-size: 0.85rem;
+    color: var(--text-color);
+    opacity: 0.8;
+    text-align: left;
+}
+
+/* CABEÇALHO AJUSTADO */
+.characterHeaderArea {
+    margin-bottom: 25px;
+}
+
+.charNameRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-color, #ffffff);
+}
+
+.charNameInput {
+    width: 50% !important;
+    font-size: 2rem;
+    text-align: left;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    color: var(--text-color, #ffffff);
+    padding: 0;
+}
+
+.charNameInput:focus {
+    border-bottom: 1px dashed #666 !important;
+}
+
+.charClassRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 2.5rem;
+    margin-top: 8px;
+}
+
+/* Estilo individual dos inputs de classe e subclasse (metade da largura anterior) */
+.classInput, .subclassInput {
+    width: 120px !important;
+    font-size: 1.1rem;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    color: var(--text-color, #ffffff);
+    padding: 0;
+}
+
+.subclassInput {
+    width: 180px !important;
+    font-size: 1.1rem;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    color: var(--text-color, #ffffff);
+    padding: 0;
+}
+
+.classInput:focus, .subclassInput:focus {
+    border-bottom: 1px dashed #666 !important;
+}
+</file>
+
 <file path="styles/tabs.css">
 .characterTabsWrapper {
     margin-top: 10px;
@@ -2737,6 +2974,7 @@ body {
     margin-bottom: 0;
     position: relative;
     z-index: 2;
+    flex-wrap: wrap; 
 }
 
 .tabBtn {
@@ -2744,12 +2982,12 @@ body {
     color: #777;
     border: 1px solid #333;
     border-bottom: none;
-    padding: 8px 22px;
+    padding: 8px 18px; 
     border-radius: 6px 6px 0 0;
     cursor: pointer;
     font-weight: bold;
-    font-size: 1rem;
-    font-family: var(--font-sub); /* Subtítulo nas abas */
+    font-size: 0.95rem;
+    font-family: var(--font-sub);
     transition: background-color 0.2s, color 0.2s;
     outline: none;
 }
@@ -2796,28 +3034,55 @@ body {
     color: var(--accent-color);
     letter-spacing: 1px;
 }
-</file>
 
-<file path="styles/utilities.css">
-/* Alinhamentos rápidos */
-.text-center { text-align: center !important; }
-.text-left { text-align: left !important; }
-.text-right { text-align: right !important; }
+/* Container unificado das abas com ícones de fundo inteiros */
+.tabs-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 0;
+    padding-left: 2px;
+}
 
-/* Flexbox helpers */
-.flex { display: flex !important; }
-.flex-column { flex-direction: column !important; }
-.items-center { align-items: center !important; }
-.justify-between { justify-content: space-between !important; }
-.gap-10 { gap: 10px !important; }
+.tab-btn {
+    background-color: transparent;
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    width: 55px;
+    height: 45px;
+    padding: 0;
+    position: relative;
+    opacity: 0.55;
+    filter: brightness(0.65);
+    transition: all 0.2s ease;
+}
 
-/* Visibilidade */
-.hidden { display: none !important; }
+.tab-btn[data-tab="personagem"] {
+    background-image: url('../assets/icons/char.icon.png');
+}
 
-/* Margens utilitárias rápidas */
-.mt-10 { margin-top: 10px !important; }
-.mt-20 { margin-top: 20px !important; }
-.mb-10 { margin-bottom: 10px !important; }
+.tab-btn[data-tab="habilidades"] {
+    background-image: url('../assets/icons/habilities.icon.png');
+}
+
+.tab-btn[data-tab="detalhes"] {
+    background-image: url('../assets/icons/inventory.icon.png');
+}
+
+.tab-btn:hover {
+    opacity: 0.85;
+    filter: brightness(0.9);
+    transform: translateY(-2px);
+}
+
+.tab-btn.active {
+    opacity: 1;
+    filter: brightness(1.15);
+    transform: translateY(-4px);
+}
 </file>
 
 <file path="styles/variables.css">
@@ -2851,10 +3116,13 @@ body {
     --bg-inputs: #2b2b2b;
     --text-color: #ffffff;
     --accent-color: #ffcc00;
+    --negative-color: #c00101;
+    --positive-color: #ffcc00;
+    --line-color: #ffffff;
 
     --font-body: 'FjallaOne', Arial, sans-serif;          
     --font-sub: 'GermaniaOne', Arial, sans-serif;         
-    --font-title: 'Quintessential', Georgia, serif;       /* Nova fonte de títulos */
+    --font-title: 'Quintessential', Georgia, serif;
 }
 
 body, input, select, textarea, button {
@@ -2887,6 +3155,57 @@ select {
     box-sizing: border-box;
 }
 
+/* Botões interativos dos ícones do cabeçalho */
+.headerIconBtn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+/* Tamanho maior e proporcional para encaixar com as linhas */
+.headerIconImg {
+    width: 36px;  /* Aumentado para acompanhar a altura do texto */
+    height: 36px; 
+    object-fit: contain;
+    filter: brightness(0.85);
+    transition: filter 0.15s ease;
+}
+
+/* Efeito ao passar o mouse */
+.headerIconBtn:hover .headerIconImg {
+    filter: brightness(1.15);
+    transform: scale(1.05);
+}
+
+/* Efeito ao clicar */
+.headerIconBtn:active {
+    transform: scale(0.95);
+}
+
+/* Afasta o bloco da classe e desce a linha divisória perfeitamente */
+.charClassRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 0; /* Alinha perfeitamente com o nome em cima */
+    margin-top: 12px; /* Dá mais respiro entre o nome e a classe */
+    margin-bottom: 12px; /* Afasta a linha de baixo em ~3px a mais */
+}
+
+/* Ajusta o espaçamento da linha divisória do cabeçalho */
+.headerDivider {
+    margin-top: 10px; /* Desce a linha um pouco mais */
+    border: 0;
+    height: 1px;
+    background: var(--line-color, #ffffff) !important;
+}
+
 /* ==========================================
    APLICAÇÃO DOS TÍTULOS COM A QUINTESSENTIAL
    ========================================== */
@@ -2906,6 +3225,59 @@ select {
     font-style: normal !important;
     font-weight: normal !important;
 }
+
+/* Container das abas */
+.tabs-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 0;
+    padding-left: 2px;
+}
+
+/* O botão VIRA a imagem quadrada e sem distorção */
+.tab-btn {
+    background-color: transparent;
+    background-size: cover; /* Garante que a imagem preencha o quadrado sem achatar */
+    background-position: center;
+    background-repeat: no-repeat;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    width: 48px;  /* Largura e altura iguais para ficar perfeitamente quadrado */
+    height: 48px; 
+    padding: 0;
+    position: relative;
+    opacity: 0.55; /* Apagada quando inativa */
+    filter: brightness(0.65);
+    transition: all 0.2s ease;
+}
+
+/* Imagens de fundo para cada aba */
+.tab-btn[data-tab="personagem"] {
+    background-image: url('../assets/icons/char.icon.png');
+}
+
+.tab-btn[data-tab="habilidades"] {
+    background-image: url('../assets/icons/habilities.icon.png');
+}
+
+.tab-btn[data-tab="detalhes"] {
+    background-image: url('../assets/icons/inventory.icon.png');
+}
+
+/* Efeito ao passar o mouse */
+.tab-btn:hover {
+    opacity: 0.85;
+    filter: brightness(0.9);
+    transform: translateY(-2px);
+}
+
+/* Aba ativa (selecionada) */
+.tab-btn.active {
+    opacity: 1;
+    filter: brightness(1.15);
+    transform: translateY(-4px);
+}
 </file>
 
 <file path="script.js">
@@ -2924,6 +3296,7 @@ import { initPersonalListeners } from './modules/personal/personal.js';
 import { initInventory } from './modules/inventory/inventory.js';
 import { initNarrative } from './modules/narrative/narrative.js';
 import { initStatus } from './modules/status/status.js';
+import { initLevelEmblem } from './modules/level/levelManager.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     // Função para blindar a inicialização. Se um módulo quebrar, o resto sobrevive.
@@ -2950,6 +3323,7 @@ document.addEventListener("DOMContentLoaded", () => {
     safeInit("Races", initRaces);
     safeInit("Origins", initOrigins);
     safeInit("Narrative", initNarrative);
+    safeInit("LevelEmblem", initLevelEmblem);
 
     console.log("Ficha Lutherian iniciada com sistema anti-crash ativado!");
 });
@@ -2961,14 +3335,16 @@ document.addEventListener("DOMContentLoaded", () => {
 <head>
     <meta charset="UTF-8">
     <title>Ficha Lutherian</title>
+    <link rel="icon" type="image/png" href="assets/icons/page.icon.png">
     <link rel="stylesheet" href="styles/global.css">
+    <link rel="stylesheet" href="modules/level/level.css">
 </head>
 <body>
 
     <div class="mainFile">
 
         <!-- MENU FLUTUANTE DE OPÇÕES (Canto Superior Direito) -->
-        <div class="optionsMenuWrapper" style="position: absolute; top: 20px; right: 20px; z-index: 1000;">
+        <div class="optionsMenuWrapper" style="position: absolute; top: 0px; right: -200px; z-index: 1000;">
             <button type="button" id="optionsMenuBtn" style="background: var(--bg-fieldset, #1c1c1c); border: 1px solid #444; color: var(--text-color, #fff); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4);" title="Opções">
                 ⋮
             </button>
@@ -3006,10 +3382,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 </h4>
                 <div id="themeControls" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
                     <label style="display: flex; justify-content: space-between; align-items: center;">
-                        Fundo Geral: <input type="color" id="colorBgMain" value="#141414">
+                        Fundo: <input type="color" id="colorBgMain" value="#141414">
                     </label>
                     <label style="display: flex; justify-content: space-between; align-items: center;">
-                        Blocos (Fieldsets): <input type="color" id="colorBgFieldset" value="#1c1c1c">
+                        Blocos: <input type="color" id="colorBgFieldset" value="#1c1c1c">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Linhas: <input type="color" id="colorLines" value="#ffffff">
                     </label>
                     <label style="display: flex; justify-content: space-between; align-items: center;">
                         Caixas de Texto: <input type="color" id="colorBgInputs" value="#2b2b2b">
@@ -3018,7 +3397,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         Texto Geral: <input type="color" id="colorText" value="#ffffff">
                     </label>
                     <label style="display: flex; justify-content: space-between; align-items: center;">
-                        Destaque: <input type="color" id="colorAccent" value="#ffffff">
+                        Destaques: <input type="color" id="colorAccent" value="#ffffff">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Desvantagens: <input type="color" id="colorNegative" value="#c00101">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Vantagens: <input type="color" id="colorPositive" value="#ffcc00">
                     </label>
                     <button type="button" id="resetThemeBtn" style="margin-top: 5px; background: #333; color: #fff; border: none; padding: 6px; border-radius: 4px; cursor: pointer;">Restaurar Padrão</button>
                 </div>
@@ -3027,32 +3412,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <div class="characterTabsWrapper">
             <!-- BOTÕES DAS ABAS -->
-            <div class="characterTabsHeader">
-                <button type="button" class="tabBtn active" data-tab="tab-personagem">Personagem</button>
-                <button type="button" class="tabBtn" data-tab="tab-detalhes">Detalhes</button>
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="personagem" title="Personagem"></button>
+                <button class="tab-btn" data-tab="habilidades" title="Habilidades"></button>
+                <button class="tab-btn" data-tab="detalhes" title="Detalhes e Inventário"></button>
             </div>
 
             <!-- ABA 1: PERSONAGEM -->
-            <div id="tab-personagem" class="tabContent active">
+            <div id="personagem" class="tabContent active">
                 
+                <!-- CABEÇALHO -->
                 <!-- CABEÇALHO -->
                 <div class="characterHeaderArea">
                     <div class="charNameRow">
-                        <span class="icon-pencil">✎</span>
-                        <input type="text" id="name" class="invisibleInput titleFont" placeholder="Nome do Personagem" autocomplete="off">
+                        <button type="button" class="headerIconBtn" onclick="document.getElementById('name').focus();" title="Focar no Nome">
+                            <img src="assets/images/pageChar/name.png" alt="Nome" class="headerIconImg">
+                        </button>
+                        <input type="text" id="name" class="invisibleInput titleFont charNameInput" placeholder="Nome do Personagem" autocomplete="off">
                     </div>
                     <div class="charClassRow">
-                        <span class="icon-sword">⚔️</span>
-                        <input type="text" id="chaClass" class="invisibleInput subFont" placeholder="Classe">
-                        <input type="text" id="chaSubclass" class="invisibleInput subFont" placeholder="Subclasse">
+                        <button type="button" class="headerIconBtn" onclick="document.getElementById('chaClass').focus();" title="Focar na Classe">
+                            <img src="assets/images/pageChar/class.png" alt="Classe" class="headerIconImg">
+                        </button>
+                        <div class="classSubclassWrapper">
+                            <input type="text" id="chaClass" class="invisibleInput subFont classInput" placeholder="Classe">
+                            <input type="text" id="chaSubclass" class="invisibleInput subFont subclassInput" placeholder="Subclasse">
+                        </div>
                     </div>
                     <hr class="headerDivider">
                 </div>
 
                 <div class="topSplitContainer">
                     <div class="leftProfileColumn">
-                        <div class="levelCircleWrapper">
-                            <input type="number" id="level" min="1" max="9" value="1" class="levelInputCircle">
+                        <div class="levelEmblemWrapper" id="levelEmblemContainer">
+                            <input type="number" id="level" min="1" max="9" value="1" class="levelInputEmblem">
                         </div>
                         <div id="threatMeterVisual" class="threatMeterBar"></div>
                         <div id="stressSquaresVisual" class="stressSquaresContainer">
@@ -3107,17 +3500,19 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </div>
                             </div>
                             <div class="basicSubRight">
-                                <div class="inlineDataGroup">
-                                    <label for="height">Altura:</label>
-                                    <input type="text" id="height" class="smallBoxInput"> <span class="unit">m</span>
-                                </div>
-                                <div class="inlineDataGroup">
-                                    <label for="weight">Peso:</label>
-                                    <input type="text" id="weight" class="smallBoxInput"> <span class="unit">kg</span>
-                                </div>
-                                <div class="inlineDataGroup">
-                                    <label for="age">Idade:</label>
-                                    <input type="number" id="age" min="1" class="smallBoxInput"> <span class="unit">anos</span>
+                                <div class="inlineDataCompactGroup">
+                                    <div class="inlineDataGroup">
+                                        <label for="height">Altura:</label>
+                                        <input type="text" id="height" class="smallBoxInput"> <span class="unit">m</span>
+                                    </div>
+                                    <div class="inlineDataGroup">
+                                        <label for="weight">Peso:</label>
+                                        <input type="text" id="weight" class="smallBoxInput"> <span class="unit">kg</span>
+                                    </div>
+                                    <div class="inlineDataGroup">
+                                        <label for="age">Idade:</label>
+                                        <input type="number" id="age" min="1" class="smallBoxInput"> <span class="unit">anos</span>
+                                    </div>
                                 </div>
                                 <div class="classCampfireBox" style="margin-top: 15px;">
                                     <strong>Hab. Fogueira (Classe):</strong>
@@ -3254,20 +3649,29 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div id="skillsContainer" class="skillsContainer"></div>
                 </fieldset>
 
-                <div class="sectionTitleWrapper" style="margin-top: 20px;">
-                    <hr class="titleLine"><h2 class="sectionTitle titleFont">HABILIDADES</h2><hr class="titleLine">
-                </div>
-                <fieldset style="border:none; padding:0; margin:0;">
-                    <div class="notesGrid">
+            </div>
+
+            <!-- ABA 2: HABILIDADES -->
+            <div id="habilidades" class="tabContent" style="display: none;">
+                <fieldset>
+                    <legend>Habilidades, Magias e Poderes</legend>
+                    <div class="notesGrid" style="margin-bottom: 20px;">
                         <textarea id="abilityMainDesc" class="notesTextArea" placeholder="Descreva habilidades, magias ou poderes..."></textarea>
                         <textarea id="abilityExtraDesc" class="notesTextArea" placeholder="Outras habilidades ou detalhes adicionais..."></textarea>
                     </div>
                 </fieldset>
 
+                <!-- Espaço livre caso queira adicionar listas dinâmicas de magias/talentos de classe depois -->
+                <fieldset>
+                    <legend>Notas de Combate e Poderes Especiais</legend>
+                    <div class="fullWidthBlock">
+                        <textarea id="combatAbilitiesNotes" class="notesTextArea narrativeArea" placeholder="Detalhes de conjuração, efeitos ativos ou restrições..."></textarea>
+                    </div>
+                </fieldset>
             </div>
 
-            <!-- ABA 2: DETALHES -->
-            <div id="tab-detalhes" class="tabContent" style="display: none;">
+            <!-- ABA 3: DETALHES -->
+            <div id="detalhes" class="tabContent" style="display: none;">
                 <fieldset>
                     <legend>Pessoal</legend>
                     <div class="personalContainer">

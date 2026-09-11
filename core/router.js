@@ -1,5 +1,5 @@
 export function initTabs() {
-    const tabButtons = document.querySelectorAll(".tabBtn");
+    const tabButtons = document.querySelectorAll(".tab-btn");
     const tabContents = document.querySelectorAll(".tabContent");
 
     if (tabButtons.length === 0) return;

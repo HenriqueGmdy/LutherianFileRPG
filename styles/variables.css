@@ -67,6 +67,57 @@ select {
     box-sizing: border-box;
 }
 
+/* Botões interativos dos ícones do cabeçalho */
+.headerIconBtn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+/* Tamanho maior e proporcional para encaixar com as linhas */
+.headerIconImg {
+    width: 36px;  /* Aumentado para acompanhar a altura do texto */
+    height: 36px; 
+    object-fit: contain;
+    filter: brightness(0.85);
+    transition: filter 0.15s ease;
+}
+
+/* Efeito ao passar o mouse */
+.headerIconBtn:hover .headerIconImg {
+    filter: brightness(1.15);
+    transform: scale(1.05);
+}
+
+/* Efeito ao clicar */
+.headerIconBtn:active {
+    transform: scale(0.95);
+}
+
+/* Afasta o bloco da classe e desce a linha divisória perfeitamente */
+.charClassRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 0; /* Alinha perfeitamente com o nome em cima */
+    margin-top: 12px; /* Dá mais respiro entre o nome e a classe */
+    margin-bottom: 12px; /* Afasta a linha de baixo em ~3px a mais */
+}
+
+/* Ajusta o espaçamento da linha divisória do cabeçalho */
+.headerDivider {
+    margin-top: 10px; /* Desce a linha um pouco mais */
+    border: 0;
+    height: 1px;
+    background: var(--line-color, #ffffff) !important;
+}
+
 /* ==========================================
    APLICAÇÃO DOS TÍTULOS COM A QUINTESSENTIAL
    ========================================== */
@@ -85,4 +136,57 @@ select {
     font-family: var(--font-sub) !important;
     font-style: normal !important;
     font-weight: normal !important;
+}
+
+/* Container das abas */
+.tabs-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 0;
+    padding-left: 2px;
+}
+
+/* O botão VIRA a imagem quadrada e sem distorção */
+.tab-btn {
+    background-color: transparent;
+    background-size: cover; /* Garante que a imagem preencha o quadrado sem achatar */
+    background-position: center;
+    background-repeat: no-repeat;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    width: 48px;  /* Largura e altura iguais para ficar perfeitamente quadrado */
+    height: 48px; 
+    padding: 0;
+    position: relative;
+    opacity: 0.55; /* Apagada quando inativa */
+    filter: brightness(0.65);
+    transition: all 0.2s ease;
+}
+
+/* Imagens de fundo para cada aba */
+.tab-btn[data-tab="personagem"] {
+    background-image: url('../assets/icons/char.icon.png');
+}
+
+.tab-btn[data-tab="habilidades"] {
+    background-image: url('../assets/icons/habilities.icon.png');
+}
+
+.tab-btn[data-tab="detalhes"] {
+    background-image: url('../assets/icons/inventory.icon.png');
+}
+
+/* Efeito ao passar o mouse */
+.tab-btn:hover {
+    opacity: 0.85;
+    filter: brightness(0.9);
+    transform: translateY(-2px);
+}
+
+/* Aba ativa (selecionada) */
+.tab-btn.active {
+    opacity: 1;
+    filter: brightness(1.15);
+    transform: translateY(-4px);
 }
