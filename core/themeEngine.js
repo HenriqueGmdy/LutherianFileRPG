@@ -11,29 +11,32 @@ export function initThemeEngine() {
     const cancelResetBtn = document.getElementById('cancelResetBtn');
     const confirmResetBtn = document.getElementById('confirmResetBtn');
 
-    if (!menuBtn || !dropdown || !themePanel) return;
-
     // Abre/fecha o menu principal de opções ao clicar nas três bolinhas
-    menuBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isOpen = dropdown.style.display === 'block' || themePanel.style.display === 'block';
-        if (isOpen) {
-            dropdown.style.display = 'none';
-            themePanel.style.display = 'none';
-        } else {
-            dropdown.style.display = 'block';
-        }
-    });
+    if (menuBtn && dropdown && themePanel) {
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = dropdown.style.display === 'block' || themePanel.style.display === 'block';
+            if (isOpen) {
+                dropdown.style.display = 'none';
+                themePanel.style.display = 'none';
+            } else {
+                dropdown.style.display = 'block';
+                themePanel.style.display = 'none';
+            }
+        });
+    }
 
     // Clicar em "Personalizar Tema" esconde o menu principal e abre o painel de cores
-    themeOptBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdown.style.display = 'none';
-        themePanel.style.display = 'block';
-    });
+    if (themeOptBtn && dropdown && themePanel) {
+        themeOptBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.style.display = 'none';
+            themePanel.style.display = 'block';
+        });
+    }
 
     // Clicar em "Resetar Ficha" fecha o menu e abre o Modal de Aviso
-    if (resetOptBtn && resetModal) {
+    if (resetOptBtn && resetModal && dropdown) {
         resetOptBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             dropdown.style.display = 'none';
@@ -57,7 +60,7 @@ export function initThemeEngine() {
     }
 
     // Botão de "Voltar" dentro do painel de cores retorna ao menu de opções
-    if (backBtn) {
+    if (backBtn && themePanel && dropdown) {
         backBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             themePanel.style.display = 'none';
@@ -69,15 +72,17 @@ export function initThemeEngine() {
     document.addEventListener('click', (e) => {
         if (resetModal && resetModal.style.display === 'flex') return;
 
-        if (!dropdown.contains(e.target) && !themePanel.contains(e.target) && e.target !== menuBtn) {
-            dropdown.style.display = 'none';
-            themePanel.style.display = 'none';
+        if (dropdown && themePanel && menuBtn) {
+            if (!dropdown.contains(e.target) && !themePanel.contains(e.target) && e.target !== menuBtn) {
+                dropdown.style.display = 'none';
+                themePanel.style.display = 'none';
+            }
         }
     });
 
     const rootStyles = document.documentElement.style;
 
-    // VALORES PADRÃO SEGUINDO A SUA REGRA DE OURO
+    // VALORES PADRÃO
     const defaultColors = {
         colorBgMain: '#141414',      // Fundo preto customizável
         colorBgFieldset: '#1c1c1c',  // Interior das caixas (um tom acima do preto)
@@ -109,31 +114,43 @@ export function initThemeEngine() {
         localStorage.setItem('lutherian_theme', JSON.stringify(savedTheme));
     };
 
-    document.getElementById('colorBgMain').addEventListener('input', (e) => updateColor('--bg-main', e.target.value, 'colorBgMain'));
-    document.getElementById('colorBgFieldset').addEventListener('input', (e) => updateColor('--bg-fieldset', e.target.value, 'colorBgFieldset'));
-    document.getElementById('colorBgInputs').addEventListener('input', (e) => updateColor('--bg-inputs', e.target.value, 'colorBgInputs'));
-    document.getElementById('colorText').addEventListener('input', (e) => updateColor('--text-color', e.target.value, 'colorText'));
-    document.getElementById('colorAccent').addEventListener('input', (e) => updateColor('--accent-color', e.target.value, 'colorAccent'));
+    const bindColorInput = (id, cssVar, key) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', (e) => updateColor(cssVar, e.target.value, key));
+        }
+    };
+
+    bindColorInput('colorBgMain', '--bg-main', 'colorBgMain');
+    bindColorInput('colorBgFieldset', '--bg-fieldset', 'colorBgFieldset');
+    bindColorInput('colorBgInputs', '--bg-inputs', 'colorBgInputs');
+    bindColorInput('colorText', '--text-color', 'colorText');
+    bindColorInput('colorAccent', '--accent-color', 'colorAccent');
 
     // Botão de restaurar padrão
-    document.getElementById('resetThemeBtn').addEventListener('click', () => {
-        localStorage.removeItem('lutherian_theme');
-        
-        Object.keys(defaultColors).forEach(key => {
-            const cssVar = `--${key.replace('color', '').toLowerCase()}`; // ex: colorBgMain -> --bgmain (ajuste o nome se precisar)
-            rootStyles.removeProperty(cssVar);
-            const input = document.getElementById(key);
-            if (input) input.value = defaultColors[key];
+    const resetThemeBtn = document.getElementById('resetThemeBtn');
+    if (resetThemeBtn) {
+        resetThemeBtn.addEventListener('click', () => {
+            localStorage.removeItem('lutherian_theme');
+            
+            Object.keys(defaultColors).forEach(key => {
+                const cssVar = `--${key.replace('color', '').toLowerCase()}`; 
+                rootStyles.removeProperty(cssVar);
+                const input = document.getElementById(key);
+                if (input) input.value = defaultColors[key];
+            });
+
+            // Reaplica os padrões imediatamente
+            applyColor('colorBgMain', '--bg-main', defaultColors.colorBgMain);
+            applyColor('colorBgFieldset', '--bg-fieldset', defaultColors.colorBgFieldset);
+            applyColor('colorBgInputs', '--bg-inputs', defaultColors.colorBgInputs);
+            applyColor('colorText', '--text-color', defaultColors.colorText);
+            applyColor('colorAccent', '--accent-color', defaultColors.colorAccent);
+
+            if (themePanel && dropdown) {
+                themePanel.style.display = 'none';
+                dropdown.style.display = 'block';
+            }
         });
-
-        // Reaplica os padrões imediatamente
-        applyColor('colorBgMain', '--bg-main', defaultColors.colorBgMain);
-        applyColor('colorBgFieldset', '--bg-fieldset', defaultColors.colorBgFieldset);
-        applyColor('colorBgInputs', '--bg-inputs', defaultColors.colorBgInputs);
-        applyColor('colorText', '--text-color', defaultColors.colorText);
-        applyColor('colorAccent', '--accent-color', defaultColors.colorAccent);
-
-        themePanel.style.display = 'none';
-        dropdown.style.display = 'block';
-    });
+    }
 }

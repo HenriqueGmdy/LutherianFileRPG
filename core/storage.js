@@ -1,6 +1,9 @@
+import { CONFIG } from './config.js';
+
 export function initLocalStorage() {
-    const STORAGE_KEY = 'lutherian_character_sheet_data';
-    const DYNAMIC_LISTS_KEY = 'lutherian_dynamic_lists_data';
+    const STORAGE_KEY = CONFIG.STORAGE_KEYS.SHEET_DATA;
+    const DYNAMIC_LISTS_KEY = CONFIG.STORAGE_KEYS.DYNAMIC_LISTS;
+    const ACTIVE_TAB_KEY = CONFIG.STORAGE_KEYS.ACTIVE_TAB;
 
     let isInitializing = true;
 
@@ -39,7 +42,7 @@ export function initLocalStorage() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
-    // 2. Salvar todas as listas dinâmicas e o inventário (Com captura universal de nome/texto)
+    // 2. Salvar todas as listas dinâmicas e o inventário
     window.saveAllDynamicLists = function() {
         if (isInitializing) return;
         
@@ -52,7 +55,6 @@ export function initLocalStorage() {
             const rowsData = [];
 
             container.querySelectorAll('.stringItemRow, .cardItemBox, .inventoryItemCard').forEach(row => {
-                // Captura universal do texto/nome em qualquer tipo de input de texto do card
                 const textInput = row.querySelector('input[type="text"]');
                 const numberInputs = row.querySelectorAll('input[type="number"]');
                 const textarea = row.querySelector('textarea');
@@ -101,7 +103,6 @@ export function initLocalStorage() {
 
                     items.forEach(itemData => {
                         const itemDiv = document.createElement("div");
-                        // Garante que o texto recuperado não venha como undefined
                         const safeText = itemData.text !== undefined && itemData.text !== null ? itemData.text : "";
                         const safeDesc = itemData.desc !== undefined && itemData.desc !== null ? itemData.desc : "";
 
@@ -147,7 +148,6 @@ export function initLocalStorage() {
                             });
                         }
 
-                        // Garante que qualquer alteração nos campos recriados volte a salvar imediatamente
                         itemDiv.querySelectorAll("input, textarea").forEach(input => {
                             input.addEventListener("input", () => window.saveAllDynamicLists());
                         });
@@ -177,11 +177,10 @@ export function initLocalStorage() {
                 });
             }
 
-            console.log("Ficha totalmente restaurada sem erros de nome!");
+            console.log("Ficha totalmente restaurada com sucesso!");
         } catch (e) {
             console.error("Erro ao carregar dados do storage:", e);
         } finally {
-            // Garante que o inventário recalcule a carga atual com os itens recriados
             if (typeof window.updateInventoryStatusGlobal === 'function') {
                 window.updateInventoryStatusGlobal();
             }

@@ -1,4 +1,6 @@
-/* 7. SEÇÃO DE INVENTÁRIO */
+/* ==========================================
+   INVENTORY.CSS - APENAS INVENTÁRIO
+   ========================================== */
 .inventoryContainer {
     display: flex;
     flex-direction: column;
@@ -150,89 +152,4 @@
     resize: vertical;
     font-family: Arial, sans-serif;
     font-size: 0.85rem;
-}
-
-/* 8. HABILIDADES E NARRATIVA */
-.skillsNotesGrid {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.skillsNotesGrid .personalColumnBox {
-    flex: 1 1 300px;
-    display: flex;
-    flex-direction: column;
-}
-
-.personalContainer {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    box-sizing: border-box;
-    color: var(--text-color);
-}
-
-.skillsNotesGrid textarea,
-.personalContainer textarea {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: 120px;
-    background-color: var(--bg-inputs);
-    color: var(--text-color);
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 10px;
-    box-sizing: border-box !important; 
-    resize: vertical;
-    font-family: Arial, sans-serif;
-    font-size: 0.9rem;
-}
-
-.skillsNotesGrid textarea:focus,
-.personalContainer textarea:focus {
-    border-color: var(--accent-color);
-    outline: none;
-}
-
-/* 9. BLOCOS DE TEXTO ISOLADOS */
-.notesGrid {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-    width: 100%;
-}
-
-.notesGrid .notesTextArea {
-    flex: 1 1 280px;
-}
-
-.fullWidthBlock {
-    width: 100%;
-    display: flex;
-}
-
-.notesTextArea {
-    width: 100%;
-    min-height: 120px;
-    background-color: var(--bg-inputs);
-    color: var(--text-color);
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 10px;
-    box-sizing: border-box; 
-    resize: vertical;
-    font-family: Arial, sans-serif;
-    font-size: 0.9rem;
-}
-
-.narrativeArea {
-    min-height: 160px; 
-}
-
-.notesTextArea:focus {
-    border-color: var(--accent-color);
-    outline: none;
 }

@@ -1,8 +1,14 @@
-/* 5. SEÇÃO PESSOAL */
+/* ==========================================
+   PERSONAL.CSS - SEÇÃO PESSOAL ISOLADA
+   ========================================== */
+
 .personalContainer {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    color: var(--text-color);
 }
 
 .personalSection {
@@ -17,9 +23,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     border-bottom: 1px solid #444;
-    padding-bottom: 6px;
+    padding-bottom: 8px;
 }
 
 .personalSectionHeader h3 {
@@ -129,7 +135,7 @@
     background-color: #5a2222;
 }
 
-/* 6. BLOCO DE 3 COLUNAS (MARCAS, IDEAIS, LAÇOS) */
+/* Bloco de 3 colunas inferiores (Marcas, Ideais, Laços) */
 .personalColumnsRow {
     display: flex;
     flex-wrap: wrap;
@@ -168,4 +174,9 @@
     font-family: Arial, sans-serif;
     font-size: 0.85rem;
     line-height: 1.4;
+}
+
+.personalColumnBox textarea:focus {
+    border-color: var(--accent-color);
+    outline: none;
 }

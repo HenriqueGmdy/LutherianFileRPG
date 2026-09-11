@@ -20,7 +20,8 @@
     border-radius: 6px 6px 0 0;
     cursor: pointer;
     font-weight: bold;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    font-family: var(--font-sub); /* Subtítulo nas abas */
     transition: background-color 0.2s, color 0.2s;
     outline: none;
 }
@@ -49,6 +50,7 @@
     z-index: 1;
     margin-top: -1px;
     color: var(--text-color);
+    font-family: var(--font-body);
 }
 
 .tabContent fieldset {
@@ -60,6 +62,9 @@
     color: var(--text-color);
 }
 
-.tabContent fieldset:last-child {
-    margin-bottom: 0;
+.tabContent fieldset legend {
+    font-family: var(--font-title);
+    font-size: 1.1rem;
+    color: var(--accent-color);
+    letter-spacing: 1px;
 }

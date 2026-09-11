@@ -1,15 +1,15 @@
 /* TIPOGRAFIA E CAMPOS INVISÍVEIS DO TOPO */
 .titleFont {
-    font-family: 'Georgia', 'Times New Roman', serif;
+    font-family: var(--font-title);
     color: var(--accent-color, #ffcc00);
     text-transform: uppercase;
     letter-spacing: 1px;
+    font-size: 1.4rem;
 }
+
 .subFont {
-    font-family: 'Arial', sans-serif;
+    font-family: var(--font-sub);
     color: var(--text-color, #ffffff);
-    font-style: italic;
-    opacity: 0.9;
 }
 .invisibleInput, .invisibleSelect, .invisibleTextarea {
     background: transparent;
@@ -87,7 +87,8 @@
 }
 .sectionTitle {
     margin: 5px 0;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
+    font-family: var(--font-title);
 }
 
 /* BLOCO SUPERIOR (30% / 70%) */
@@ -240,8 +241,5 @@
     padding: 10px;
     border-radius: 4px;
     color: var(--text-color, #fff);
-}
-
-.raceTraitBox strong, .classTrait strong {
-    color: var(--accent-color, #ffcc00);
+    
 }

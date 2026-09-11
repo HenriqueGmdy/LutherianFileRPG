@@ -18,9 +18,10 @@
 .resourceTitle {
     text-align: center;
     margin: 0 0 10px 0;
-    font-size: 14px;
+    font-size: 15px;
     color: var(--text-color, #ffffff);
     letter-spacing: 1px;
+    font-family: var(--font-sub);
 }
 
 .resourceBarContainer {
@@ -149,8 +150,20 @@
     min-height: 50px;
     color: var(--text-color, #ffffff);
 }
-.stressConditionBox h4 { margin: 0 0 5px 0; font-size: 12px; color: var(--text-color, #888); }
-.stressConditionBox p { margin: 0; font-size: 14px; font-weight: bold; }
+
+.stressConditionBox h4 {
+    margin: 0 0 5px 0;
+    font-size: 13px;
+    color: var(--text-color, #888);
+    font-family: var(--font-sub);
+}
+
+.stressConditionBox p {
+    margin: 0;
+    font-size: 14px;
+    font-weight: bold;
+    font-family: var(--font-body);
+}
 
 .stressConditionBox.is-virtuous {
     border-color: #fff;

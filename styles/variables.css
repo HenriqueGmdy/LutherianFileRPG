@@ -1,18 +1,43 @@
+/* ==========================================
+   REGISTRO DAS FONTES DA FICHA LUTHERIAN
+   ========================================== */
+@font-face {
+    font-family: 'FjallaOne';
+    src: url('../assets/fonts/FjallaOne-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'GermaniaOne';
+    src: url('../assets/fonts/GermaniaOne-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Quintessential';
+    src: url('../assets/fonts/Quintessential-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 :root {
-    /* Cores padrão */
     --bg-main: #141414;
     --bg-fieldset: #1c1c1c;
     --bg-inputs: #2b2b2b;
     --text-color: #ffffff;
     --accent-color: #ffcc00;
+
+    --font-body: 'FjallaOne', Arial, sans-serif;          
+    --font-sub: 'GermaniaOne', Arial, sans-serif;         
+    --font-title: 'Quintessential', Georgia, serif;       /* Nova fonte de títulos */
 }
 
-body {
+body, input, select, textarea, button {
+    font-family: var(--font-body);
     background-color: var(--bg-main); 
-    color: var(--text-color);         
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 20px;
+    color: var(--text-color);
 }
 
 fieldset {
@@ -24,8 +49,8 @@ fieldset {
 
 legend {
     color: var(--accent-color);
-    font-weight: bold;
     padding: 0 5px;
+    font-family: var(--font-title);
 }
 
 input[type="text"],
@@ -37,4 +62,24 @@ select {
     border-radius: 4px;
     padding: 4px 6px;
     box-sizing: border-box;
+}
+
+/* ==========================================
+   APLICAÇÃO DOS TÍTULOS COM A QUINTESSENTIAL
+   ========================================== */
+.titleFont, h1, h2, h3, legend {
+    font-family: var(--font-title) !important;
+    font-weight: normal !important;
+    text-transform: none !important;
+    letter-spacing: 0.5px;
+}
+
+.sectionTitle {
+    font-size: 1.8rem !important; 
+}
+
+.subFont, label, .invTitle, .resourceTitle, .skillAttr {
+    font-family: var(--font-sub) !important;
+    font-style: normal !important;
+    font-weight: normal !important;
 }

@@ -1,0 +1,38 @@
+.notesGrid {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.notesGrid .notesTextArea {
+    flex: 1 1 280px;
+}
+
+.fullWidthBlock {
+    width: 100%;
+    display: flex;
+}
+
+.notesTextArea {
+    width: 100%;
+    min-height: 120px;
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px;
+    box-sizing: border-box; 
+    resize: vertical;
+    font-family: Arial, sans-serif;
+    font-size: 0.9rem;
+}
+
+.narrativeArea {
+    min-height: 160px; 
+}
+
+.notesTextArea:focus {
+    border-color: var(--accent-color);
+    outline: none;
+}
