@@ -41,6 +41,8 @@ The content is organized as follows:
 
 <directory_structure>
 assets/
+  audio/
+    chacal.mp3
   fonts/
     FjallaOne-Regular.ttf
     GermaniaOne-Regular.ttf
@@ -53,14 +55,14 @@ assets/
     page.icon.png
   images/
     general/
-      he_icon_idle.png
-      he_icon_selected.png
-      heirloom_exchange.arrow_down.png
-      heirloom_exchange.arrow_up.png
+      button.exit.golden.png
+      button.exit.red.png
       menu.check_box.png
       menu.check_mark.png
-      remove_quirk_positive.png
-      removequirk.png
+      reroll.idle.png
+      reroll.selected.png
+      select.down.png
+      select.up.png
     levels/
       level1_2.png
       level3.png
@@ -70,8 +72,8 @@ assets/
       level7.png
       level8.png
       level9.png
-    menus/
-      titlesFrame.png
+      stressResolve.png
+      virtuousResolve.png
     pageChar/
       class.png
       name.png
@@ -93,6 +95,7 @@ modules/
     racesData.js
   header/
     basics.css
+    curios.js
     imageHandler.js
   inventory/
     inventory.css
@@ -202,11 +205,10 @@ import { CONFIG } from './config.js';
 export function initLocalStorage() {
     const STORAGE_KEY = CONFIG.STORAGE_KEYS.SHEET_DATA;
     const DYNAMIC_LISTS_KEY = CONFIG.STORAGE_KEYS.DYNAMIC_LISTS;
-    const ACTIVE_TAB_KEY = CONFIG.STORAGE_KEYS.ACTIVE_TAB;
 
     let isInitializing = true;
 
-    // 1. Salvar campos estáticos normais
+    // 1. Salvar campos estáticos normais + estados de estresse/resolução
     document.addEventListener('input', (e) => {
         if (isInitializing) return;
         if (e.target.matches('input, select, textarea') && !e.target.closest('.dynamicList') && !e.target.closest('#inventoryItemsList')) {
@@ -241,7 +243,7 @@ export function initLocalStorage() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
-    // 2. Salvar todas as listas dinâmicas e o inventário
+    // 2. Salvar listas dinâmicas e inventário
     window.saveAllDynamicLists = function() {
         if (isInitializing) return;
         
@@ -374,6 +376,44 @@ export function initLocalStorage() {
                         field.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 });
+            }
+
+            // ==========================================
+            // RESTAURAÇÃO EXPLÍCITA DE ESTRESSE E RESOLUÇÃO
+            // ==========================================
+            const virtuousOverlay = document.getElementById("virtuousResolveOverlay");
+            const stressOverlay = document.getElementById("stressResolveOverlay");
+            const stressConditionBox = document.getElementById("stressConditionBox");
+            const stressConditionName = document.getElementById("stressConditionName");
+            const stressConditionDesc = document.getElementById("stressConditionDesc");
+            const headerStressCondition = document.getElementById("headerStressCondition");
+
+            const savedResolve = localStorage.getItem('lutherian_resolve_state');
+            if (savedResolve === 'virtuous' && virtuousOverlay) {
+                virtuousOverlay.style.display = "block";
+            } else if (savedResolve === 'afflicted' && stressOverlay) {
+                stressOverlay.style.display = "block";
+            }
+
+            const savedConditionData = localStorage.getItem('lutherian_active_condition');
+            if (savedConditionData) {
+                try {
+                    const savedCondition = JSON.parse(savedConditionData);
+                    if (stressConditionName) stressConditionName.textContent = savedCondition.name;
+                    if (stressConditionDesc) stressConditionDesc.textContent = savedCondition.desc;
+                    if (headerStressCondition) headerStressCondition.textContent = savedCondition.name;
+
+                    if (stressConditionBox) {
+                        stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
+                        if (savedCondition.type === "virtuous") {
+                            stressConditionBox.classList.add("is-virtuous");
+                        } else if (savedCondition.type === "afflicted") {
+                            stressConditionBox.classList.add("is-afflicted");
+                        }
+                    }
+                } catch (err) {
+                    console.error("Erro ao restaurar condição de estresse:", err);
+                }
             }
 
             console.log("Ficha totalmente restaurada com sucesso!");
@@ -809,14 +849,7 @@ export function initAttributesListeners() {
         const checkbox = document.getElementById(group.attrCondition.id);
         if (checkbox) {
             checkbox.addEventListener("change", function() {
-                group.attributes.forEach(attr => {
-                    const inputAttribute = document.getElementById(attr.id);
-                    if (inputAttribute) {
-                        let valorAtual = parseInt(inputAttribute.value);
-                        inputAttribute.value = checkbox.checked ? valorAtual - 1 : valorAtual + 1;
-                        updateAttributeDice(attr.id);
-                    }
-                });
+                updateAllAttributes();
                 updateInitiative();
                 updateAllSkills();
             });
@@ -1669,6 +1702,26 @@ export const racesData = {
 }
 </file>
 
+<file path="modules/header/curios.js">
+export function initCurios() {
+    const nameInput = document.getElementById("name");
+    const audio = document.getElementById("easterEggAudio");
+
+    if (!nameInput || !audio) return;
+
+    nameInput.addEventListener("input", (e) => {
+        const valorDigitado = e.target.value.trim();
+        
+        if (valorDigitado.toLowerCase() === "chacal") {
+            if (audio.paused) {
+                audio.currentTime = 0;
+                audio.play().catch(err => console.log("Áudio bloqueado pelo navegador:", err));
+            }
+        }
+    });
+}
+</file>
+
 <file path="modules/header/imageHandler.js">
 export function initImageHandler(options = {}) {
     // Permite configurar múltiplos slots de imagem no futuro passando seletores, 
@@ -2066,6 +2119,35 @@ export function initInventory() {
     position: relative;
 }
 
+/* Camadas de resolução de estresse (Virtude / Aflição) */
+.resolveOverlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    pointer-events: none;
+}
+
+.virtuousBg {
+    background-image: url('../../assets/images/levels/virtuousResolve.png');
+    z-index: -1; /* O valor negativo joga a imagem para trás do background (emblema) da div pai */
+    bottom: -20px; 
+    left: -8px;
+    animation: spinVirtue 30s linear infinite;
+    transform-origin: 50% 40%;
+}
+
+/* Aflição fica posicionada por cima do emblema e mais alta */
+.stressTop {
+    background-image: url('../../assets/images/levels/stressResolve.png');
+    z-index: 3; 
+    top: -17px; /* Sobe a imagem */
+    transform: scale(1.6); 
+    left: -2px;
+}
+
 .levelInputEmblem::-webkit-inner-spin-button, 
 .levelInputEmblem::-webkit-outer-spin-button { 
     -webkit-appearance: none; 
@@ -2085,36 +2167,17 @@ export function initInventory() {
     font-size: 30px;
     font-weight: bold;
     text-align: center;
-    text-shadow: none !important;     /* Remove a sombra branca/preta ao redor para o número ficar chapado em preto, ou ajuste se preferir */
+    position: relative;
+    z-index: 2;
 }
-</file>
 
-<file path="modules/level/levelManager.js">
-export function initLevelEmblem() {
-    const levelInput = document.getElementById('level');
-    const container = document.getElementById('levelEmblemContainer');
-
-    if (!levelInput || !container) return;
-
-    function updateEmblem(val) {
-        const num = parseInt(val) || 1;
-        let fileName = 'level1_2.png';
-
-        if (num >= 3 && num <= 9) {
-            fileName = `level${num}.png`;
-        } else {
-            fileName = 'level1_2.png';
-        }
-
-        // Adicionamos ?v=Date.now() para impedir que o navegador pegue a imagem corrompida/antiga do cache
-        container.style.backgroundImage = `url('/assets/images/levels/${fileName}?v=${Date.now()}')`;
-    }
-
-    levelInput.addEventListener('input', (e) => {
-        updateEmblem(e.target.value);
-    });
-
-    updateEmblem(levelInput.value);
+/* Cria a animação de rotação mantendo a escala de 6x */
+@keyframes spinVirtue {
+    0% { transform: scale(6) translate(0px, 0px) rotate(0deg); }
+    25% { transform: scale(6) translate(0px, -2px) rotate(90deg); }
+    50% { transform: scale(6) translate(0px, -4px) rotate(180deg); }
+    75% { transform: scale(6) translate(3px, 0px) rotate(270deg); }
+    100% { transform: scale(6) translate(0px, 0px) rotate(360deg); }
 }
 </file>
 
@@ -2711,7 +2774,7 @@ export function initStatus() {
 
     // 3. BARRA DE ESTRESSE E CAIXINHAS DO TOPO
     const stressRange = document.getElementById("stressRange");
-    const stressNumberInput = document.getElementById("stress"); // Input numérico (0/200)
+    const stressNumberInput = document.getElementById("stress");
     const stressFill = document.getElementById("stressFill");
     const stressSquares = document.querySelectorAll(".stressSquare");
     const headerStressCondition = document.getElementById("headerStressCondition");
@@ -2721,6 +2784,10 @@ export function initStatus() {
     const stressConditionBox = document.getElementById("stressConditionBox");
     const stressConditionName = document.getElementById("stressConditionName");
     const stressConditionDesc = document.getElementById("stressConditionDesc");
+
+    // Elementos visuais do emblema de nível (Resolução de Estresse)
+    const virtuousOverlay = document.getElementById("virtuousResolveOverlay");
+    const stressOverlay = document.getElementById("stressResolveOverlay");
 
     const conditionsList = [
         { name: "Com medo", desc: "Você adquire desvantagem em todos os testes e sofre o dobro de estresse de todas as fontes.", type: "afflicted" },
@@ -2758,7 +2825,6 @@ export function initStatus() {
             stressFill.style.width = `${percentage}%`;
         }
 
-        // Ativa as 10 caixinhas do topo (1 a cada 10 pontos)
         const activeBoxesCount = Math.floor(val / 10);
         stressSquares.forEach((square, index) => {
             if (index < activeBoxesCount) {
@@ -2768,23 +2834,24 @@ export function initStatus() {
             }
         });
 
-        // Brilho do botão D20 ao atingir 100+ de estresse
         if (rollStressBtn) {
             if (val >= 100) {
                 rollStressBtn.classList.add("glow-ready");
             } else {
                 rollStressBtn.classList.remove("glow-ready");
-                if (val < 100 && stressConditionBox) {
-                    stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
-                }
             }
         }
 
+        if (val < 100) {
+            if (virtuousOverlay) virtuousOverlay.style.display = "none";
+            if (stressOverlay) stressOverlay.style.display = "none";
+            if (stressConditionBox) stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
+        }
         if (val === 0) {
             if (stressConditionName) stressConditionName.textContent = "Condições de Estresse";
             if (stressConditionDesc) stressConditionDesc.textContent = "Nenhuma condição ativa.";
             if (headerStressCondition) headerStressCondition.textContent = " ";
-            if (stressConditionBox) stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
+            localStorage.removeItem('lutherian_active_condition');
         }
     }
 
@@ -2813,12 +2880,28 @@ export function initStatus() {
             if (stressConditionDesc) stressConditionDesc.textContent = chosen.desc;
             if (headerStressCondition) headerStressCondition.textContent = chosen.name;
 
+            // SALVAMENTO IMEDIATO DA CONDIÇÃO
+            localStorage.setItem('lutherian_active_condition', JSON.stringify(chosen));
+
             if (stressConditionBox) {
                 stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
                 if (chosen.type === "virtuous") {
                     stressConditionBox.classList.add("is-virtuous");
                 } else {
                     stressConditionBox.classList.add("is-afflicted");
+                }
+            }
+
+            if (virtuousOverlay && stressOverlay) {
+                virtuousOverlay.style.display = "none";
+                stressOverlay.style.display = "none";
+
+                if (chosen.type === "virtuous") {
+                    virtuousOverlay.style.display = "block";
+                    localStorage.setItem('lutherian_resolve_state', 'virtuous');
+                } else if (chosen.type === "afflicted") {
+                    stressOverlay.style.display = "block";
+                    localStorage.setItem('lutherian_resolve_state', 'afflicted');
                 }
             }
         });
@@ -2848,7 +2931,6 @@ export function initStatus() {
         threatLevelSelect.addEventListener("change", updateThreatMeter);
     }
 
-    // OUVINTE DE INICIATIVA
     document.addEventListener("input", function(e) {
         if (e.target && (e.target.id === "dexterity" || e.target.id === "temp_dexterity")) {
             updateInitiative();
@@ -2861,6 +2943,37 @@ export function initStatus() {
     updateStress(stressNumberInput ? stressNumberInput.value : 0);
     updateThreatMeter();
     updateInitiative();
+
+    // ==========================================
+    // RESTAURAÇÃO DEVE OCORRER POR ÚLTIMO NO STATUS
+    // ==========================================
+    const savedResolve = localStorage.getItem('lutherian_resolve_state');
+    if (savedResolve === 'virtuous' && virtuousOverlay) {
+        virtuousOverlay.style.display = "block";
+    } else if (savedResolve === 'afflicted' && stressOverlay) {
+        stressOverlay.style.display = "block";
+    }
+
+    const savedConditionData = localStorage.getItem('lutherian_active_condition');
+    if (savedConditionData) {
+        try {
+            const savedCondition = JSON.parse(savedConditionData);
+            if (stressConditionName) stressConditionName.textContent = savedCondition.name;
+            if (stressConditionDesc) stressConditionDesc.textContent = savedCondition.desc;
+            if (headerStressCondition) headerStressCondition.textContent = savedCondition.name;
+
+            if (stressConditionBox) {
+                stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
+                if (savedCondition.type === "virtuous") {
+                    stressConditionBox.classList.add("is-virtuous");
+                } else if (savedCondition.type === "afflicted") {
+                    stressConditionBox.classList.add("is-afflicted");
+                }
+            }
+        } catch (error) {
+            console.error("Erro ao carregar a condição de estresse ativa.", error);
+        }
+    }
 }
 </file>
 
@@ -3248,6 +3361,65 @@ select {
 }
 </file>
 
+<file path="modules/level/levelManager.js">
+export function initLevelEmblem() {
+    const levelInput = document.getElementById('level');
+    const container = document.getElementById('levelEmblemContainer');
+
+    if (!levelInput || !container) return;
+
+    function updateEmblem(val) {
+        const num = parseInt(val) || 1;
+        let fileName = 'level1_2.png';
+
+        if (num >= 3 && num <= 9) {
+            fileName = `level${num}.png`;
+        } else {
+            fileName = 'level1_2.png';
+        }
+
+        const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+        const imageUrl = `${window.location.origin}${basePath}/assets/images/levels/${fileName}`;
+
+        container.style.backgroundImage = `url('${imageUrl}?v=${Date.now()}')`;
+    }
+
+    levelInput.addEventListener('input', (e) => {
+        updateEmblem(e.target.value);
+    });
+
+    updateEmblem(levelInput.value);
+
+    const savedState = localStorage.getItem('characterResolveState') || 'normal';
+    setResolveState(savedState);
+    
+}
+
+// Função para aplicar o estresse/virtude e salvar o estado
+export function setResolveState(state) {
+    const virtuousOverlay = document.getElementById('virtuousResolveOverlay');
+    const stressOverlay = document.getElementById('stressResolveOverlay');
+
+    virtuousOverlay.style.display = 'none';
+    stressOverlay.style.display = 'none';
+
+    if (state === 'virtuous') {
+        virtuousOverlay.style.display = 'block';
+    } else if (state === 'stress') {
+        stressOverlay.style.display = 'block';
+    }
+
+    localStorage.setItem('characterResolveState', state);
+}
+
+// Carrega o estado salvo ao abrir a ficha
+document.addEventListener('DOMContentLoaded', () => {
+    // Busca o estado salvo. Se não houver nenhum, assume que está 'normal'
+    const savedState = localStorage.getItem('characterResolveState') || 'normal';
+    setResolveState(savedState);
+});
+</file>
+
 <file path="script.js">
 // Importações do Core
 import { initThemeEngine } from './core/themeEngine.js';
@@ -3265,6 +3437,7 @@ import { initInventory } from './modules/inventory/inventory.js';
 import { initNarrative } from './modules/narrative/narrative.js';
 import { initStatus } from './modules/status/status.js';
 import { initLevelEmblem } from './modules/level/levelManager.js';
+import { initCurios } from './modules/header/curios.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     // Função para blindar a inicialização. Se um módulo quebrar, o resto sobrevive.
@@ -3278,8 +3451,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Inicializações de infraestrutura (Blindadas)
     safeInit("ThemeEngine", initThemeEngine);
-    safeInit("Tabs", initTabs);
-    safeInit("LocalStorage", initLocalStorage); 
+    safeInit("Tabs", initTabs); 
     
     // Inicializações de componentes da ficha (Blindadas)
     safeInit("ImageHandler", initImageHandler);
@@ -3292,6 +3464,10 @@ document.addEventListener("DOMContentLoaded", () => {
     safeInit("Origins", initOrigins);
     safeInit("Narrative", initNarrative);
     safeInit("LevelEmblem", initLevelEmblem);
+    safeInit("Curios", initCurios);
+
+    // Sempre o último.
+    safeInit("LocalStorage", initLocalStorage);
 
     console.log("Ficha Lutherian iniciada com sistema anti-crash ativado!");
 });
@@ -3308,6 +3484,8 @@ document.addEventListener("DOMContentLoaded", () => {
     <link rel="stylesheet" href="modules/level/level.css">
 </head>
 <body>
+
+    <audio id="easterEggAudio" src="assets/audio/chacal.mp3" preload="auto"></audio>
 
     <div class="mainFile">
 
@@ -3411,11 +3589,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
 
                 <div class="topSplitContainer">
-                    <div class="leftProfileColumn">
-                        <div class="levelEmblemWrapper" id="levelEmblemContainer">
-                            <input type="number" id="level" min="1" max="9" value="1" class="levelInputEmblem">
-                        </div>
-                        <div id="threatMeterVisual" class="threatMeterBar"></div>
+                   <div class="leftProfileColumn">
+                    <div class="levelEmblemWrapper" id="levelEmblemContainer">
+                        <div id="virtuousResolveOverlay" class="resolveOverlay virtuousBg" style="display: none;"></div>
+                        <input type="number" id="level" min="1" max="9" value="1" class="levelInputEmblem">
+                        <div id="stressResolveOverlay" class="resolveOverlay stressTop" style="display: none;"></div>
+                    </div>
+                    
+                    <div id="threatMeterVisual" class="threatMeterBar"></div>
                         <div id="stressSquaresVisual" class="stressSquaresContainer">
                             <div class="stressSquare"></div><div class="stressSquare"></div>
                             <div class="stressSquare"></div><div class="stressSquare"></div>

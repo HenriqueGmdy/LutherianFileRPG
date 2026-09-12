@@ -83,7 +83,7 @@ export function initStatus() {
 
     // 3. BARRA DE ESTRESSE E CAIXINHAS DO TOPO
     const stressRange = document.getElementById("stressRange");
-    const stressNumberInput = document.getElementById("stress"); // Input numérico (0/200)
+    const stressNumberInput = document.getElementById("stress");
     const stressFill = document.getElementById("stressFill");
     const stressSquares = document.querySelectorAll(".stressSquare");
     const headerStressCondition = document.getElementById("headerStressCondition");
@@ -93,6 +93,10 @@ export function initStatus() {
     const stressConditionBox = document.getElementById("stressConditionBox");
     const stressConditionName = document.getElementById("stressConditionName");
     const stressConditionDesc = document.getElementById("stressConditionDesc");
+
+    // Elementos visuais do emblema de nível (Resolução de Estresse)
+    const virtuousOverlay = document.getElementById("virtuousResolveOverlay");
+    const stressOverlay = document.getElementById("stressResolveOverlay");
 
     const conditionsList = [
         { name: "Com medo", desc: "Você adquire desvantagem em todos os testes e sofre o dobro de estresse de todas as fontes.", type: "afflicted" },
@@ -113,7 +117,7 @@ export function initStatus() {
         { name: "Suicida", desc: "Ganhou condição permanente de Marcado. Com vitalidade menor que 10, recebe +1 em testes (exceto Limiar da Morte e Resistência).", type: "afflicted" },
         { name: "Imortal", desc: "No início de cada turno, regenera vitalidade com base na soma de todos seus modificadores.", type: "virtuous" },
         { name: "Robusto", desc: "Você se torna imune a doenças e efeitos contínuos negativos até o fim dessa virtude.", type: "virtuous" },
-        { name: "Imunidade baixa", desc: "Você adquire uma doença imediatamente, e causa 3d10 de estresse nos aliados.", type: "afflicted" },
+        { name: "Imunidade baixa", desc: "Você adquire uma doença imediatamente, e causa 3d10 de estresse aos aliados.", type: "afflicted" },
         { name: "Depressivo", desc: "Seu turno passa a ser o último da rodada. Errar uma ação profere palavras que causam desvantagem ao aliado mais perto.", type: "afflicted" }
     ];  
 
@@ -130,7 +134,6 @@ export function initStatus() {
             stressFill.style.width = `${percentage}%`;
         }
 
-        // Ativa as 10 caixinhas do topo (1 a cada 10 pontos)
         const activeBoxesCount = Math.floor(val / 10);
         stressSquares.forEach((square, index) => {
             if (index < activeBoxesCount) {
@@ -140,23 +143,26 @@ export function initStatus() {
             }
         });
 
-        // Brilho do botão D20 ao atingir 100+ de estresse
         if (rollStressBtn) {
-            if (val >= 100) {
+            const hasActiveCondition = localStorage.getItem('lutherian_active_condition');
+            if (val >= 100 && !hasActiveCondition) {
                 rollStressBtn.classList.add("glow-ready");
             } else {
                 rollStressBtn.classList.remove("glow-ready");
-                if (val < 100 && stressConditionBox) {
-                    stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
-                }
             }
         }
 
-        if (val === 0) {
+        if (val < 100) {
+            if (virtuousOverlay) virtuousOverlay.style.display = "none";
+            if (stressOverlay) stressOverlay.style.display = "none";
+            if (stressConditionBox) stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
+        }
+
+        if (val === 0 && !localStorage.getItem('lutherian_active_condition')) {
             if (stressConditionName) stressConditionName.textContent = "Condições de Estresse";
             if (stressConditionDesc) stressConditionDesc.textContent = "Nenhuma condição ativa.";
             if (headerStressCondition) headerStressCondition.textContent = " ";
-            if (stressConditionBox) stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
+            localStorage.removeItem('lutherian_resolve_state');
         }
     }
 
@@ -171,10 +177,16 @@ export function initStatus() {
     if (rollStressBtn) {
         rollStressBtn.addEventListener("click", () => {
             const currentStress = parseInt(stressNumberInput?.value) || 0;
+            const hasActiveCondition = localStorage.getItem('lutherian_active_condition');
 
             if (currentStress < 100) {
                 const charName = document.getElementById("name")?.value || "o personagem";
                 alert(`Por sorte, ${charName} não está estressado(a) o suficiente…`);
+                return;
+            }
+
+            if (hasActiveCondition) {
+                alert("Você já possui uma condição de estresse ativa! É preciso zerar o estresse antes de rolar novamente.");
                 return;
             }
 
@@ -185,14 +197,32 @@ export function initStatus() {
             if (stressConditionDesc) stressConditionDesc.textContent = chosen.desc;
             if (headerStressCondition) headerStressCondition.textContent = chosen.name;
 
+            // SALVAMENTO IMEDIATO DA CONDIÇÃO
+            localStorage.setItem('lutherian_active_condition', JSON.stringify(chosen));
+
             if (stressConditionBox) {
                 stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
                 if (chosen.type === "virtuous") {
                     stressConditionBox.classList.add("is-virtuous");
-                } else {
+                } else if (chosen.type === "afflicted") {
                     stressConditionBox.classList.add("is-afflicted");
                 }
             }
+
+            if (virtuousOverlay && stressOverlay) {
+                virtuousOverlay.style.display = "none";
+                stressOverlay.style.display = "none";
+
+                if (chosen.type === "virtuous") {
+                    virtuousOverlay.style.display = "block";
+                    localStorage.setItem('lutherian_resolve_state', 'virtuous');
+                } else if (chosen.type === "afflicted") {
+                    stressOverlay.style.display = "block";
+                    localStorage.setItem('lutherian_resolve_state', 'afflicted');
+                }
+            }
+
+            rollStressBtn.classList.remove("glow-ready");
         });
     }
 
@@ -220,7 +250,6 @@ export function initStatus() {
         threatLevelSelect.addEventListener("change", updateThreatMeter);
     }
 
-    // OUVINTE DE INICIATIVA
     document.addEventListener("input", function(e) {
         if (e.target && (e.target.id === "dexterity" || e.target.id === "temp_dexterity")) {
             updateInitiative();
@@ -233,4 +262,39 @@ export function initStatus() {
     updateStress(stressNumberInput ? stressNumberInput.value : 0);
     updateThreatMeter();
     updateInitiative();
+
+    // ==========================================
+    // RESTAURAÇÃO EXPLÍCITA DA CONDIÇÃO E RESOLUÇÃO
+    // ==========================================
+    const savedResolve = localStorage.getItem('lutherian_resolve_state');
+    if (savedResolve === 'virtuous' && virtuousOverlay) {
+        virtuousOverlay.style.display = "block";
+    } else if (savedResolve === 'afflicted' && stressOverlay) {
+        stressOverlay.style.display = "block";
+    }
+
+    const savedConditionData = localStorage.getItem('lutherian_active_condition');
+    if (savedConditionData) {
+        try {
+            const savedCondition = JSON.parse(savedConditionData);
+            if (stressConditionName) stressConditionName.textContent = savedCondition.name;
+            if (stressConditionDesc) stressConditionDesc.textContent = savedCondition.desc;
+            if (headerStressCondition) headerStressCondition.textContent = savedCondition.name;
+
+            if (stressConditionBox) {
+                stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
+                if (savedCondition.type === "virtuous") {
+                    stressConditionBox.classList.add("is-virtuous");
+                } else if (savedCondition.type === "afflicted") {
+                    stressConditionBox.classList.add("is-afflicted");
+                }
+            }
+
+            if (rollStressBtn) {
+                rollStressBtn.classList.remove("glow-ready");
+            }
+        } catch (error) {
+            console.error("Erro ao carregar a condição de estresse ativa.", error);
+        }
+    }
 }

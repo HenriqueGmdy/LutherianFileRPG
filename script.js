@@ -28,8 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Inicializações de infraestrutura (Blindadas)
     safeInit("ThemeEngine", initThemeEngine);
-    safeInit("Tabs", initTabs);
-    safeInit("LocalStorage", initLocalStorage); 
+    safeInit("Tabs", initTabs); 
     
     // Inicializações de componentes da ficha (Blindadas)
     safeInit("ImageHandler", initImageHandler);
@@ -43,6 +42,9 @@ document.addEventListener("DOMContentLoaded", () => {
     safeInit("Narrative", initNarrative);
     safeInit("LevelEmblem", initLevelEmblem);
     safeInit("Curios", initCurios);
+
+    // Sempre o último.
+    safeInit("LocalStorage", initLocalStorage);
 
     console.log("Ficha Lutherian iniciada com sistema anti-crash ativado!");
 });

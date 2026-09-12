@@ -1,4 +1,3 @@
-
 .levelEmblemWrapper {
     width: 95px;
     height: 95px;
@@ -9,6 +8,35 @@
     align-items: center;
     justify-content: center;
     position: relative;
+}
+
+/* Camadas de resolução de estresse (Virtude / Aflição) */
+.resolveOverlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    pointer-events: none;
+}
+
+.virtuousBg {
+    background-image: url('../../assets/images/levels/virtuousResolve.png');
+    z-index: -1; /* O valor negativo joga a imagem para trás do background (emblema) da div pai */
+    bottom: -20px; 
+    left: -8px;
+    animation: spinVirtue 30s linear infinite;
+    transform-origin: 50% 40%;
+}
+
+/* Aflição fica posicionada por cima do emblema e mais alta */
+.stressTop {
+    background-image: url('../../assets/images/levels/stressResolve.png');
+    z-index: 3; 
+    top: -17px; /* Sobe a imagem */
+    transform: scale(1.6); 
+    left: -2px;
 }
 
 .levelInputEmblem::-webkit-inner-spin-button, 
@@ -30,5 +58,15 @@
     font-size: 30px;
     font-weight: bold;
     text-align: center;
-    text-shadow: none !important;     /* Remove a sombra branca/preta ao redor para o número ficar chapado em preto, ou ajuste se preferir */
+    position: relative;
+    z-index: 2;
+}
+
+/* Cria a animação de rotação mantendo a escala de 6x */
+@keyframes spinVirtue {
+    0% { transform: scale(6) translate(0px, 0px) rotate(0deg); }
+    25% { transform: scale(6) translate(0px, -2px) rotate(90deg); }
+    50% { transform: scale(6) translate(0px, -4px) rotate(180deg); }
+    75% { transform: scale(6) translate(3px, 0px) rotate(270deg); }
+    100% { transform: scale(6) translate(0px, 0px) rotate(360deg); }
 }

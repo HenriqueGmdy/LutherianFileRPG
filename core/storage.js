@@ -3,11 +3,9 @@ import { CONFIG } from './config.js';
 export function initLocalStorage() {
     const STORAGE_KEY = CONFIG.STORAGE_KEYS.SHEET_DATA;
     const DYNAMIC_LISTS_KEY = CONFIG.STORAGE_KEYS.DYNAMIC_LISTS;
-    const ACTIVE_TAB_KEY = CONFIG.STORAGE_KEYS.ACTIVE_TAB;
 
     let isInitializing = true;
 
-    // 1. Salvar campos estáticos normais
     document.addEventListener('input', (e) => {
         if (isInitializing) return;
         if (e.target.matches('input, select, textarea') && !e.target.closest('.dynamicList') && !e.target.closest('#inventoryItemsList')) {
@@ -42,7 +40,6 @@ export function initLocalStorage() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
-    // 2. Salvar todas as listas dinâmicas e o inventário
     window.saveAllDynamicLists = function() {
         if (isInitializing) return;
         
@@ -85,7 +82,6 @@ export function initLocalStorage() {
         }
     });
 
-    // 3. Carregar e reconstruir os dados ao iniciar
     function loadData() {
         const savedJSON = localStorage.getItem(STORAGE_KEY);
         const savedListsJSON = localStorage.getItem(DYNAMIC_LISTS_KEY);
@@ -177,7 +173,46 @@ export function initLocalStorage() {
                 });
             }
 
-            console.log("Ficha totalmente restaurada com sucesso!");
+            // Restauração protegida e centralizada do estresse e condição
+            const virtuousOverlay = document.getElementById("virtuousResolveOverlay");
+            const stressOverlay = document.getElementById("stressResolveOverlay");
+            const stressConditionBox = document.getElementById("stressConditionBox");
+            const stressConditionName = document.getElementById("stressConditionName");
+            const stressConditionDesc = document.getElementById("stressConditionDesc");
+            const headerStressCondition = document.getElementById("headerStressCondition");
+
+            const savedResolve = localStorage.getItem('lutherian_resolve_state') || localStorage.getItem('characterResolveState');
+            if (virtuousOverlay && stressOverlay) {
+                virtuousOverlay.style.display = "none";
+                stressOverlay.style.display = "none";
+                if (savedResolve === 'virtuous') {
+                    virtuousOverlay.style.display = "block";
+                } else if (savedResolve === 'afflicted' || savedResolve === 'stress') {
+                    stressOverlay.style.display = "block";
+                }
+            }
+
+            const savedConditionData = localStorage.getItem('lutherian_active_condition');
+            if (savedConditionData) {
+                try {
+                    const savedCondition = JSON.parse(savedConditionData);
+                    if (stressConditionName) stressConditionName.textContent = savedCondition.name;
+                    if (stressConditionDesc) stressConditionDesc.textContent = savedCondition.desc;
+                    if (headerStressCondition) headerStressCondition.textContent = savedCondition.name;
+
+                    if (stressConditionBox) {
+                        stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
+                        if (savedCondition.type === "virtuous") {
+                            stressConditionBox.classList.add("is-virtuous");
+                        } else if (savedCondition.type === "afflicted") {
+                            stressConditionBox.classList.add("is-afflicted");
+                        }
+                    }
+                } catch (err) {
+                    console.error("Erro ao restaurar condição de estresse:", err);
+                }
+            }
+
         } catch (e) {
             console.error("Erro ao carregar dados do storage:", e);
         } finally {

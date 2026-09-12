@@ -25,4 +25,23 @@ export function initLevelEmblem() {
     });
 
     updateEmblem(levelInput.value);
+
+    const savedState = localStorage.getItem('lutherian_resolve_state') || 'normal';
+    setResolveState(savedState);
+}
+
+export function setResolveState(state) {
+    const virtuousOverlay = document.getElementById('virtuousResolveOverlay');
+    const stressOverlay = document.getElementById('stressResolveOverlay');
+
+    if (virtuousOverlay) virtuousOverlay.style.display = 'none';
+    if (stressOverlay) stressOverlay.style.display = 'none';
+
+    if (state === 'virtuous' && virtuousOverlay) {
+        virtuousOverlay.style.display = 'block';
+    } else if ((state === 'afflicted' || state === 'stress') && stressOverlay) {
+        stressOverlay.style.display = 'block';
+    }
+
+    localStorage.setItem('lutherian_resolve_state', state);
 }

@@ -158,14 +158,7 @@ export function initAttributesListeners() {
         const checkbox = document.getElementById(group.attrCondition.id);
         if (checkbox) {
             checkbox.addEventListener("change", function() {
-                group.attributes.forEach(attr => {
-                    const inputAttribute = document.getElementById(attr.id);
-                    if (inputAttribute) {
-                        let valorAtual = parseInt(inputAttribute.value);
-                        inputAttribute.value = checkbox.checked ? valorAtual - 1 : valorAtual + 1;
-                        updateAttributeDice(attr.id);
-                    }
-                });
+                updateAllAttributes();
                 updateInitiative();
                 updateAllSkills();
             });

@@ -113,11 +113,14 @@
                 </div>
 
                 <div class="topSplitContainer">
-                    <div class="leftProfileColumn">
-                        <div class="levelEmblemWrapper" id="levelEmblemContainer">
-                            <input type="number" id="level" min="1" max="9" value="1" class="levelInputEmblem">
-                        </div>
-                        <div id="threatMeterVisual" class="threatMeterBar"></div>
+                   <div class="leftProfileColumn">
+                    <div class="levelEmblemWrapper" id="levelEmblemContainer">
+                        <div id="virtuousResolveOverlay" class="resolveOverlay virtuousBg" style="display: none;"></div>
+                        <input type="number" id="level" min="1" max="9" value="1" class="levelInputEmblem">
+                        <div id="stressResolveOverlay" class="resolveOverlay stressTop" style="display: none;"></div>
+                    </div>
+                    
+                    <div id="threatMeterVisual" class="threatMeterBar"></div>
                         <div id="stressSquaresVisual" class="stressSquaresContainer">
                             <div class="stressSquare"></div><div class="stressSquare"></div>
                             <div class="stressSquare"></div><div class="stressSquare"></div>
