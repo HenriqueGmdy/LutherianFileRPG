@@ -173,46 +173,7 @@ export function initLocalStorage() {
                 });
             }
 
-            // Restauração protegida e centralizada do estresse e condição
-            const virtuousOverlay = document.getElementById("virtuousResolveOverlay");
-            const stressOverlay = document.getElementById("stressResolveOverlay");
-            const stressConditionBox = document.getElementById("stressConditionBox");
-            const stressConditionName = document.getElementById("stressConditionName");
-            const stressConditionDesc = document.getElementById("stressConditionDesc");
-            const headerStressCondition = document.getElementById("headerStressCondition");
-
-            const savedResolve = localStorage.getItem('lutherian_resolve_state') || localStorage.getItem('characterResolveState');
-            if (virtuousOverlay && stressOverlay) {
-                virtuousOverlay.style.display = "none";
-                stressOverlay.style.display = "none";
-                if (savedResolve === 'virtuous') {
-                    virtuousOverlay.style.display = "block";
-                } else if (savedResolve === 'afflicted' || savedResolve === 'stress') {
-                    stressOverlay.style.display = "block";
-                }
-            }
-
-            const savedConditionData = localStorage.getItem('lutherian_active_condition');
-            if (savedConditionData) {
-                try {
-                    const savedCondition = JSON.parse(savedConditionData);
-                    if (stressConditionName) stressConditionName.textContent = savedCondition.name;
-                    if (stressConditionDesc) stressConditionDesc.textContent = savedCondition.desc;
-                    if (headerStressCondition) headerStressCondition.textContent = savedCondition.name;
-
-                    if (stressConditionBox) {
-                        stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
-                        if (savedCondition.type === "virtuous") {
-                            stressConditionBox.classList.add("is-virtuous");
-                        } else if (savedCondition.type === "afflicted") {
-                            stressConditionBox.classList.add("is-afflicted");
-                        }
-                    }
-                } catch (err) {
-                    console.error("Erro ao restaurar condição de estresse:", err);
-                }
-            }
-
+            console.log("Dados estáticos e listas carregados.");
         } catch (e) {
             console.error("Erro ao carregar dados do storage:", e);
         } finally {

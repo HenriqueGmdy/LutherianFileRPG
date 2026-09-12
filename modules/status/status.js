@@ -14,7 +14,8 @@ export function updateInitiative() {
 }
 
 export function initStatus() {
-    // 1. LIMIAR DA MORTE (FALHAS)
+    let isStarting = true; // Flag para impedir que o carregamento limpe a condição ativa
+
     const deathFail1 = document.getElementById("deathFail1");
     const deathFail2 = document.getElementById("deathFail2");
     const deathFail3 = document.getElementById("deathFail3");
@@ -34,9 +35,7 @@ export function initStatus() {
     }
 
     [deathFail1, deathFail2, deathFail3].forEach(checkbox => {
-        if (checkbox) {
-            checkbox.addEventListener("change", checkDeathSaves);
-        }
+        if (checkbox) checkbox.addEventListener("change", checkDeathSaves);
     });
 
     if (vitalityCurrentInput) {
@@ -57,12 +56,9 @@ export function initStatus() {
         const total = parseFloat(vitalityTotalInput?.value) || 1;
         let percentage = (current / total) * 100;
         percentage = Math.max(0, Math.min(100, percentage));
-        if (vitalityBarFill) {
-            vitalityBarFill.style.width = `${percentage}%`;
-        }
+        if (vitalityBarFill) vitalityBarFill.style.width = `${percentage}%`;
     }
 
-    // 2. BARRA DE VONTADE
     const willpowerCurrentInput = document.getElementById("willpowerCurrent");
     const willpowerTotalInput = document.getElementById("willpowerTotal");
     const willpowerBarFill = document.getElementById("willpowerBarFill");
@@ -72,29 +68,24 @@ export function initStatus() {
         const total = parseFloat(willpowerTotalInput?.value) || 1;
         let percentage = (current / total) * 100;
         percentage = Math.max(0, Math.min(100, percentage));
-        if (willpowerBarFill) {
-            willpowerBarFill.style.width = `${percentage}%`;
-        }
+        if (willpowerBarFill) willpowerBarFill.style.width = `${percentage}%`;
     }
 
     [willpowerCurrentInput, willpowerTotalInput].forEach(el => {
         if (el) el.addEventListener("input", updateWillpowerBar);
     });
 
-    // 3. BARRA DE ESTRESSE E CAIXINHAS DO TOPO
     const stressRange = document.getElementById("stressRange");
     const stressNumberInput = document.getElementById("stress");
     const stressFill = document.getElementById("stressFill");
     const stressSquares = document.querySelectorAll(".stressSquare");
     const headerStressCondition = document.getElementById("headerStressCondition");
 
-    // Botão D20 e Caixa de Condições
     const rollStressBtn = document.getElementById("rollStressBtn");
     const stressConditionBox = document.getElementById("stressConditionBox");
     const stressConditionName = document.getElementById("stressConditionName");
     const stressConditionDesc = document.getElementById("stressConditionDesc");
 
-    // Elementos visuais do emblema de nível (Resolução de Estresse)
     const virtuousOverlay = document.getElementById("virtuousResolveOverlay");
     const stressOverlay = document.getElementById("stressResolveOverlay");
 
@@ -130,9 +121,7 @@ export function initStatus() {
         if (stressNumberInput && stressNumberInput.value != val) stressNumberInput.value = val;
 
         const percentage = (val / 200) * 100;
-        if (stressFill) {
-            stressFill.style.width = `${percentage}%`;
-        }
+        if (stressFill) stressFill.style.width = `${percentage}%`;
 
         const activeBoxesCount = Math.floor(val / 10);
         stressSquares.forEach((square, index) => {
@@ -143,8 +132,8 @@ export function initStatus() {
             }
         });
 
+        const hasActiveCondition = localStorage.getItem('lutherian_active_condition');
         if (rollStressBtn) {
-            const hasActiveCondition = localStorage.getItem('lutherian_active_condition');
             if (val >= 100 && !hasActiveCondition) {
                 rollStressBtn.classList.add("glow-ready");
             } else {
@@ -152,18 +141,25 @@ export function initStatus() {
             }
         }
 
-        if (val < 100) {
-            if (virtuousOverlay) virtuousOverlay.style.display = "none";
-            if (stressOverlay) stressOverlay.style.display = "none";
-            if (stressConditionBox) stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
-        }
+        // Ignora qualquer tentativa de limpeza automática enquanto estiver inicializando a página
+        if (isInitializingOrStarting()) return;
 
-        if (val === 0 && !localStorage.getItem('lutherian_active_condition')) {
+        // Se o usuário zerar o estresse manualmente durante o jogo, limpa tudo
+        if (val === 0) {
             if (stressConditionName) stressConditionName.textContent = "Condições de Estresse";
             if (stressConditionDesc) stressConditionDesc.textContent = "Nenhuma condição ativa.";
-            if (headerStressCondition) headerStressCondition.textContent = " ";
+            if (headerStressCondition) headerStressCondition.textContent = "Normal";
+            if (stressConditionBox) stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
+            if (virtuousOverlay) virtuousOverlay.style.display = "none";
+            if (stressOverlay) stressOverlay.style.display = "none";
+            
+            localStorage.removeItem('lutherian_active_condition');
             localStorage.removeItem('lutherian_resolve_state');
         }
+    }
+
+    function isInitializingOrStarting() {
+        return isStarting;
     }
 
     if (stressRange) {
@@ -173,7 +169,6 @@ export function initStatus() {
         stressNumberInput.addEventListener("input", () => updateStress(stressNumberInput.value));
     }
 
-    // 4. BOTÃO D20 (SORTEIO DE CONDIÇÃO DE ESTRESSE)
     if (rollStressBtn) {
         rollStressBtn.addEventListener("click", () => {
             const currentStress = parseInt(stressNumberInput?.value) || 0;
@@ -197,7 +192,6 @@ export function initStatus() {
             if (stressConditionDesc) stressConditionDesc.textContent = chosen.desc;
             if (headerStressCondition) headerStressCondition.textContent = chosen.name;
 
-            // SALVAMENTO IMEDIATO DA CONDIÇÃO
             localStorage.setItem('lutherian_active_condition', JSON.stringify(chosen));
 
             if (stressConditionBox) {
@@ -226,7 +220,6 @@ export function initStatus() {
         });
     }
 
-    // 5. MEDIDOR DE AMEAÇA
     const threatLevelSelect = document.getElementById("threatLevel");
     const threatMeterVisual = document.getElementById("threatMeterVisual");
 
@@ -256,45 +249,55 @@ export function initStatus() {
         }
     });
 
-    // INICIALIZAÇÃO
+    // Executa as configurações iniciais
     updateVitalityBar();
     updateWillpowerBar();
     updateStress(stressNumberInput ? stressNumberInput.value : 0);
     updateThreatMeter();
     updateInitiative();
 
-    // ==========================================
-    // RESTAURAÇÃO EXPLÍCITA DA CONDIÇÃO E RESOLUÇÃO
-    // ==========================================
-    const savedResolve = localStorage.getItem('lutherian_resolve_state');
-    if (savedResolve === 'virtuous' && virtuousOverlay) {
-        virtuousOverlay.style.display = "block";
-    } else if (savedResolve === 'afflicted' && stressOverlay) {
-        stressOverlay.style.display = "block";
-    }
+    // =========================================================================
+    // RESTAURAÇÃO EXPLICITA COM LIBERAÇÃO DA FLAG
+    // =========================================================================
+    setTimeout(() => {
+        const savedResolve = localStorage.getItem('lutherian_resolve_state');
+        const savedConditionData = localStorage.getItem('lutherian_active_condition');
 
-    const savedConditionData = localStorage.getItem('lutherian_active_condition');
-    if (savedConditionData) {
-        try {
-            const savedCondition = JSON.parse(savedConditionData);
-            if (stressConditionName) stressConditionName.textContent = savedCondition.name;
-            if (stressConditionDesc) stressConditionDesc.textContent = savedCondition.desc;
-            if (headerStressCondition) headerStressCondition.textContent = savedCondition.name;
+        if (savedConditionData) {
+            try {
+                const savedCondition = JSON.parse(savedConditionData);
+                if (stressConditionName) stressConditionName.textContent = savedCondition.name;
+                if (stressConditionDesc) stressConditionDesc.textContent = savedCondition.desc;
+                if (headerStressCondition) headerStressCondition.textContent = savedCondition.name;
 
-            if (stressConditionBox) {
-                stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
-                if (savedCondition.type === "virtuous") {
-                    stressConditionBox.classList.add("is-virtuous");
-                } else if (savedCondition.type === "afflicted") {
-                    stressConditionBox.classList.add("is-afflicted");
+                if (stressConditionBox) {
+                    stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
+                    if (savedCondition.type === "virtuous") {
+                        stressConditionBox.classList.add("is-virtuous");
+                    } else if (savedCondition.type === "afflicted") {
+                        stressConditionBox.classList.add("is-afflicted");
+                    }
                 }
-            }
 
-            if (rollStressBtn) {
-                rollStressBtn.classList.remove("glow-ready");
+                if (virtuousOverlay && stressOverlay) {
+                    virtuousOverlay.style.display = "none";
+                    stressOverlay.style.display = "none";
+                    if (savedResolve === 'virtuous') {
+                        virtuousOverlay.style.display = "block";
+                    } else if (savedResolve === 'afflicted') {
+                        stressOverlay.style.display = "block";
+                    }
+                }
+
+                if (rollStressBtn) {
+                    rollStressBtn.classList.remove("glow-ready");
+                }
+            } catch (err) {
+                console.error("Erro ao carregar a condição de estresse:", err);
             }
-        } catch (error) {
-            console.error("Erro ao carregar a condição de estresse ativa.", error);
         }
-    }
+
+        // Libera a trava para que o usuário possa alterar o estresse normalmente daqui para frente
+        isStarting = false;
+    }, 100);
 }

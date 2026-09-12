@@ -25,9 +25,6 @@ export function initLevelEmblem() {
     });
 
     updateEmblem(levelInput.value);
-
-    const savedState = localStorage.getItem('lutherian_resolve_state') || 'normal';
-    setResolveState(savedState);
 }
 
 export function setResolveState(state) {
