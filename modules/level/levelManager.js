@@ -14,8 +14,10 @@ export function initLevelEmblem() {
             fileName = 'level1_2.png';
         }
 
-        // Adicionamos ?v=Date.now() para impedir que o navegador pegue a imagem corrompida/antiga do cache
-        container.style.backgroundImage = `url('../../assets/images/levels/${fileName}?v=${Date.now()}')`;
+        const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+        const imageUrl = `${window.location.origin}${basePath}/assets/images/levels/${fileName}`;
+
+        container.style.backgroundImage = `url('${imageUrl}?v=${Date.now()}')`;
     }
 
     levelInput.addEventListener('input', (e) => {
