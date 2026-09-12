@@ -39,3 +39,108 @@ body {
     width: 100% !important;
     box-sizing: border-box;
 }
+
+.resolve-cinematic-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    animation: fadeInCinematic 0.3s ease;
+}
+
+.resolve-cinematic-message {
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: visible;
+}
+
+#resolveCinematicImg {
+    max-width: 840px; /* Dobro de 420px */
+    width: 90vw;
+    height: auto;
+    animation: zoomInDetermination 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes zoomInDetermination {
+    0% {
+        transform: scale(0.90);
+        opacity: 0;
+    }
+    20% {
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
+}
+
+/* Container de sobreposição para a segunda etapa */
+.resolve-text-wrapper {
+    position: relative;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    animation: popInText 0.3s ease forwards;
+}
+
+/* Banner de fundo do veredito (bg.stress.text.png - Dobro do tamanho anterior) */
+#resolveBgTextImg {
+    max-width: 900px; /* Dobro de 450px */
+    width: 95vw;
+    height: auto;
+    display: block;
+}
+
+/* O texto centralizado com tamanho de fonte proporcional ao novo banner */
+#resolveCinematicText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: inherit;
+    font-size: 4rem; /* Dobro do tamanho anterior para preencher bem o banner maior */
+    font-weight: bold;
+    white-space: nowrap;
+    letter-spacing: 2px;
+}
+
+/* Regra estabelecida para Virtuoso (Glow Branco) */
+.resolve-text-wrapper.is-virtue span {
+    color: #ffffff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.9), 0 0 40px rgba(255, 255, 255, 0.6);
+}
+
+/* Regra estabelecida para Aflito (Vermelho com glow/sombra preta) */
+.resolve-text-wrapper.is-affliction span {
+    color: #ff3333;
+    text-shadow: 5px 5px 0px #000000, -5px -5px 0px #000000, 5px -5px 0px #000000, -5px 5px 0px #000000, 0 0 25px rgba(255, 0, 0, 0.8);
+}
+
+@keyframes popInText {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInCinematic {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

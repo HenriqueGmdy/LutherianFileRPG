@@ -73,14 +73,30 @@ export function updateSkillModifier(skillKey) {
         let attrTemp = parseInt(document.getElementById(`temp_${attrId}`)?.value) || 0;
         let attrTotal = attrBase + attrTemp;
 
-        // Soma as penalidades ativas para as perícias baseadas em Força e Destreza
         let penalty = 0;
         const isOverloaded = typeof window.isCharacterOverloaded === 'function' && window.isCharacterOverloaded();
-        const bigBackpackActive = document.getElementById("bigBackpackCheck")?.checked || false;
+        const bigBackpackEl = document.getElementById("bigBackpackCheck");
+        const bigBackpackActive = bigBackpackEl ? bigBackpackEl.checked : false;
+
+        // Checagem das condições nas perícias
+        const weakenedChecked = document.getElementById("weakened")?.checked || false;
+        const unwellChecked = document.getElementById("unwell")?.checked || false;
+        const miserableChecked = document.getElementById("miserable")?.checked || false;
+
+        if (weakenedChecked && (attrId === "strength" || attrId === "dexterity")) {
+            penalty += 1;
+        }
+        if (unwellChecked && (attrId === "constitution" || attrId === "charisma")) {
+            penalty += 1;
+        }
+        if (miserableChecked && (attrId === "psyche" || attrId === "wisdom")) {
+            penalty += 1;
+        }
 
         if (isOverloaded && (attrId === "strength" || attrId === "dexterity")) {
             penalty += 1;
         }
+        
         if (bigBackpackActive && attrId === "strength") {
             penalty += 1;
         }
@@ -130,7 +146,6 @@ export function initSkillsListeners() {
     });
 }
 
-// Função principal de inicialização exigida pelo script.js
 export function initSkills() {
     renderSkills();
     initSkillsListeners();

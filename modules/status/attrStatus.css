@@ -165,16 +165,34 @@
     font-family: var(--font-body);
 }
 
-.stressConditionBox.is-virtuous {
-    border-color: #fff;
-    box-shadow: 0 0 15px rgba(255,255,255,0.6);
+/* Caixa de Condição de Estresse - Estado Virtuoso */
+.stressConditionBox.is-virtuous, 
+#stressConditionBox.is-virtuous {
+    border-color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.6); /* Glow suave apenas na borda da caixa */
 }
-.stressConditionBox.is-virtuous h4, .stressConditionBox.is-virtuous p { color: #fff; text-shadow: 0 0 5px #fff; }
-.stressConditionBox.is-afflicted {
-    border-color: #8b0000;
-    box-shadow: 0 0 15px rgba(139,0,0,0.8);
+
+/* Remove o excesso de glow do texto interno para ficar perfeitamente legível */
+.stressConditionBox.is-virtuous h4,
+.stressConditionBox.is-virtuous p,
+#stressConditionName,
+#stressConditionDesc {
+    text-shadow: none !important; /* Limpa o brilho estourado das letras */
+    color: #ffffff;
 }
-.stressConditionBox.is-afflicted h4, .stressConditionBox.is-afflicted p { color: #ff4d4d; }
+
+/* Caixa de Condição de Estresse - Estado Aflito */
+.stressConditionBox.is-afflicted, 
+#stressConditionBox.is-afflicted {
+    border-color: #ff1a1a;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.6); /* Glow suave vermelho apenas na borda */
+}
+
+.stressConditionBox.is-afflicted h4,
+.stressConditionBox.is-afflicted p {
+    text-shadow: none !important;
+    color: #ffcccc; /* Um tom levemente avermelhado claro, mas 100% legível */
+}
 
 .defMoraleBlock {
     display: flex;

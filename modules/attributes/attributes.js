@@ -29,7 +29,6 @@ export function renderAttributes() {
     const container = document.getElementById("attributesContainer");
     if (!container) return;
 
-    // Limpa o container antes de renderizar para evitar duplicações
     container.innerHTML = "";
 
     attributeGroups.forEach(group => {
@@ -39,7 +38,6 @@ export function renderAttributes() {
 
         container.innerHTML += `
             <div class="attributeGroup">
-                <!-- Atributo 1 -->
                 <div class="attributeRow">
                     <div class="attribute-left">
                         <label for="${attr1.id}">${attr1.name}:</label>
@@ -52,7 +50,6 @@ export function renderAttributes() {
                     </div>
                 </div>
 
-                <!-- Atributo 2 -->
                 <div class="attributeRow">
                     <div class="attribute-left">
                         <label for="${attr2.id}">${attr2.name}:</label>
@@ -65,7 +62,6 @@ export function renderAttributes() {
                     </div>
                 </div>
 
-                <!-- Condição -->
                 <div class="conditionBox">
                     <input type="checkbox" id="${cond.id}" class="conditionCheckbox">
                     <label for="${cond.id}"><strong>${cond.name}</strong></label>
@@ -85,28 +81,38 @@ export function updateAttributeDice(attrId) {
         let tempVal = parseInt(tempInput.value) || 0;
         let total = baseVal + tempVal;
 
-        // Soma as penalidades ativas
         let penalty = 0;
         const isOverloaded = typeof window.isCharacterOverloaded === 'function' && window.isCharacterOverloaded();
-        const bigBackpackActive = document.getElementById("bigBackpackCheck")?.checked || false;
+        const bigBackpackEl = document.getElementById("bigBackpackCheck");
+        const bigBackpackActive = bigBackpackEl ? bigBackpackEl.checked : false;
 
-        // Sobrecarga aplica penalidade de -1 em Força e Destreza
+        // Checagem das condições dos atributos
+        const weakenedChecked = document.getElementById("weakened")?.checked || false;
+        const unwellChecked = document.getElementById("unwell")?.checked || false;
+        const miserableChecked = document.getElementById("miserable")?.checked || false;
+
+        if (weakenedChecked && (attrId === "strength" || attrId === "dexterity")) {
+            penalty += 1;
+        }
+        if (unwellChecked && (attrId === "constitution" || attrId === "charisma")) {
+            penalty += 1;
+        }
+        if (miserableChecked && (attrId === "psyche" || attrId === "wisdom")) {
+            penalty += 1;
+        }
+
         if (isOverloaded && (attrId === "strength" || attrId === "dexterity")) {
             penalty += 1;
         }
 
-        // Mochila grande aplica penalidade permanente de -1 apenas em Força
         if (bigBackpackActive && attrId === "strength") {
             penalty += 1;
         }
 
-        // Aplica o acumulado das penalidades subtraindo do total
         if (penalty > 0) {
             if (total > 0) {
-                // Se houver bônus positivo, as penalidades abatem primeiro o bônus
                 total = Math.max(0, total - penalty);
             } else {
-                // Se já for 0 ou negativo, as penalidades empurram ainda mais para o negativo
                 total -= penalty;
             }
         }
@@ -166,7 +172,6 @@ export function initAttributesListeners() {
     });
 }
 
-// Função principal que faltava e agora é exportada para o script.js
 export function initAttributes() {
     renderAttributes();
     initAttributesListeners();

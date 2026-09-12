@@ -169,6 +169,7 @@ export function initStatus() {
         stressNumberInput.addEventListener("input", () => updateStress(stressNumberInput.value));
     }
 
+// 4. BOTÃO D20 (SORTEIO DE CONDIÇÃO DE ESTRESSE)
     if (rollStressBtn) {
         rollStressBtn.addEventListener("click", () => {
             const currentStress = parseInt(stressNumberInput?.value) || 0;
@@ -188,32 +189,88 @@ export function initStatus() {
             const randomIndex = Math.floor(Math.random() * conditionsList.length);
             const chosen = conditionsList[randomIndex];
 
-            if (stressConditionName) stressConditionName.textContent = chosen.name;
-            if (stressConditionDesc) stressConditionDesc.textContent = chosen.desc;
-            if (headerStressCondition) headerStressCondition.textContent = chosen.name;
+            // Elementos da Cinematic Overlay
+            const overlay = document.getElementById("resolveCinematicOverlay");
+            const box = document.getElementById("resolveCinematicBox");
+            const textSpan = document.getElementById("resolveCinematicText");
+            const imgEl = document.getElementById("resolveCinematicImg");
+            const textContainer = document.getElementById("resolveTextContainer");
+            const bgTextImg = document.getElementById("resolveBgTextImg");
 
-            localStorage.setItem('lutherian_active_condition', JSON.stringify(chosen));
+            if (overlay && box && textSpan && imgEl && textContainer && bgTextImg) {
+                // Passo 1: Mostra a determination.png centralizada
+                textContainer.style.display = "none";
+                
+                const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+                
+                imgEl.style.animation = 'none';
+                imgEl.offsetHeight; // Trigger reflow
+                imgEl.style.animation = null; 
 
-            if (stressConditionBox) {
-                stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
-                if (chosen.type === "virtuous") {
-                    stressConditionBox.classList.add("is-virtuous");
-                } else if (chosen.type === "afflicted") {
-                    stressConditionBox.classList.add("is-afflicted");
-                }
-            }
+                imgEl.src = `${window.location.origin}${basePath}/assets/images/menus/determination.png`;
+                imgEl.style.display = "block";
 
-            if (virtuousOverlay && stressOverlay) {
-                virtuousOverlay.style.display = "none";
-                stressOverlay.style.display = "none";
+                overlay.style.display = "flex";
 
-                if (chosen.type === "virtuous") {
-                    virtuousOverlay.style.display = "block";
-                    localStorage.setItem('lutherian_resolve_state', 'virtuous');
-                } else if (chosen.type === "afflicted") {
-                    stressOverlay.style.display = "block";
-                    localStorage.setItem('lutherian_resolve_state', 'afflicted');
-                }
+                // Toca o som correspondente imediatamente
+                let finalAudioFile = chosen.type === "virtuous" ? "virtue.mp3" : "affliction.mp3";
+                const resolveAudio = new Audio(`${window.location.origin}${basePath}/assets/audio/${finalAudioFile}`);
+                resolveAudio.volume = 0.7;
+                resolveAudio.play().catch(e => console.log("Erro ao reproduzir áudio de resolução:", e));
+
+                // Passo 2: Após 1.5 segundos, esconde a determination.png e exibe bg.stress.text.png com o texto em cima
+                setTimeout(() => {
+                    imgEl.style.display = "none";
+                    
+                    bgTextImg.src = `${window.location.origin}${basePath}/assets/images/menus/bg.stress.text.png`;
+                    textContainer.className = "resolve-text-wrapper";
+
+                    if (chosen.type === "virtuous") {
+                        textContainer.classList.add("is-virtue");
+                        textSpan.textContent = "Virtuoso!";
+                    } else {
+                        textContainer.classList.add("is-affliction");
+                        textSpan.textContent = "Aflito!";
+                    }
+
+                    textContainer.style.display = "inline-flex";
+
+                    // Passo 3: Fecha a cinematic após mais 2.5 segundos
+                    setTimeout(() => {
+                        overlay.style.display = "none";
+                        
+                        // Aplica os dados reais na ficha
+                        if (stressConditionName) stressConditionName.textContent = chosen.name;
+                        if (stressConditionDesc) stressConditionDesc.textContent = chosen.desc;
+                        if (headerStressCondition) headerStressCondition.textContent = chosen.name;
+
+                        localStorage.setItem('lutherian_active_condition', JSON.stringify(chosen));
+
+                        if (stressConditionBox) {
+                            stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
+                            if (chosen.type === "virtuous") {
+                                stressConditionBox.classList.add("is-virtuous");
+                            } else if (chosen.type === "afflicted") {
+                                stressConditionBox.classList.add("is-afflicted");
+                            }
+                        }
+
+                        if (virtuousOverlay && stressOverlay) {
+                            virtuousOverlay.style.display = "none";
+                            stressOverlay.style.display = "none";
+
+                            if (chosen.type === "virtuous") {
+                                virtuousOverlay.style.display = "block";
+                                localStorage.setItem('lutherian_resolve_state', 'virtuous');
+                            } else if (chosen.type === "afflicted") {
+                                stressOverlay.style.display = "block";
+                                localStorage.setItem('lutherian_resolve_state', 'afflicted');
+                            }
+                        }
+
+                    }, 2500);
+
+                }, 2600);
             }
 
             rollStressBtn.classList.remove("glow-ready");
