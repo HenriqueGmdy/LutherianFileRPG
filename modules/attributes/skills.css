@@ -1,0 +1,70 @@
+/* 4. SEÇÃO DE PERÍCIAS (5 COLUNAS) */
+.skillsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.skillColumn {
+    flex: 1 1 220px; 
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background-color: var(--bg-fieldset);
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px;
+    color: var(--text-color);
+}
+
+.skillGroup {
+    display: grid;
+    grid-template-columns: 1fr 32px 105px; 
+    align-items: center;
+    gap: 6px;
+}
+
+.skillGroup label {
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-color);
+}
+
+.skillAttr {
+    font-size: 0.7rem;
+    color: #888;
+}
+
+.skillGroup input[type="number"] {
+    width: 32px;
+    text-align: center;
+    padding: 2px;
+    font-size: 0.85rem;
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #555;
+    border-radius: 4px;
+}
+
+.skillMod {
+    text-align: right; 
+    font-size: 0.8rem;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+/* Estados dinâmicos dos dados nas perícias (igual aos atributos) */
+.skillMod.dice-neutral {
+    color: #a3a3a3;
+}
+
+.skillMod.dice-positive {
+    color: var(--positive-color, #ffcc00);
+}
+
+.skillMod.dice-negative {
+    color: var(--negative-color, #c00101); 
+}

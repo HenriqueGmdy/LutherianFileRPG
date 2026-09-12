@@ -1,37 +1,48 @@
-import { renderAttributes, initAttributesListeners, updateAllAttributes } from './js/components/attributes.js';
-import { renderSkills, initSkillsListeners, updateAllSkills } from './js/components/skills.js';
-import { initPersonalListeners } from './js/components/personal.js';
-import { initInventory } from './js/components/inventory.js';
-import { initOrigins } from './js/components/origins.js';
-import { initRaces } from './js/components/races.js';
-import { initTabs } from './js/components/tabs.js';
-import { initThemeCustomizer } from './js/components/themeCustomizer.js';
-import { initLocalStorage } from './js/components/storage.js';
-//nova modularização
-import { initStatus } from './js/components/status.js';
-import { initImageHandler } from './js/components/imageHandler.js';
+// Importações do Core
+import { initThemeEngine } from './core/themeEngine.js';
+import { initTabs } from './core/router.js';
+import { initLocalStorage } from './core/storage.js';
 
-window.addEventListener("DOMContentLoaded", () => {
-    // 1. Renderiza os componentes gerados via JS
-    renderAttributes();
-    renderSkills();
-    initThemeCustomizer();
-    initLocalStorage();
+// Importações dos Módulos
+import { initAttributes } from './modules/attributes/attributes.js';
+import { initSkills } from './modules/attributes/skills.js';
+import { initRaces } from './modules/background/races.js';
+import { initOrigins } from './modules/background/origins.js';
+import { initImageHandler } from './modules/header/imageHandler.js';
+import { initPersonalListeners } from './modules/personal/personal.js';
+import { initInventory } from './modules/inventory/inventory.js';
+import { initNarrative } from './modules/narrative/narrative.js';
+import { initStatus } from './modules/status/status.js';
+import { initLevelEmblem } from './modules/level/levelManager.js';
+import { initCurios } from './modules/header/curios.js';
 
-    // 2. Inicializa os ouvintes de eventos de todos os módulos
-    initTabs();
-    initAttributesListeners();
-    initSkillsListeners();
-    initPersonalListeners();
-    initInventory();
-    initOrigins();
-    initRaces();
+document.addEventListener("DOMContentLoaded", () => {
+    // Função para blindar a inicialização. Se um módulo quebrar, o resto sobrevive.
+    const safeInit = (moduleName, initFunction) => {
+        try {
+            initFunction();
+        } catch (error) {
+            console.error(`Falha ao iniciar o módulo [${moduleName}]:`, error);
+        }
+    };
+
+    // Inicializações de infraestrutura (Blindadas)
+    safeInit("ThemeEngine", initThemeEngine);
+    safeInit("Tabs", initTabs);
+    safeInit("LocalStorage", initLocalStorage); 
     
-    // novos inits
-    initStatus();
-    initImageHandler();
+    // Inicializações de componentes da ficha (Blindadas)
+    safeInit("ImageHandler", initImageHandler);
+    safeInit("PersonalListeners", initPersonalListeners);
+    safeInit("Attributes", initAttributes);
+    safeInit("Skills", initSkills);
+    safeInit("Status", initStatus);
+    safeInit("Inventory", initInventory);
+    safeInit("Races", initRaces);
+    safeInit("Origins", initOrigins);
+    safeInit("Narrative", initNarrative);
+    safeInit("LevelEmblem", initLevelEmblem);
+    safeInit("Curios", initCurios);
 
-    // 3. Executa as sincronizações iniciais
-    updateAllAttributes();
-    updateAllSkills();
+    console.log("Ficha Lutherian iniciada com sistema anti-crash ativado!");
 });

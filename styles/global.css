@@ -1,0 +1,41 @@
+/* ==========================================
+   GLOBAL.CSS - ORQUESTRADOR DE ESTILOS
+   ========================================== */
+
+@import url('variables.css');
+@import url('utilities.css');
+@import url('tabs.css');
+
+/* Módulos isolados por domínio */
+@import url('../modules/attributes/attributes.css');
+@import url('../modules/attributes/skills.css');
+@import url('../modules/header/basics.css');
+@import url('../modules/personal/personal.css');
+@import url('../modules/inventory/inventory.css');
+@import url('../modules/status/attrStatus.css');
+@import url('../modules/narrative/narrative.css');
+
+body {
+    background-color: var(--bg-main, #141414);
+    color: var(--text-color, #ffffff);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    font-family: var(--font-body, 'Arial', sans-serif);
+}
+
+.mainFile {
+    width: 85% !important;
+    max-width: 85% !important;
+    margin-left: 25px !important;
+    margin-right: auto !important;
+    margin-top: 20px;
+    margin-bottom: 40px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.characterTabsWrapper {
+    width: 100% !important;
+    box-sizing: border-box;
+}

@@ -1,0 +1,90 @@
+#attributesContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+.attributeGroup {
+    flex: 1 1 300px;
+    border: 1px solid #333 !important;
+    border-radius: 6px;
+    padding: 12px;
+    background-color: var(--bg-fieldset) !important; 
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.attributeRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.attribute-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.attribute-left label {
+    width: 90px;
+    white-space: nowrap;
+    color: var(--text-color);
+    font-family: var(--font-sub); /* Subtítulo nos nomes dos atributos */
+    font-size: 0.95rem;
+}
+
+.attribute-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.attribute-right label {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    color: #ccc;
+}
+
+.attributeRow input[type="number"] {
+    width: 45px;
+    text-align: center;
+    padding: 3px;
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #444;
+    border-radius: 4px;
+    font-family: var(--font-body);
+}
+
+.diceToRoll {
+    text-align: right;
+    font-weight: bold;
+    min-width: 85px;
+    font-size: 0.9rem;
+    color: var(--accent-color);
+    font-family: var(--font-body);
+}
+
+.conditionBox {
+    text-align: center;
+    padding: 8px;
+    background-color: var(--bg-inputs) !important;
+    border-radius: 4px;
+    border-top: 1px solid #444 !important;
+    color: var(--text-color);
+    margin-top: 5px;
+    font-family: var(--font-sub);
+}
+
+.diceToRoll.dice-negative {
+    color: var(--negative-color, #c00101);
+}
+.diceToRoll.dice-positive {
+    color: var(--positive-color, #ffcc00);
+}

@@ -1,0 +1,19 @@
+/* Alinhamentos rápidos */
+.text-center { text-align: center !important; }
+.text-left { text-align: left !important; }
+.text-right { text-align: right !important; }
+
+/* Flexbox helpers */
+.flex { display: flex !important; }
+.flex-column { flex-direction: column !important; }
+.items-center { align-items: center !important; }
+.justify-between { justify-content: space-between !important; }
+.gap-10 { gap: 10px !important; }
+
+/* Visibilidade */
+.hidden { display: none !important; }
+
+/* Margens utilitárias rápidas */
+.mt-10 { margin-top: 10px !important; }
+.mt-20 { margin-top: 20px !important; }
+.mb-10 { margin-bottom: 10px !important; }

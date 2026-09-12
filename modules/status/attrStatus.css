@@ -1,0 +1,205 @@
+.statusSplitColumns {
+    display: flex;
+    gap: 20px;
+}
+.statusLeftColumn, .statusRightColumn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.resourceBlock {
+    background: var(--bg-fieldset, #1c1c1c);
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #333;
+}
+.resourceTitle {
+    text-align: center;
+    margin: 0 0 10px 0;
+    font-size: 15px;
+    color: var(--text-color, #ffffff);
+    letter-spacing: 1px;
+    font-family: var(--font-sub);
+}
+
+.resourceBarContainer {
+    width: 100%;
+    height: 16px;
+    background: #0d0d0d;
+    border: 2px solid #333;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+}
+.vitalityFill {
+    height: 100%;
+    width: 0%;
+    background:#860202;
+    box-shadow: 0 0 4px rgba(255,0,0,0.25);
+    transition: width 0.3s ease;
+}
+.willpowerFill {
+    height: 100%;
+    width: 0%;
+    background:#001a4d;
+    box-shadow: 0 0 4px rgba(0, 102, 204, 0.25); 
+    transition: width 0.3s ease;
+}
+.stressFill {
+    height: 100%;
+    width: 0%;
+    background: #e6e6e6;
+    box-shadow: 0 0 4px rgba(255,255,255,0.2); 
+    transition: width 0.3s ease, background 0.3s ease;
+}
+.stressMark100 {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #000;
+    z-index: 5;
+}
+.stressRangeSlider {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.resourceCounter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    margin-top: 8px;
+    font-weight: bold;
+    font-size: 14px;
+    color: var(--text-color, #ffffff);
+}
+.resourceCounter input {
+    font-weight: bold;
+    font-size: 14px;
+    color: var(--text-color, #ffffff);
+}
+#stress {
+    width: 45px;
+    text-align: right;
+}
+
+.deathThresholdBlock, .inspirationBlock {
+    text-align: center;
+    background: var(--bg-fieldset, #1c1c1c);
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    color: var(--text-color, #ffffff);
+}
+.deathSaveBoxes {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+.death-fail-input {
+    width: 20px;
+    height: 20px;
+    accent-color: #8b0000;
+}
+.inspirationCheckboxWrapper input {
+    width: 25px;
+    height: 25px;
+    accent-color: var(--accent-color, #ffcc00);
+    border-radius: 50%;
+}
+
+.stressConditionBlock {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.d20Button {
+    background: var(--bg-inputs, #2b2b2b);
+    border: 1px solid #555;
+    color: var(--text-color, #fff);
+    font-size: 24px;
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.3s;
+}
+.d20Button:active {
+    transform: scale(0.9);
+}
+.d20Button.glow-ready {
+    box-shadow: 0 0 10px var(--accent-color, #ffcc00);
+    border-color: var(--accent-color, #ffcc00);
+}
+.stressConditionBox {
+    flex: 1;
+    background: var(--bg-fieldset, #1c1c1c);
+    border: 1px solid #444;
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+    transition: all 0.3s ease;
+    min-height: 50px;
+    color: var(--text-color, #ffffff);
+}
+
+.stressConditionBox h4 {
+    margin: 0 0 5px 0;
+    font-size: 13px;
+    color: var(--text-color, #888);
+    font-family: var(--font-sub);
+}
+
+.stressConditionBox p {
+    margin: 0;
+    font-size: 14px;
+    font-weight: bold;
+    font-family: var(--font-body);
+}
+
+.stressConditionBox.is-virtuous {
+    border-color: #fff;
+    box-shadow: 0 0 15px rgba(255,255,255,0.6);
+}
+.stressConditionBox.is-virtuous h4, .stressConditionBox.is-virtuous p { color: #fff; text-shadow: 0 0 5px #fff; }
+.stressConditionBox.is-afflicted {
+    border-color: #8b0000;
+    box-shadow: 0 0 15px rgba(139,0,0,0.8);
+}
+.stressConditionBox.is-afflicted h4, .stressConditionBox.is-afflicted p { color: #ff4d4d; }
+
+.defMoraleBlock {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: var(--bg-fieldset, #1c1c1c);
+    padding: 15px 0;
+    border-radius: 6px;
+    border: 1px solid #333;
+}
+.shieldContainer, .moraleContainer {
+    position: relative;
+    font-size: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+}
+.shieldInput, .moraleInput {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    text-shadow: 2px 2px 4px #000, -1px -1px 0 #000;
+}

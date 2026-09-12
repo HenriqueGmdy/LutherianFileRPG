@@ -1,0 +1,3748 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+assets/
+  fonts/
+    FjallaOne-Regular.ttf
+    GermaniaOne-Regular.ttf
+    Quintessential-Regular.ttf
+    Schmale Halbfette Fraktur.ttf
+  icons/
+    char.icon.png
+    habilities.icon.png
+    inventory.icon.png
+    page.icon.png
+  images/
+    general/
+      he_icon_idle.png
+      he_icon_selected.png
+      heirloom_exchange.arrow_down.png
+      heirloom_exchange.arrow_up.png
+      menu.check_box.png
+      menu.check_mark.png
+      remove_quirk_positive.png
+      removequirk.png
+    levels/
+      level1_2.png
+      level3.png
+      level4.png
+      level5.png
+      level6.png
+      level7.png
+      level8.png
+      level9.png
+    menus/
+      titlesFrame.png
+    pageChar/
+      class.png
+      name.png
+core/
+  config.js
+  router.js
+  storage.js
+  themeEngine.js
+modules/
+  attributes/
+    attributes.css
+    attributes.js
+    skills.css
+    skills.js
+  background/
+    origins.js
+    originsData.js
+    races.js
+    racesData.js
+  header/
+    basics.css
+    imageHandler.js
+  inventory/
+    inventory.css
+    inventory.js
+    itemsData.js
+  level/
+    level.css
+    levelManager.js
+  narrative/
+    narrative.css
+    narrative.js
+  personal/
+    personal.css
+    personal.js
+  status/
+    attrStatus.css
+    status.js
+styles/
+  global.css
+  tabs.css
+  utilities.css
+  variables.css
+index.html
+script.js
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="core/config.js">
+//CONSTANTES E CONFIGURAÇÕES GLOBAIS
+
+export const CONFIG = {
+    STORAGE_KEYS: {
+        SHEET_DATA: 'lutherian_character_sheet_data',
+        DYNAMIC_LISTS: 'lutherian_dynamic_lists_data',
+        ACTIVE_TAB: 'lutherian_active_tab',
+        THEME: 'lutherian_theme',
+        IMAGE: 'lutherian_char_image'
+    },
+    LIMITS: {
+        MAX_LEVEL: 9,
+        MIN_LEVEL: 1,
+        MAX_STRESS: 200,
+        MAX_DYNAMIC_ITEMS: 20,
+        MAX_INVENTORY_ITEMS: 50
+    },
+    DEFAULTS: {
+        SPEED_MEDIUM: 6,
+        SPEED_SMALL: 5,
+        SPEED_LARGE: 7
+    }
+};
+</file>
+
+<file path="core/router.js">
+export function initTabs() {
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    const tabContents = document.querySelectorAll(".tabContent");
+
+    if (tabButtons.length === 0) return;
+
+    function switchTab(targetId, saveState = true) {
+        tabButtons.forEach(btn => {
+            if (btn.getAttribute("data-tab") === targetId) {
+                btn.classList.add("active");
+            } else {
+                btn.classList.remove("active");
+            }
+        });
+
+        tabContents.forEach(content => {
+            if (content.id === targetId) {
+                content.classList.add("active");
+                content.style.display = "block";
+            } else {
+                content.classList.remove("active");
+                content.style.display = "none";
+            }
+        });
+
+        // Salva a aba ativa no localStorage para persistir no F5
+        if (saveState) {
+            localStorage.setItem('lutherian_active_tab', targetId);
+        }
+    }
+
+    // Ouve os cliques nos botões de aba
+    tabButtons.forEach(button => {
+        button.addEventListener("click", () => {
+            const targetId = button.getAttribute("data-tab");
+            switchTab(targetId, true);
+        });
+    });
+
+    // Ao iniciar, restaura a última aba ativa salva ou mantém a padrão
+    const savedTab = localStorage.getItem('lutherian_active_tab');
+    if (savedTab && document.getElementById(savedTab)) {
+        switchTab(savedTab, false);
+    }
+}
+</file>
+
+<file path="core/storage.js">
+import { CONFIG } from './config.js';
+
+export function initLocalStorage() {
+    const STORAGE_KEY = CONFIG.STORAGE_KEYS.SHEET_DATA;
+    const DYNAMIC_LISTS_KEY = CONFIG.STORAGE_KEYS.DYNAMIC_LISTS;
+    const ACTIVE_TAB_KEY = CONFIG.STORAGE_KEYS.ACTIVE_TAB;
+
+    let isInitializing = true;
+
+    // 1. Salvar campos estáticos normais
+    document.addEventListener('input', (e) => {
+        if (isInitializing) return;
+        if (e.target.matches('input, select, textarea') && !e.target.closest('.dynamicList') && !e.target.closest('#inventoryItemsList')) {
+            saveStaticData();
+        }
+    });
+
+    document.addEventListener('change', (e) => {
+        if (isInitializing) return;
+        if (e.target.matches('input[type="checkbox"], input[type="range"], select')) {
+            saveStaticData();
+        }
+    });
+
+    function saveStaticData() {
+        const data = {};
+        const fields = document.querySelectorAll('input, select, textarea');
+        
+        fields.forEach(field => {
+            if (field.closest('.dynamicList') || field.closest('#inventoryItemsList')) return;
+
+            const identifier = field.id || field.name;
+            if (!identifier) return;
+
+            if (field.type === 'checkbox') {
+                data[identifier] = field.checked;
+            } else {
+                data[identifier] = field.value;
+            }
+        });
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    // 2. Salvar todas as listas dinâmicas e o inventário
+    window.saveAllDynamicLists = function() {
+        if (isInitializing) return;
+        
+        const listsData = {};
+
+        document.querySelectorAll('.dynamicList').forEach(container => {
+            const containerId = container.id;
+            if (!containerId) return;
+
+            const rowsData = [];
+
+            container.querySelectorAll('.stringItemRow, .cardItemBox, .inventoryItemCard').forEach(row => {
+                const textInput = row.querySelector('input[type="text"]');
+                const numberInputs = row.querySelectorAll('input[type="number"]');
+                const textarea = row.querySelector('textarea');
+
+                rowsData.push({
+                    text: textInput ? textInput.value : "",
+                    qty: numberInputs[0] ? numberInputs[0].value : "1",
+                    weight: numberInputs[1] ? numberInputs[1].value : "0",
+                    desc: textarea ? textarea.value : ""
+                });
+            });
+
+            listsData[containerId] = rowsData;
+        });
+
+        localStorage.setItem(DYNAMIC_LISTS_KEY, JSON.stringify(listsData));
+    };
+
+    document.addEventListener('input', (e) => {
+        if (e.target.closest('.dynamicList') || e.target.closest('#inventoryItemsList')) {
+            window.saveAllDynamicLists();
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('removeItemBtn') || e.target.classList.contains('addItemBtn') || e.target.id === 'addInventoryItemBtn') {
+            setTimeout(window.saveAllDynamicLists, 150);
+        }
+    });
+
+    // 3. Carregar e reconstruir os dados ao iniciar
+    function loadData() {
+        const savedJSON = localStorage.getItem(STORAGE_KEY);
+        const savedListsJSON = localStorage.getItem(DYNAMIC_LISTS_KEY);
+
+        try {
+            if (savedListsJSON) {
+                const listsData = JSON.parse(savedListsJSON);
+                
+                Object.keys(listsData).forEach(containerId => {
+                    const container = document.getElementById(containerId);
+                    if (!container) return;
+
+                    container.innerHTML = "";
+                    const items = listsData[containerId];
+
+                    items.forEach(itemData => {
+                        const itemDiv = document.createElement("div");
+                        const safeText = itemData.text !== undefined && itemData.text !== null ? itemData.text : "";
+                        const safeDesc = itemData.desc !== undefined && itemData.desc !== null ? itemData.desc : "";
+
+                        if (containerId === "inventoryItemsList") {
+                            itemDiv.className = "inventoryItemCard cardItemBox";
+                            itemDiv.innerHTML = `
+                                <div class="inventoryItemTop">
+                                    <input type="text" placeholder="Nome do item..." class="item-name-input" value="${safeText}">
+                                    <label style="font-size:0.75rem; color:#aaa;">Qtd:</label>
+                                    <input type="number" value="${itemData.qty || 1}" min="0" class="item-qty-input">
+                                    <label style="font-size:0.75rem; color:#aaa;">Peso:</label>
+                                    <input type="number" value="${itemData.weight || 0}" min="0" step="0.5" class="item-weight-input">
+                                    <button type="button" class="removeItemBtn" title="Excluir">X</button>
+                                </div>
+                                <textarea placeholder="Descrição do item...">${safeDesc}</textarea>
+                            `;
+                        } else {
+                            const isCard = container.classList.contains("cardList");
+
+                            if (isCard) {
+                                itemDiv.className = "cardItemBox";
+                                itemDiv.innerHTML = `
+                                    <div class="cardItemTop">
+                                        <input type="text" placeholder="Nome / Título..." class="personal-input" value="${safeText}">
+                                        <button type="button" class="removeItemBtn" title="Remover">X</button>
+                                    </div>
+                                    <textarea placeholder="Descrição...">${safeDesc}</textarea>
+                                `;
+                            } else {
+                                itemDiv.className = "stringItemRow";
+                                itemDiv.innerHTML = `
+                                    <input type="text" placeholder="Digite o nome..." class="personal-input" value="${safeText}">
+                                    <button type="button" class="removeItemBtn" title="Remover">X</button>
+                                `;
+                            }
+                        }
+
+                        const removeBtn = itemDiv.querySelector(".removeItemBtn");
+                        if (removeBtn) {
+                            removeBtn.addEventListener("click", () => {
+                                itemDiv.remove();
+                                window.saveAllDynamicLists();
+                            });
+                        }
+
+                        itemDiv.querySelectorAll("input, textarea").forEach(input => {
+                            input.addEventListener("input", () => window.saveAllDynamicLists());
+                        });
+
+                        container.appendChild(itemDiv);
+                    });
+                });
+            }
+
+            if (savedJSON) {
+                const data = JSON.parse(savedJSON);
+                Object.keys(data).forEach(identifier => {
+                    const field = document.getElementById(identifier) || document.querySelector(`[name="${identifier}"]`);
+                    if (!field) return;
+
+                    if (field.type === 'checkbox') {
+                        field.checked = data[identifier];
+                        field.dispatchEvent(new Event('change', { bubbles: true }));
+                    } else if (field.tagName === 'SELECT') {
+                        field.value = data[identifier];
+                        field.dispatchEvent(new Event('change', { bubbles: true }));
+                    } else {
+                        field.value = data[identifier];
+                        field.dispatchEvent(new Event('input', { bubbles: true }));
+                        field.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            }
+
+            console.log("Ficha totalmente restaurada com sucesso!");
+        } catch (e) {
+            console.error("Erro ao carregar dados do storage:", e);
+        } finally {
+            if (typeof window.updateInventoryStatusGlobal === 'function') {
+                window.updateInventoryStatusGlobal();
+            }
+
+            setTimeout(() => {
+                isInitializing = false;
+            }, 300);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', loadData);
+    } else {
+        loadData();
+    }
+}
+</file>
+
+<file path="core/themeEngine.js">
+export function initThemeEngine() {
+    const menuBtn = document.getElementById('optionsMenuBtn');
+    const dropdown = document.getElementById('optionsDropdown');
+    const themePanel = document.getElementById('themeCustomizerPanel');
+    const themeOptBtn = document.getElementById('menuOptTheme');
+    const backBtn = document.getElementById('backToMenuBtn');
+    
+    // Elementos do Modal de Reset
+    const resetOptBtn = document.getElementById('menuOptReset');
+    const resetModal = document.getElementById('resetConfirmModal');
+    const cancelResetBtn = document.getElementById('cancelResetBtn');
+    const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+    // Abre/fecha o menu principal de opções ao clicar nas três bolinhas
+    if (menuBtn && dropdown && themePanel) {
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = dropdown.style.display === 'block' || themePanel.style.display === 'block';
+            if (isOpen) {
+                dropdown.style.display = 'none';
+                themePanel.style.display = 'none';
+            } else {
+                dropdown.style.display = 'block';
+                themePanel.style.display = 'none';
+            }
+        });
+    }
+
+    // Clicar em "Personalizar Tema" esconde o menu principal e abre o painel de cores
+    if (themeOptBtn && dropdown && themePanel) {
+        themeOptBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.style.display = 'none';
+            themePanel.style.display = 'block';
+        });
+    }
+
+    // Clicar em "Resetar Ficha" fecha o menu e abre o Modal de Aviso
+    if (resetOptBtn && resetModal && dropdown) {
+        resetOptBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.style.display = 'none';
+            resetModal.style.display = 'flex';
+        });
+    }
+
+    // Botão Cancelar do Modal
+    if (cancelResetBtn && resetModal) {
+        cancelResetBtn.addEventListener('click', () => {
+            resetModal.style.display = 'none';
+        });
+    }
+
+    // Botão Confirmar do Modal (Apaga tudo e reinicia)
+    if (confirmResetBtn) {
+        confirmResetBtn.addEventListener('click', () => {
+            localStorage.clear();
+            location.reload();
+        });
+    }
+
+    // Botão de "Voltar" dentro do painel de cores retorna ao menu de opções
+    if (backBtn && themePanel && dropdown) {
+        backBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            themePanel.style.display = 'none';
+            dropdown.style.display = 'block';
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (resetModal && resetModal.style.display === 'flex') return;
+
+        if (dropdown && themePanel && menuBtn) {
+            if (!dropdown.contains(e.target) && !themePanel.contains(e.target) && e.target !== menuBtn) {
+                dropdown.style.display = 'none';
+                themePanel.style.display = 'none';
+            }
+        }
+    });
+
+    const rootStyles = document.documentElement.style;
+
+    // VALORES PADRÃO
+    const defaultColors = {
+        colorBgMain: '#141414',
+        colorBgFieldset: '#1c1c1c',
+        colorBgInputs: '#2b2b2b',
+        colorText: '#ffffff',
+        colorAccent: '#ffcc00',
+        colorNegative: '#c00101',
+        colorPositive: '#ffcc00',
+        colorLines: '#ffffff'
+    };
+
+    let savedTheme = JSON.parse(localStorage.getItem('lutherian_theme')) || {};
+    
+    const applyColor = (key, cssVar, defaultVal) => {
+        const val = savedTheme[key] || defaultVal;
+        rootStyles.setProperty(cssVar, val);
+        const input = document.getElementById(key);
+        if (input) input.value = val;
+    };
+
+    const applyAllColors = (themeSource) => {
+        applyColor('colorBgMain', '--bg-main', themeSource.colorBgMain || defaultColors.colorBgMain);
+        applyColor('colorBgFieldset', '--bg-fieldset', themeSource.colorBgFieldset || defaultColors.colorBgFieldset);
+        applyColor('colorBgInputs', '--bg-inputs', themeSource.colorBgInputs || defaultColors.colorBgInputs);
+        applyColor('colorText', '--text-color', themeSource.colorText || defaultColors.colorText);
+        applyColor('colorAccent', '--accent-color', themeSource.colorAccent || defaultColors.colorAccent);
+        applyColor('colorNegative', '--negative-color', themeSource.colorNegative || defaultColors.colorNegative);
+        applyColor('colorPositive', '--positive-color', themeSource.colorPositive || defaultColors.colorPositive);
+        applyColor('colorLines', '--line-color', themeSource.colorLines || defaultColors.colorLines);
+    };
+
+    applyAllColors(savedTheme);
+
+    const updateColor = (property, value, key) => {
+        rootStyles.setProperty(property, value);
+        savedTheme[key] = value;
+        localStorage.setItem('lutherian_theme', JSON.stringify(savedTheme));
+    };
+
+    const bindColorInput = (id, cssVar, key) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', (e) => updateColor(cssVar, e.target.value, key));
+        }
+    };
+
+    bindColorInput('colorBgMain', '--bg-main', 'colorBgMain');
+    bindColorInput('colorBgFieldset', '--bg-fieldset', 'colorBgFieldset');
+    bindColorInput('colorBgInputs', '--bg-inputs', 'colorBgInputs');
+    bindColorInput('colorText', '--text-color', 'colorText');
+    bindColorInput('colorAccent', '--accent-color', 'colorAccent');
+    bindColorInput('colorNegative', '--negative-color', 'colorNegative');
+    bindColorInput('colorPositive', '--positive-color', 'colorPositive');
+    bindColorInput('colorLines', '--line-color', 'colorLines');
+
+    const resetThemeBtn = document.getElementById('resetThemeBtn');
+    if (resetThemeBtn) {
+        resetThemeBtn.addEventListener('click', () => {
+            localStorage.removeItem('lutherian_theme');
+            savedTheme = {};
+
+            applyAllColors(defaultColors);
+
+            if (themePanel && dropdown) {
+                themePanel.style.display = 'none';
+                dropdown.style.display = 'block';
+            }
+        });
+    }
+}
+</file>
+
+<file path="modules/attributes/attributes.css">
+#attributesContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+.attributeGroup {
+    flex: 1 1 300px;
+    border: 1px solid #333 !important;
+    border-radius: 6px;
+    padding: 12px;
+    background-color: var(--bg-fieldset) !important; 
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.attributeRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.attribute-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.attribute-left label {
+    width: 90px;
+    white-space: nowrap;
+    color: var(--text-color);
+    font-family: var(--font-sub); /* Subtítulo nos nomes dos atributos */
+    font-size: 0.95rem;
+}
+
+.attribute-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.attribute-right label {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    color: #ccc;
+}
+
+.attributeRow input[type="number"] {
+    width: 45px;
+    text-align: center;
+    padding: 3px;
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #444;
+    border-radius: 4px;
+    font-family: var(--font-body);
+}
+
+.diceToRoll {
+    text-align: right;
+    font-weight: bold;
+    min-width: 85px;
+    font-size: 0.9rem;
+    color: var(--accent-color);
+    font-family: var(--font-body);
+}
+
+.conditionBox {
+    text-align: center;
+    padding: 8px;
+    background-color: var(--bg-inputs) !important;
+    border-radius: 4px;
+    border-top: 1px solid #444 !important;
+    color: var(--text-color);
+    margin-top: 5px;
+    font-family: var(--font-sub);
+}
+
+.diceToRoll.dice-negative {
+    color: var(--negative-color, #c00101);
+}
+.diceToRoll.dice-positive {
+    color: var(--positive-color, #ffcc00);
+}
+</file>
+
+<file path="modules/attributes/attributes.js">
+export const attributeGroups = [
+    {
+        attrCondition: { id: "weakened", name: "Enfraquecido" },
+        attributes: [
+            { id: "strength", name: "Força" },
+            { id: "dexterity", name: "Destreza" }
+        ]
+    },
+    {
+        attrCondition: { id: "unwell", name: "Indisposto" },
+        attributes: [
+            { id: "constitution", name: "Constituição" },
+            { id: "charisma", name: "Carisma" }
+        ]
+    },
+    {
+        attrCondition: { id: "miserable", name: "Miserável" },
+        attributes: [
+            { id: "psyche", name: "Psique" },
+            { id: "wisdom", name: "Sabedoria" }
+        ]
+    }
+];
+
+import { updateInitiative } from '../status/status.js';
+import { updateAllSkills } from './skills.js';
+
+export function renderAttributes() {
+    const container = document.getElementById("attributesContainer");
+    if (!container) return;
+
+    // Limpa o container antes de renderizar para evitar duplicações
+    container.innerHTML = "";
+
+    attributeGroups.forEach(group => {
+        const attr1 = group.attributes[0];
+        const attr2 = group.attributes[1];
+        const cond = group.attrCondition;
+
+        container.innerHTML += `
+            <div class="attributeGroup">
+                <!-- Atributo 1 -->
+                <div class="attributeRow">
+                    <div class="attribute-left">
+                        <label for="${attr1.id}">${attr1.name}:</label>
+                        <input type="number" id="${attr1.id}" min="-3" max="3" value="0" class="attr-input">
+                    </div>
+                    <div class="attribute-right">
+                        <label for="temp_${attr1.id}">Mod. temporário:</label>
+                        <input type="number" id="temp_${attr1.id}" min="-2" max="2" value="0" class="attr-input">
+                        <span id="dices_${attr1.id}" class="diceToRoll">d20</span>
+                    </div>
+                </div>
+
+                <!-- Atributo 2 -->
+                <div class="attributeRow">
+                    <div class="attribute-left">
+                        <label for="${attr2.id}">${attr2.name}:</label>
+                        <input type="number" id="${attr2.id}" min="-3" max="3" value="0" class="attr-input">
+                    </div>
+                    <div class="attribute-right">
+                        <label for="temp_${attr2.id}">Mod. temporário:</label>
+                        <input type="number" id="temp_${attr2.id}" min="-2" max="2" value="0" class="attr-input">
+                        <span id="dices_${attr2.id}" class="diceToRoll">d20</span>
+                    </div>
+                </div>
+
+                <!-- Condição -->
+                <div class="conditionBox">
+                    <input type="checkbox" id="${cond.id}" class="conditionCheckbox">
+                    <label for="${cond.id}"><strong>${cond.name}</strong></label>
+                </div>
+            </div>
+        `;
+    });
+}
+
+export function updateAttributeDice(attrId) {
+    const baseInput = document.getElementById(attrId);
+    const tempInput = document.getElementById(`temp_${attrId}`);
+    const diceSpan = document.getElementById(`dices_${attrId}`);
+
+    if (baseInput && tempInput && diceSpan) {
+        let baseVal = parseInt(baseInput.value) || 0;
+        let tempVal = parseInt(tempInput.value) || 0;
+        let total = baseVal + tempVal;
+
+        // Soma as penalidades ativas
+        let penalty = 0;
+        const isOverloaded = typeof window.isCharacterOverloaded === 'function' && window.isCharacterOverloaded();
+        const bigBackpackActive = document.getElementById("bigBackpackCheck")?.checked || false;
+
+        // Sobrecarga aplica penalidade de -1 em Força e Destreza
+        if (isOverloaded && (attrId === "strength" || attrId === "dexterity")) {
+            penalty += 1;
+        }
+
+        // Mochila grande aplica penalidade permanente de -1 apenas em Força
+        if (bigBackpackActive && attrId === "strength") {
+            penalty += 1;
+        }
+
+        // Aplica o acumulado das penalidades subtraindo do total
+        if (penalty > 0) {
+            if (total > 0) {
+                // Se houver bônus positivo, as penalidades abatem primeiro o bônus
+                total = Math.max(0, total - penalty);
+            } else {
+                // Se já for 0 ou negativo, as penalidades empurram ainda mais para o negativo
+                total -= penalty;
+            }
+        }
+
+        if (total === 0) {
+            diceSpan.textContent = "d20";
+            diceSpan.className = "diceToRoll dice-neutral";
+        } else if (total > 0) {
+            diceSpan.textContent = `d20 + ${total}d6`;
+            diceSpan.className = "diceToRoll dice-positive";
+        } else {
+            diceSpan.textContent = `d20 - ${Math.abs(total)}d6`;
+            diceSpan.className = "diceToRoll dice-negative";
+        }
+    }
+}
+
+export function updateAllAttributes() {
+    attributeGroups.forEach(group => {
+        group.attributes.forEach(attr => {
+            updateAttributeDice(attr.id);
+        });
+    });
+}
+
+export function initAttributesListeners() {
+    document.addEventListener("input", function(e) {
+        if (e.target && e.target.classList.contains("attr-input")) {
+            let attrId = e.target.id.replace("temp_", "");
+            updateAttributeDice(attrId);
+            
+            if (attrId === "dexterity") {
+                updateInitiative();
+            }
+            updateAllSkills();
+        }
+    });
+
+    document.querySelectorAll(".conditionCheckbox").forEach(checkbox => {
+        checkbox.addEventListener("change", function() {
+            setTimeout(() => {
+                updateAllAttributes();
+                updateAllSkills();
+            }, 10);
+        });
+    });
+
+    attributeGroups.forEach(group => {
+        const checkbox = document.getElementById(group.attrCondition.id);
+        if (checkbox) {
+            checkbox.addEventListener("change", function() {
+                group.attributes.forEach(attr => {
+                    const inputAttribute = document.getElementById(attr.id);
+                    if (inputAttribute) {
+                        let valorAtual = parseInt(inputAttribute.value);
+                        inputAttribute.value = checkbox.checked ? valorAtual - 1 : valorAtual + 1;
+                        updateAttributeDice(attr.id);
+                    }
+                });
+                updateInitiative();
+                updateAllSkills();
+            });
+        }
+    });
+}
+
+// Função principal que faltava e agora é exportada para o script.js
+export function initAttributes() {
+    renderAttributes();
+    initAttributesListeners();
+    updateAllAttributes();
+}
+</file>
+
+<file path="modules/attributes/skills.css">
+/* 4. SEÇÃO DE PERÍCIAS (5 COLUNAS) */
+.skillsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.skillColumn {
+    flex: 1 1 220px; 
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background-color: var(--bg-fieldset);
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px;
+    color: var(--text-color);
+}
+
+.skillGroup {
+    display: grid;
+    grid-template-columns: 1fr 32px 105px; 
+    align-items: center;
+    gap: 6px;
+}
+
+.skillGroup label {
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-color);
+}
+
+.skillAttr {
+    font-size: 0.7rem;
+    color: #888;
+}
+
+.skillGroup input[type="number"] {
+    width: 32px;
+    text-align: center;
+    padding: 2px;
+    font-size: 0.85rem;
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #555;
+    border-radius: 4px;
+}
+
+.skillMod {
+    text-align: right; 
+    font-size: 0.8rem;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+/* Estados dinâmicos dos dados nas perícias (igual aos atributos) */
+.skillMod.dice-neutral {
+    color: #a3a3a3;
+}
+
+.skillMod.dice-positive {
+    color: var(--positive-color, #ffcc00);
+}
+
+.skillMod.dice-negative {
+    color: var(--negative-color, #c00101); 
+}
+</file>
+
+<file path="modules/attributes/skills.js">
+const skillColumnsData = [
+    [
+        { id: "atletismo", name: "Atletismo", attr: "For", attrId: "strength" },
+        { id: "luta", name: "Luta", attr: "For", attrId: "strength" },
+        { id: "limiar", name: "Limiar da morte", attr: "Con", attrId: "constitution" },
+        { id: "resistencia", name: "Resistência", attr: "Con", attrId: "constitution" },
+        { id: "vontade", name: "Força de vontade", attr: "Con", attrId: "constitution" }
+    ],
+    [
+        { id: "furtividade", name: "Furtividade", attr: "Des", attrId: "dexterity" },
+        { id: "pontaria", name: "Pontaria", attr: "Des", attrId: "dexterity" },
+        { id: "coordenacao", name: "Coordenação", attr: "Des", attrId: "dexterity" },
+        { id: "navegacao", name: "Navegação", attr: "Des", attrId: "dexterity" },
+        { id: "reacao", name: "Reação", attr: "Des", attrId: "dexterity" }
+    ],
+    [
+        { id: "arcanismo", name: "Arcanismo", attr: "Psi", attrId: "psyche" },
+        { id: "existir", name: "Existir", attr: "Psi", attrId: "psyche" },
+        { id: "logica", name: "Lógica", attr: "Psi", attrId: "psyche" },
+        { id: "percepcao", name: "Percepção", attr: "Psi", attrId: "psyche" },
+        { id: "interacao", name: "Interação", attr: "Psi", attrId: "psyche" }
+    ],
+    [
+        { id: "adestramento", name: "Adestramento", attr: "Sab", attrId: "wisdom" },
+        { id: "enciclopedia", name: "Enciclopédia", attr: "Sab", attrId: "wisdom" },
+        { id: "medicina", name: "Medicina", attr: "Sab", attrId: "wisdom" },
+        { id: "religiao", name: "Religião", attr: "Sab", attrId: "wisdom" },
+        { id: "sobrevivencia", name: "Sobrevivência", attr: "Sab", attrId: "wisdom" }
+    ],
+    [
+        { id: "autoridade", name: "Autoridade", attr: "Car", attrId: "charisma" },
+        { id: "compostura", name: "Compostura", attr: "Car", attrId: "charisma" },
+        { id: "drama", name: "Drama", attr: "Car", attrId: "charisma" },
+        { id: "empatia", name: "Empatia", attr: "Car", attrId: "charisma" },
+        { id: "uniao", name: "União", attr: "Car", attrId: "charisma" }
+    ]
+];
+
+const skillAttributeMap = {};
+
+export function renderSkills() {
+    const skillsContainer = document.getElementById("skillsContainer");
+    if (!skillsContainer) return;
+
+    skillColumnsData.forEach(column => {
+        let columnHTML = `<div class="skillColumn">`;
+        
+        column.forEach(skill => {
+            skillAttributeMap[skill.id] = skill.attrId;
+            columnHTML += `
+                <div class="skillGroup">
+                    <label for="skill_${skill.id}">${skill.name} <span class="skillAttr">(${skill.attr})</span></label>
+                    <input type="number" id="skill_${skill.id}" value="0" class="skill-input">
+                    <span id="mod_skill_${skill.id}" class="skillMod">d20</span>
+                </div>
+            `;
+        });
+
+        columnHTML += `</div>`;
+        skillsContainer.innerHTML += columnHTML;
+    });
+}
+
+export function updateSkillModifier(skillKey) {
+    const skillInput = document.getElementById(`skill_${skillKey}`);
+    const modSpan = document.getElementById(`mod_skill_${skillKey}`);
+    const attrId = skillAttributeMap[skillKey];
+
+    if (skillInput && modSpan && attrId) {
+        let skillRank = parseInt(skillInput.value) || 0;
+        
+        let attrBase = parseInt(document.getElementById(attrId)?.value) || 0;
+        let attrTemp = parseInt(document.getElementById(`temp_${attrId}`)?.value) || 0;
+        let attrTotal = attrBase + attrTemp;
+
+        // Soma as penalidades ativas para as perícias baseadas em Força e Destreza
+        let penalty = 0;
+        const isOverloaded = typeof window.isCharacterOverloaded === 'function' && window.isCharacterOverloaded();
+        const bigBackpackActive = document.getElementById("bigBackpackCheck")?.checked || false;
+
+        if (isOverloaded && (attrId === "strength" || attrId === "dexterity")) {
+            penalty += 1;
+        }
+        if (bigBackpackActive && attrId === "strength") {
+            penalty += 1;
+        }
+
+        if (penalty > 0) {
+            if (attrTotal > 0) {
+                attrTotal = Math.max(0, attrTotal - penalty);
+            } else {
+                attrTotal -= penalty;
+            }
+        }
+
+        if (attrTotal === 0) {
+            if (skillRank === 0) {
+                modSpan.textContent = "d20";
+                modSpan.className = "skillMod dice-neutral";
+            } else {
+                let sSign = skillRank > 0 ? `+ ${skillRank}` : `- ${Math.abs(skillRank)}`;
+                modSpan.textContent = `d20 ${sSign}`;
+                modSpan.className = "skillMod " + (skillRank > 0 ? "dice-positive" : "dice-negative");
+            }
+        } else if (attrTotal > 0) {
+            let rankPart = skillRank !== 0 ? (skillRank > 0 ? ` + ${skillRank}` : ` - ${Math.abs(skillRank)}`) : "";
+            modSpan.textContent = `d20 + ${attrTotal}d6${rankPart}`;
+            modSpan.className = "skillMod dice-positive";
+        } else {
+            let absAttr = Math.abs(attrTotal);
+            let rankPart = skillRank !== 0 ? (skillRank > 0 ? ` + ${skillRank}` : ` - ${Math.abs(skillRank)}`) : "";
+            modSpan.textContent = `d20 - ${absAttr}d6${rankPart}`;
+            modSpan.className = "skillMod dice-negative";
+        }
+    }
+}
+
+export function updateAllSkills() {
+    Object.keys(skillAttributeMap).forEach(skillKey => {
+        updateSkillModifier(skillKey);
+    });
+}
+
+export function initSkillsListeners() {
+    document.addEventListener("input", function(e) {
+        if (e.target && e.target.classList.contains("skill-input")) {
+            let skillKey = e.target.id.replace("skill_", "");
+            updateSkillModifier(skillKey);
+        }
+    });
+}
+
+// Função principal de inicialização exigida pelo script.js
+export function initSkills() {
+    renderSkills();
+    initSkillsListeners();
+    updateAllSkills();
+}
+</file>
+
+<file path="modules/background/origins.js">
+import { originsData } from '../background/originsData.js'; 
+import { updateAllSkills } from '../attributes/skills.js';
+
+let lastTrainedSkills = [];
+
+export function initOrigins() {
+    const originSelect = document.getElementById("origin");
+    const habilityDesc = document.getElementById("originTraitDescription");
+
+    if (!originSelect) return;
+
+    // Popula o select ordenado alfabeticamente
+    if (originSelect.options.length <= 1) {
+        originSelect.innerHTML = `<option value="">Selecione uma origem...</option>`;
+        const sortedOrigins = Object.entries(originsData).sort((a, b) => a[1].name.localeCompare(b[1].name));
+
+        sortedOrigins.forEach(([key, origin]) => {
+            const option = document.createElement("option");
+            option.value = key;
+            option.textContent = origin.name;
+            originSelect.appendChild(option);
+        });
+    }
+
+    function applyOrigin(selectedKey, isInitialLoad = false) {
+        if (!isInitialLoad) {
+            lastTrainedSkills.forEach(skillId => {
+                const input = document.getElementById(`skill_${skillId}`);
+                if (input) {
+                    input.value = Math.max(0, parseInt(input.value || 0) - 1);
+                }
+            });
+            lastTrainedSkills = [];
+        }
+
+        if (!selectedKey || !originsData[selectedKey]) {
+            if (habilityDesc) {
+                habilityDesc.textContent = "Nenhuma origem especificada.";
+            }
+            updateAllSkills();
+            return;
+        }
+
+        const origin = originsData[selectedKey];
+
+        if (origin.skills && origin.skills.length > 0) {
+            origin.skills.forEach(skillId => {
+                const input = document.getElementById(`skill_${skillId}`);
+                if (input) {
+                    if (!isInitialLoad) {
+                        input.value = parseInt(input.value || 0) + 1;
+                    }
+                    lastTrainedSkills.push(skillId);
+                }
+            });
+        }
+
+        if (habilityDesc) {
+            let skillsText = origin.skillsName ? origin.skillsName : "À escolha do jogador";
+            habilityDesc.innerHTML = `Perícias Treinadas: ${skillsText}<br><br>${origin.campfireSkill}`;
+        }
+
+        updateAllSkills();
+    }
+
+    originSelect.addEventListener("change", function() {
+        applyOrigin(this.value, false);
+    });
+
+    // Restaura automaticamente do localStorage na inicialização
+    try {
+        const savedJSON = localStorage.getItem('lutherian_character_sheet_data');
+        if (savedJSON) {
+            const data = JSON.parse(savedJSON);
+            if (data['origin'] && originsData[data['origin']]) {
+                originSelect.value = data['origin'];
+                applyOrigin(data['origin'], true); // true evita somar bônus duplicado de perícia no F5
+            }
+        }
+    } catch (e) {
+        console.error("Erro ao carregar origem:", e);
+    }
+}
+</file>
+
+<file path="modules/background/originsData.js">
+export const originsData = {
+    "academico": {
+        name: "Acadêmico",
+        skills: ["enciclopedia", "logica"],
+        skillsName: "Enciclopédia e Lógica",
+        campfireSkill: "Reconhecimento forense: Sempre que encontrar um item que possua mecanismo ou elementos mágicos, você rola o teste para analisá-lo com vantagem."
+    },
+    "acolito": {
+        name: "Acólito",
+        skills: ["religiao", "compostura"],
+        skillsName: "Religião e Compostura",
+        campfireSkill: "Ouçam-me!: Você possui vantagem em testes de Autoridade ou Compostura para lidar com uma multidão local."
+    },
+    "amaldicoado": {
+        name: "Amaldiçoado",
+        skills: ["arcanismo", "sobrevivencia"],
+        skillsName: "Arcanismo e Sobrevivência",
+        campfireSkill: "Aura apocalíptica: Quando usar essa habilidade, você previne emboscadas durante um descanso sem nenhum custo de fogueira. No entanto, o próximo descanso acarretará em uma emboscada garantida."
+    },
+    "andarilho": {
+        name: "Andarilho",
+        skills: ["logica", "sobrevivencia"],
+        skillsName: "Lógica e Sobrevivência",
+        campfireSkill: "Eu conheço um cara...: Em um descanso, você gasta 2 pontos de fogueira e rola d6. Se o resultado for superior a 3, você se recorda de algo ou alguém que possa te ajudar com um problema, de acordo com o mestre."
+    },
+    "artesao": {
+        name: "Artesão",
+        skills: ["interacao", "coordenacao"],
+        skillsName: "Interação e Coordenação",
+        campfireSkill: "Remendão: Você pode gastar 2 pontos de fogueira para realizar um reparo emergencial que dura até o próximo descanso em uma arma ou armadura não-mágicos, tornando o item Íntegro até o fim do período, sem nenhum custo adicional."
+    },
+    "artista": {
+        name: "Artista",
+        skills: ["compostura", "autoridade"],
+        skillsName: "Compostura e Autoridade",
+        campfireSkill: "Demonstração: Você realiza uma pequena amostra de seu dom, garantindo +2 em testes de Carisma para dois aliados e reduzindo o estresse de todos que possam ver ou ouvir em 30."
+    },
+    "banido": {
+        name: "Banido",
+        skills: ["furtividade", "resistencia"],
+        skillsName: "Furtividade e Resistência",
+        campfireSkill: "Inescrupuloso: Você é apto a comer comidas estragadas sem penalidade, além de suportar o dobro do período com fome e sem dormir."
+    },
+    "camponês": {
+        name: "Camponês",
+        skills: [],
+        skillsName: "Duas à escolha",
+        campfireSkill: "Histórias de fogueira: Sempre que em descanso, você gasta 1 ponto de fogueira para perder todo seu estresse e rola d2. Se cair 1, todos os aliados recebem 15 de estresse."
+    },
+    "desconhecido": {
+        name: "Desconhecido",
+        skills: [],
+        skillsName: "Especial (As duas primeiras a rolarem 20 natural)",
+        campfireSkill: "Gatilho sensorial: Ao descobrir um fragmento significativo de seu passado, o personagem ganha 1 de inspiração."
+    },
+    "desertor": {
+        name: "Desertor",
+        skills: ["reacao", "percepcao"],
+        skillsName: "Reação e Percepção",
+        campfireSkill: "Coragem velada: Durante um descanso, você designa um aliado ou a si mesmo. O alvo terá vantagem em testes de Limiar da Morte até o próximo descanso."
+    },
+    "forasteiro": {
+        name: "Forasteiro",
+        skills: ["atletismo", "resistencia"],
+        skillsName: "Atletismo e Resistência",
+        campfireSkill: "Sobrevivência exótica: Durante um descanso, você gasta 1 ponto de fogueira para encontrar um dia de ração, um ingrediente natural ou algum item simples."
+    },
+    "heroi_local": {
+        name: "Herói local",
+        skills: ["luta", "vontade"],
+        skillsName: "Luta e Força de Vontade",
+        campfireSkill: "Logo atrás de mim: Você possui +4 de moral com todas as pessoas da sua região. Em um descanso, você pode fazer um teste de Sugestão para ganhar comida ou abrigo de graça."
+    },
+    "impostor": {
+        name: "Impostor",
+        skills: ["autoridade", "existir"],
+        skillsName: "Autoridade e Existir",
+        campfireSkill: "Entre nós: Você pode, por descanso, escolher uma outra habilidade de fogueira de qualquer origem ou classe para utilizar, com o custo de 1 de vontade."
+    },
+    "leproso": {
+        name: "Leproso",
+        skills: ["limiar", "resistencia"],
+        skillsName: "Limiar da Morte e Resistência",
+        campfireSkill: "Quarentena: Você causa 1d10 de dano a si e recupera 20 de estresse de todos os aliados."
+    },
+    "mercenario": {
+        name: "Mercenário",
+        skills: ["pontaria"],
+        skillsName: "Pontaria e +1 de sua escolha",
+        campfireSkill: "Caça remunerada: Você ganha a habilidade de firmar contratos em cenas de descanso onde seja possível."
+    },
+    "miliciano": {
+        name: "Miliciano",
+        skills: ["luta"],
+        skillsName: "Luta e +1 de sua escolha",
+        campfireSkill: "Táticas de guerrilha: Ao descansar, você gasta 1 ponto de fogueira para montar armadilhas que causam desvantagem em inimigos."
+    },
+    "nobre": {
+        name: "Nobre",
+        skills: ["enciclopedia", "autoridade"],
+        skillsName: "Enciclopédia e Autoridade",
+        campfireSkill: "Decreto de privilégio: Ao estar em uma zona habitada durante um descanso pela primeira vez, você gasta 2 pontos de fogueira para arrecadar 3d8 valores."
+    },
+    "orfao": {
+        name: "Órfão",
+        skills: ["reacao", "furtividade"],
+        skillsName: "Reação e Furtividade",
+        campfireSkill: "Astúcia: Durante um descanso, você garante que seu grupo não seja emboscado através de habilidades de furtividade."
+    },
+    "portador": {
+        name: "Portador",
+        skills: ["arcanismo", "existir"],
+        skillsName: "Arcanismo e Existir",
+        campfireSkill: "Execração: Graças a sua origem, você recebe um anátema comum ou inesquecível, à escolha."
+    },
+    "sabio": {
+        name: "Sábio",
+        skills: ["enciclopedia", "uniao"],
+        skillsName: "Enciclopédia e União",
+        campfireSkill: "Conhecimento geracional: Você pode gastar 1 ponto de fogueira para adquirir +3 em testes de Enciclopédia até o próximo descanso."
+    },
+    "refugiado": {
+        name: "Refugiado",
+        skills: ["sobrevivencia", "empatia"],
+        skillsName: "Sobrevivência e Empatia",
+        campfireSkill: "Nossa dor é a mesma: Durante um descanso e gastando 2 pontos de fogueira, você e um aliado recuperam 100 de estresse."
+    }
+};
+</file>
+
+<file path="modules/background/races.js">
+import { racesData } from '../background/racesData.js';
+
+export function initRaces() {
+    const raceSelect = document.getElementById("race");
+    const advDesc = document.getElementById("raceAdvantageDescription");
+    const curseDesc = document.getElementById("raceCurseDescription");
+
+    if (!raceSelect) return;
+
+    function applyRace(selectedKey) {
+        if (!selectedKey || !racesData[selectedKey]) {
+            if (advDesc) advDesc.textContent = "Nenhuma raça selecionada.";
+            if (curseDesc) curseDesc.textContent = "Nenhuma raça selecionada.";
+            return;
+        }
+
+        const race = racesData[selectedKey];
+        if (advDesc) advDesc.textContent = race.advantage;
+        if (curseDesc) curseDesc.textContent = race.curse;
+    }
+
+    raceSelect.addEventListener("change", function() {
+        applyRace(this.value);
+    });
+
+    // Restaura automaticamente do localStorage assim que a página carrega
+    try {
+        const savedJSON = localStorage.getItem('lutherian_character_sheet_data');
+        if (savedJSON) {
+            const data = JSON.parse(savedJSON);
+            if (data['race'] && racesData[data['race']]) {
+                raceSelect.value = data['race'];
+                applyRace(data['race']);
+            }
+        }
+    } catch (e) {
+        console.error("Erro ao carregar raça:", e);
+    }
+}
+</file>
+
+<file path="modules/background/racesData.js">
+export const racesData = {
+    "human": {
+        name: "Humano",
+        advantage: "Melhoria latente: Humanos podem adquirir ou receber habilidades através de estudo ou treinamento com muita facilidade. A cada nível de melhoria, role 1d20. Se o resultado for igual ou superior a 14, seu personagem adquire uma nova técnica da lista de técnicas correspondente ao seu nível ou inferior.",
+        curse: "Destino falho: Todos os humanos são vulneráveis às forças que regem a realidade, e principalmente, o véu. Testes de resistência contra magias de encantamento ou maldições possuem vantagem contra você."
+    },
+    "basilisk": {
+        name: "Basilisco",
+        advantage: "Resistência ofídica: Essa raça ganha Classe de Defesa quando está sem nenhuma armadura igual a Mod. Força + Mod. Constituição + 1.",
+        curse: "Presságio imunológico: Basiliscos sofrem o dobro de dano de condições duradouras, como envenenamento, além de sofrerem o dobro da penalidade de doenças."
+    },
+    "gray": {
+        name: "Cinzento",
+        advantage: "Afinidade mágica: Cinzentos possuem uma estranha relação com a magia, e por serem muito mais conectados a ela, não são tão punidos pelo véu. Uma vez por descanso, ao falhar em uma magia, você pode anular seu Paradoxo.",
+        curse: "Vínculo transitório: Sua natureza desapegada quebra as leis do véu e causa um distúrbio quando você porta um anátema. Você recebe apenas metade do bônus de qualquer anátema, mas também se torna capaz de se desvincular dele com um teste de Força de Vontade DT16."
+    },
+    "constructs": {
+        name: "Constructo",
+        advantage: "Imunidade férrea: Você é completamente imune a condições como sangramento e envenenamento, e não precisa nem sofre de penalidades por falta de descanso ou fome.",
+        curse: "Resquício da centelha: Seu núcleo morre, e você sabe disso. Você sofre +3 de dano de todas as fontes mágicas. Ao cair a 0 de VitA por magia, você cai com uma falha."
+    },
+    "goblins": {
+        name: "Goblin",
+        advantage: "Premonição cautelosa: Goblins possuem vantagem em testes para detectar ou perceber armadilhas, e não precisam de uma fogueira para descansarem adequadamente.",
+        curse: "Impulso Tribal: Ao entrar em combate, o goblin ganha a condição Confuso até o fim do combate se não for um dos 3 primeiros a atacar."
+    },
+    "resonant": {
+        name: "Ressonante",
+        advantage: "Observação espectral: Ressonantes enxergam plenamente em um grau a menos de escuridão exceto por escuridão mágica, além de não receberem estresse pela escuridão.",
+        curse: "Ressonância: Você é um ressonante. Assuma a maldição da raça que você escolher como modelo (Exceto constructos). Além disso, ao cair em morrendo, você possui desvantagem em testes de Limiar da Morte e se morrer seu corpo desaparece completamente."
+    }
+};
+</file>
+
+<file path="modules/header/basics.css">
+/* TIPOGRAFIA E CAMPOS INVISÍVEIS DO TOPO */
+.titleFont {
+    font-family: var(--font-title);
+    color: var(--accent-color, #ffcc00);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 1.4rem;
+}
+
+.subFont {
+    font-family: var(--font-sub);
+    color: var(--text-color, #ffffff);
+}
+.invisibleInput, .invisibleSelect, .invisibleTextarea {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: inherit;
+    font-family: inherit;
+}
+.invisibleInput:focus, .invisibleSelect:focus, .invisibleTextarea:focus {
+    border-bottom: 1px dashed #666;
+}
+.invisibleInput[type="number"]::-webkit-inner-spin-button, 
+.invisibleInput[type="number"]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; margin: 0; 
+}
+.invisibleInput[type="number"] { -moz-appearance: textfield; }
+
+.invisibleSelect option {
+    background-color: var(--bg-inputs, #2b2b2b);
+    color: var(--text-color, #ffffff);
+}
+
+/* CABEÇALHO */
+.characterHeaderArea {
+    margin-bottom: 25px;
+}
+.charNameRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-color, #ffffff);
+}
+.charNameRow input {
+    width: 100%;
+    font-size: 2rem;
+    text-align: left;
+    color: var(--text-color, #ffffff);
+}
+.charClassRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 2.5rem;
+    margin-top: 5px;
+}
+.charClassRow input {
+    font-size: 1.1rem;
+    width: 40%;
+    color: var(--text-color, #ffffff);
+}
+
+.titleLine, .headerDivider {
+    width: 100%;
+    border: 0;
+    height: 1px;
+    background: var(--line-color, #ffffff) !important;
+    margin: 0;
+}
+
+/* TÍTULOS DE SEÇÃO COM LINHAS HORIZONTAIS */
+.sectionTitleWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 15px;
+    width: 100%;
+}
+.titleLine {
+    width: 100%;
+    border: 0;
+    height: 1px;
+    background: var(--bg-fieldset, #555);
+    margin: 0;
+}
+.sectionTitle {
+    margin: 5px 0;
+    font-size: 1.3rem;
+    font-family: var(--font-title);
+}
+
+/* BLOCO SUPERIOR (30% / 70%) */
+.topSplitContainer {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    padding-right: 15px; /* Cria o pequeno espaço simétrico na direita do bloco Básico */
+    box-sizing: border-box;
+}
+.leftProfileColumn {
+    flex: 0 0 30%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+.rightBasicColumn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.threatMeterBar {
+    width: 12px;
+    height: 60px;
+    background: #111;
+    border: 1px solid var(--bg-fieldset, #444);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    margin-top: -26px;
+}
+.stressSquaresContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+.stressSquare {
+    width: 12px;
+    height: 12px;
+    background: #111;
+    border: 1px solid #555;
+    transition: background 0.3s ease;
+}
+.stressSquare.active {
+    background: #fff;
+    box-shadow: 0 0 5px #fff;
+}
+.stressConditionHeader {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--text-color, #aaa);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.characterImageBox {
+    width: 85%;
+    max-width: 290px;
+    aspect-ratio: 0.85;
+    border: 2px dashed #555;
+    background: var(--bg-fieldset, rgba(0,0,0,0.3));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.basicSplitColumns {
+    display: flex;
+    gap: 20px;
+}
+.basicSubLeft { flex: 0 0 55%; }
+
+.basicSubRight {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    margin-top: 35px; 
+}
+
+.smallBoxInput {
+    background: var(--bg-inputs, #2b2b2b);
+    border: 1px solid #444;
+    color: var(--text-color, #fff);
+    width: 45px;
+    text-align: center;
+    padding: 3px;
+    border-radius: 3px;
+}
+.inlineDataGroup {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    background: var(--bg-fieldset, #1c1c1c);
+    border: 1px solid #333;
+    padding: 5px 10px;
+    border-radius: 4px;
+    color: var(--text-color, #fff);
+}
+.classCampfireBox textarea {
+    width: 100%;
+    height: 80px;
+    margin-top: 5px;
+    background: var(--bg-inputs, #2b2b2b);
+    border: 1px solid #444;
+    padding: 8px;
+    color: var(--text-color, #fff);
+    resize: none;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+/* Restaura as caixas de Vantagem, Maldição e Origem */
+.raceTraitsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.raceTraitBox, .classTrait {
+    background: var(--bg-fieldset, #1c1c1c);
+    border: 1px solid #333;
+    padding: 10px;
+    border-radius: 4px;
+    color: var(--text-color, #fff);
+    
+}
+
+/* Container empilhado e compacto */
+.inlineDataCompactGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+/* Cada linha se comporta como um grid fixo para alinhar perfeitamente */
+.inlineDataCompactGroup .inlineDataGroup {
+    display: grid;
+    grid-template-columns: 75px 50px 45px; /* Rótulo fixo (75px), Input fixo (50px), Unidade (45px) */
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0;
+    padding: 6px 12px;
+    background: var(--bg-fieldset, #1c1c1c);
+    border: 1px solid #333;
+    border-radius: 4px;
+    width: fit-content;
+}
+
+.inlineDataCompactGroup .inlineDataGroup label {
+    text-align: left;
+    white-space: nowrap;
+}
+
+.inlineDataCompactGroup .smallBoxInput {
+    width: 100%; /* Ocupa os 50px reservados na coluna do grid */
+    text-align: center;
+}
+
+.inlineDataCompactGroup .unit {
+    font-size: 0.85rem;
+    color: var(--text-color);
+    opacity: 0.8;
+    text-align: left;
+}
+
+/* CABEÇALHO AJUSTADO */
+.characterHeaderArea {
+    margin-bottom: 25px;
+}
+
+.charNameRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-color, #ffffff);
+}
+
+.charNameInput {
+    width: 50% !important;
+    font-size: 2rem;
+    text-align: left;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    color: var(--text-color, #ffffff);
+    padding: 0;
+}
+
+.charNameInput:focus {
+    border-bottom: 1px dashed #666 !important;
+}
+
+.charClassRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 2.5rem;
+    margin-top: 8px;
+}
+
+/* Estilo individual dos inputs de classe e subclasse (metade da largura anterior) */
+.classInput, .subclassInput {
+    width: 120px !important;
+    font-size: 1.1rem;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    color: var(--text-color, #ffffff);
+    padding: 0;
+}
+
+.subclassInput {
+    width: 180px !important;
+    font-size: 1.1rem;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    color: var(--text-color, #ffffff);
+    padding: 0;
+}
+
+.classInput:focus, .subclassInput:focus {
+    border-bottom: 1px dashed #666 !important;
+}
+</file>
+
+<file path="modules/header/imageHandler.js">
+export function initImageHandler(options = {}) {
+    // Permite configurar múltiplos slots de imagem no futuro passando seletores, 
+    // mas já começa configurando a principal por padrão.
+    const boxId = options.boxId || "imageUploadBox";
+    const inputId = options.inputId || "charImageInput";
+    const displayId = options.displayId || "charImageDisplay";
+    const placeholderId = options.placeholderId || "imagePlaceholderText";
+    const storageKey = options.storageKey || "lutherian_char_image";
+
+    const imageBox = document.getElementById(boxId);
+    const imageInput = document.getElementById(inputId);
+    const imageDisplay = document.getElementById(displayId);
+    const placeholderText = document.getElementById(placeholderId);
+
+    if (!imageBox || !imageInput) return;
+
+    // Abre o explorador de arquivos ao clicar na caixa
+    imageBox.addEventListener("click", () => {
+        imageInput.click();
+    });
+
+    // Processa o arquivo selecionado
+    imageInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const base64Image = event.target.result;
+                
+                setImageVisuals(base64Image, imageDisplay, placeholderText);
+                localStorage.setItem(storageKey, base64Image);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Carrega a imagem salva anteriormente do localStorage ao iniciar
+    const savedImage = localStorage.getItem(storageKey);
+    if (savedImage) {
+        setImageVisuals(savedImage, imageDisplay, placeholderText);
+    }
+}
+
+// Função auxiliar interna para alternar a exibição visual
+function setImageVisuals(src, displayElement, placeholderElement) {
+    if (displayElement) {
+        displayElement.src = src;
+        displayElement.style.display = "block";
+    }
+    if (placeholderElement) {
+        placeholderElement.style.display = "none";
+    }
+}
+</file>
+
+<file path="modules/inventory/inventory.css">
+/* ==========================================
+   INVENTORY.CSS - APENAS INVENTÁRIO
+   ========================================== */
+.inventoryContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.inventoryTopGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.inventoryBlock {
+    flex: 1 1 280px;
+    background-color: var(--bg-fieldset);
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: var(--text-color);
+}
+
+.invTitle {
+    color: var(--accent-color);
+    font-weight: bold;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.invInputWrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.invCoinsInput {
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px 8px;
+    width: 80px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.invCapacityHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.loadDisplayValue {
+    font-weight: bold;
+    color: var(--text-color);
+    font-size: 0.95rem;
+}
+
+.backpackOptions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-top: 1px solid #2a2a2a;
+    padding-top: 6px;
+    margin-top: 2px;
+}
+
+.encumbranceAlerts {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #ff4444;
+    background-color: #2a1515;
+    border: 1px solid #552222;
+    border-radius: 4px;
+    padding: 6px 10px;
+    display: none;
+}
+
+.inventoryItemCard {
+    background-color: var(--bg-fieldset); 
+    border: 1px solid #333;  
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: var(--text-color);
+}
+
+.inventoryItemTop {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+}
+
+.item-name-input {
+    flex: 1;
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-weight: bold;
+}
+
+.item-qty-input, .item-weight-input {
+    width: 45px;
+    text-align: center;
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px 2px;
+}
+
+.removeItemBtn {
+    background-color: #3a1a1a;
+    color: #ff4444;
+    border: 1px solid #555;
+    border-radius: 4px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.removeItemBtn:hover {
+    background-color: #5a2222;
+}
+
+.inventoryItemCard textarea {
+    width: 100%;
+    min-height: 45px;
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 6px;
+    box-sizing: border-box;
+    resize: vertical;
+    font-family: Arial, sans-serif;
+    font-size: 0.85rem;
+}
+</file>
+
+<file path="modules/inventory/inventory.js">
+import { updateAllAttributes } from '../attributes/attributes.js';
+import { updateAllSkills } from '../attributes/skills.js';
+
+export function initInventory() {
+    const MAX_ITEMS = 50;
+    const itemsContainer = document.getElementById("inventoryItemsList");
+    const addBtn = document.getElementById("addInventoryItemBtn");
+    const loadDisplay = document.getElementById("loadDisplay");
+    const alertsBox = document.getElementById("encumbranceAlerts");
+    
+    const backpackCheck = document.getElementById("backpackCheck");
+    const bigBackpackCheck = document.getElementById("bigBackpackCheck");
+    const sizeSelect = document.getElementById("size");
+
+    // Função para calcular a capacidade máxima e gerenciar o custo de Força da Mochila Grande
+    function calculateMaxCapacity() {
+        const strengthInput = document.getElementById("strength");
+        const tempStrengthInput = document.getElementById("temp_strength");
+
+        let baseStr = parseInt(strengthInput?.value) || 0;
+        let tempStr = parseInt(tempStrengthInput?.value) || 0;
+        
+        // Se a mochila grande estiver ativa, aplica o -1 de penalidade na Força total para o cálculo
+        let strengthPenalty = (bigBackpackCheck && bigBackpackCheck.checked) ? 1 : 0;
+        let totalStr = (baseStr + tempStr) - strengthPenalty;
+
+        let maxSlots = totalStr <= 0 ? 3 : totalStr * 6;
+
+        if (backpackCheck && backpackCheck.checked) maxSlots += 10;
+        if (bigBackpackCheck && bigBackpackCheck.checked) maxSlots += 22;
+
+        return maxSlots;
+    }
+
+    function calculateCurrentLoad() {
+        let currentLoad = 0;
+        if (!itemsContainer) return currentLoad;
+        const itemCards = itemsContainer.querySelectorAll(".inventoryItemCard");
+
+        itemCards.forEach(card => {
+            const qtyInput = card.querySelector(".item-qty-input");
+            const weightInput = card.querySelector(".item-weight-input");
+            const qty = parseFloat(qtyInput?.value) || 0;
+            const weight = parseFloat(weightInput?.value) || 0;
+            currentLoad += qty * weight;
+        });
+
+        return currentLoad;
+    }
+
+    // Expõe globalmente se o inventário está sobrecarregado
+    window.isCharacterOverloaded = function() {
+        const current = calculateCurrentLoad();
+        const max = calculateMaxCapacity();
+        return current > max;
+    };
+
+    function updateInventoryStatus() {
+        const current = calculateCurrentLoad();
+        const max = calculateMaxCapacity();
+
+        if (loadDisplay) {
+            loadDisplay.textContent = `${current} / ${max}`;
+        }
+
+        const isOverloaded = current > max;
+        const isExcessive = current >= max * 2 && max > 0;
+
+        // Define o deslocamento base de acordo com o tamanho escolhido (Pequeno: 5, Médio: 6, Grande: 7)
+        let baseSpeed = 6; // Padrão Médio
+        if (sizeSelect) {
+            if (sizeSelect.value === "pequeno") baseSpeed = 5;
+            else if (sizeSelect.value === "grande") baseSpeed = 7;
+            else baseSpeed = 6; // "medio"
+        }
+
+        const speedInput = document.getElementById("speed");
+        if (speedInput) {
+            if (isExcessive) speedInput.value = 0;
+            else if (isOverloaded) speedInput.value = Math.max(0, baseSpeed - 2);
+            else speedInput.value = baseSpeed;
+        }
+
+        // Força a atualização visual dos atributos e perícias
+        updateAllAttributes();
+        updateAllSkills();
+
+        if (alertsBox) {
+            let alerts = [];
+            if (bigBackpackCheck && bigBackpackCheck.checked) {
+                alerts.push("🎒 MOCHILA GRANDE: Penalidade ativa de -1 em Força.");
+            }
+            if (isOverloaded && !isExcessive) {
+                alerts.push("⚠️ SOBRECARGA: -2 qds de deslocamento e Desvantagem em Força e Destreza.");
+            }
+            if (isExcessive) {
+                alerts.push("❌ CARGA EXCESSIVA (Dobro do limite): Deslocamento reduzido a 0 e Incapaz de realizar ações!");
+            }
+
+            if (alerts.length > 0) {
+                alertsBox.innerHTML = alerts.join("<br>");
+                alertsBox.style.display = "block";
+            } else {
+                alertsBox.style.display = "none";
+            }
+        }
+    }
+
+    // Expõe globalmente para o storage acionar logo após recarregar os dados no F5
+    window.updateInventoryStatusGlobal = function() {
+        updateInventoryStatus();
+    };
+
+    function addInventoryItem() {
+        if (itemsContainer.children.length >= MAX_ITEMS) {
+            alert("Limite máximo de itens atingido.");
+            return;
+        }
+
+        const card = document.createElement("div");
+        card.className = "inventoryItemCard cardItemBox";
+        card.innerHTML = `
+            <div class="inventoryItemTop">
+                <input type="text" placeholder="Nome do item..." class="item-name-input">
+                <label style="font-size:0.75rem; color:#aaa;">Qtd:</label>
+                <input type="number" value="1" min="0" class="item-qty-input">
+                <label style="font-size:0.75rem; color:#aaa;">Peso:</label>
+                <input type="number" value="0" min="0" step="0.5" class="item-weight-input">
+                <button type="button" class="removeItemBtn" title="Excluir">X</button>
+            </div>
+            <textarea placeholder="Descrição do item..."></textarea>
+        `;
+
+        card.querySelectorAll("input").forEach(input => {
+            input.addEventListener("input", updateInventoryStatus);
+        });
+
+        card.querySelector(".removeItemBtn").addEventListener("click", () => {
+            card.remove();
+            updateInventoryStatus();
+        });
+
+        itemsContainer.appendChild(card);
+        updateInventoryStatus();
+    }
+
+    if (addBtn) {
+        addBtn.addEventListener("click", addInventoryItem);
+    }
+
+    // Ouvintes de mudanças nas opções de mochilas e tamanho
+    [backpackCheck, bigBackpackCheck, sizeSelect].forEach(element => {
+        if (element) element.addEventListener("change", updateInventoryStatus);
+    });
+
+    document.addEventListener("input", (e) => {
+        if (e.target && (e.target.id === "strength" || e.target.id === "temp_strength")) {
+            updateInventoryStatus();
+        }
+    });
+
+    updateInventoryStatus();
+}
+</file>
+
+<file path="modules/inventory/itemsData.js">
+
+</file>
+
+<file path="modules/level/level.css">
+.levelEmblemWrapper {
+    width: 95px;
+    height: 95px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.levelInputEmblem::-webkit-inner-spin-button, 
+.levelInputEmblem::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+}
+
+.levelInputEmblem {
+    -moz-appearance: textfield;
+    padding: 0;
+    width: 60%;
+    height: 60%;
+    box-sizing: border-box;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    font-size: 30px;
+    font-weight: bold;
+    text-align: center;
+    text-shadow: none !important;     /* Remove a sombra branca/preta ao redor para o número ficar chapado em preto, ou ajuste se preferir */
+}
+</file>
+
+<file path="modules/level/levelManager.js">
+export function initLevelEmblem() {
+    const levelInput = document.getElementById('level');
+    const container = document.getElementById('levelEmblemContainer');
+
+    if (!levelInput || !container) return;
+
+    function updateEmblem(val) {
+        const num = parseInt(val) || 1;
+        let fileName = 'level1_2.png';
+
+        if (num >= 3 && num <= 9) {
+            fileName = `level${num}.png`;
+        } else {
+            fileName = 'level1_2.png';
+        }
+
+        // Adicionamos ?v=Date.now() para impedir que o navegador pegue a imagem corrompida/antiga do cache
+        container.style.backgroundImage = `url('/assets/images/levels/${fileName}?v=${Date.now()}')`;
+    }
+
+    levelInput.addEventListener('input', (e) => {
+        updateEmblem(e.target.value);
+    });
+
+    updateEmblem(levelInput.value);
+}
+</file>
+
+<file path="modules/narrative/narrative.css">
+.notesGrid {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.notesGrid .notesTextArea {
+    flex: 1 1 280px;
+}
+
+.fullWidthBlock {
+    width: 100%;
+    display: flex;
+}
+
+.notesTextArea {
+    width: 100%;
+    min-height: 120px;
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px;
+    box-sizing: border-box; 
+    resize: vertical;
+    font-family: Arial, sans-serif;
+    font-size: 0.9rem;
+}
+
+.narrativeArea {
+    min-height: 160px; 
+}
+
+.notesTextArea:focus {
+    border-color: var(--accent-color);
+    outline: none;
+}
+</file>
+
+<file path="modules/narrative/narrative.js">
+export function initNarrative() {
+    const narrativeTextArea = document.getElementById("narrativeNotes");
+
+    if (!narrativeTextArea) return;
+
+    // Exemplo de comportamento opcional para o bloco de narrativa
+    narrativeTextArea.addEventListener("focus", () => {
+        // Você pode adicionar comportamentos específicos aqui se precisar
+    });
+
+    console.log("Módulo de Narrativa inicializado com sucesso.");
+}
+</file>
+
+<file path="modules/personal/personal.css">
+/* ==========================================
+   PERSONAL.CSS - SEÇÃO PESSOAL ISOLADA
+   ========================================== */
+
+.personalContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    color: var(--text-color);
+}
+
+.personalSection {
+    background-color: var(--bg-fieldset);
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 12px;
+    color: var(--text-color);
+}
+
+.personalSectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 8px;
+}
+
+.personalSectionHeader h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-color);
+}
+
+/* Botão de Adicionar */
+.addItemBtn {
+    background-color: var(--bg-inputs);
+    color: var(--accent-color);
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.addItemBtn:hover {
+    background-color: #3a3a3a;
+}
+
+/* Listas Dinâmicas */
+.dynamicList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Itens de String simples (Proficiências e Idiomas) */
+.stringItemRow {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.stringItemRow input {
+    flex: 1;
+    padding: 4px 8px;
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #555;
+    border-radius: 4px;
+}
+
+/* Itens em Bloco/Card (Talentos, Doenças, Traços) */
+.cardItemBox {
+    background-color: var(--bg-inputs);
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--text-color);
+}
+
+.cardItemTop {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.cardItemTop input {
+    flex: 1;
+    padding: 4px 8px;
+    font-weight: bold;
+    background-color: var(--bg-fieldset);
+    color: var(--text-color);
+    border: 1px solid #555;
+    border-radius: 4px;
+}
+
+.cardItemBox textarea {
+    width: 100%;
+    min-height: 45px;
+    background-color: var(--bg-fieldset);
+    color: var(--text-color);
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 6px;
+    box-sizing: border-box;
+    resize: vertical;
+    font-family: Arial, sans-serif;
+    font-size: 0.85rem;
+}
+
+.removeItemBtn {
+    background-color: #3a1a1a;
+    color: #ff4444;
+    border: 1px solid #555;
+    border-radius: 4px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.removeItemBtn:hover {
+    background-color: #5a2222;
+}
+
+/* Bloco de 3 colunas inferiores (Marcas, Ideais, Laços) */
+.personalColumnsRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: space-between;
+}
+
+.personalColumnBox {
+    flex: 1 1 250px;
+    background-color: var(--bg-fieldset);
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: var(--text-color);
+}
+
+.personalColumnBox label {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.personalColumnBox textarea {
+    width: 100%;
+    min-height: 100px; 
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 8px;
+    box-sizing: border-box;
+    resize: vertical;
+    font-family: Arial, sans-serif;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.personalColumnBox textarea:focus {
+    border-color: var(--accent-color);
+    outline: none;
+}
+</file>
+
+<file path="modules/personal/personal.js">
+export function initPersonalListeners() {
+    const MAX_ITEMS = 10;
+
+    // Função genérica para adicionar elementos dinâmicos
+    function addItem(listId, type) {
+        const container = document.getElementById(listId);
+        if (!container) return;
+
+        // Limita a 10 elementos por lista
+        if (container.children.length >= MAX_ITEMS) {
+            alert("Você atingiu o limite máximo de 10 itens para esta lista.");
+            return;
+        }
+
+        const itemDiv = document.createElement("div");
+
+        if (type === "string") {
+            itemDiv.className = "stringItemRow";
+            itemDiv.innerHTML = `
+                <input type="text" placeholder="Digite o nome..." class="personal-input">
+                <button type="button" class="removeItemBtn" title="Remover">X</button>
+            `;
+        } else if (type === "card") {
+            itemDiv.className = "cardItemBox";
+            itemDiv.innerHTML = `
+                <div class="cardItemTop">
+                    <input type="text" placeholder="Nome / Título..." class="personal-input">
+                    <button type="button" class="removeItemBtn" title="Remover">X</button>
+                </div>
+                <textarea placeholder="Descrição..."></textarea>
+            `;
+        }
+
+        // Evento do botão de remover
+        itemDiv.querySelector(".removeItemBtn").addEventListener("click", () => {
+            itemDiv.remove();
+        });
+
+        container.appendChild(itemDiv);
+    }
+
+    // Ouve os cliques nos botões de "+ Adicionar"
+    document.querySelectorAll(".addItemBtn").forEach(btn => {
+        btn.addEventListener("click", function() {
+            const targetId = this.getAttribute("data-target");
+            // Define o tipo de acordo com a classe da lista
+            const container = document.getElementById(targetId);
+            if (container.classList.contains("stringList")) {
+                addItem(targetId, "string");
+            } else if (container.classList.contains("cardList")) {
+                addItem(targetId, "card");
+            }
+        });
+    });
+}
+</file>
+
+<file path="modules/status/attrStatus.css">
+.statusSplitColumns {
+    display: flex;
+    gap: 20px;
+}
+.statusLeftColumn, .statusRightColumn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.resourceBlock {
+    background: var(--bg-fieldset, #1c1c1c);
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #333;
+}
+.resourceTitle {
+    text-align: center;
+    margin: 0 0 10px 0;
+    font-size: 15px;
+    color: var(--text-color, #ffffff);
+    letter-spacing: 1px;
+    font-family: var(--font-sub);
+}
+
+.resourceBarContainer {
+    width: 100%;
+    height: 16px;
+    background: #0d0d0d;
+    border: 2px solid #333;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+}
+.vitalityFill {
+    height: 100%;
+    width: 0%;
+    background:#860202;
+    box-shadow: 0 0 4px rgba(255,0,0,0.25);
+    transition: width 0.3s ease;
+}
+.willpowerFill {
+    height: 100%;
+    width: 0%;
+    background:#001a4d;
+    box-shadow: 0 0 4px rgba(0, 102, 204, 0.25); 
+    transition: width 0.3s ease;
+}
+.stressFill {
+    height: 100%;
+    width: 0%;
+    background: #e6e6e6;
+    box-shadow: 0 0 4px rgba(255,255,255,0.2); 
+    transition: width 0.3s ease, background 0.3s ease;
+}
+.stressMark100 {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #000;
+    z-index: 5;
+}
+.stressRangeSlider {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.resourceCounter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    margin-top: 8px;
+    font-weight: bold;
+    font-size: 14px;
+    color: var(--text-color, #ffffff);
+}
+.resourceCounter input {
+    font-weight: bold;
+    font-size: 14px;
+    color: var(--text-color, #ffffff);
+}
+#stress {
+    width: 45px;
+    text-align: right;
+}
+
+.deathThresholdBlock, .inspirationBlock {
+    text-align: center;
+    background: var(--bg-fieldset, #1c1c1c);
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    color: var(--text-color, #ffffff);
+}
+.deathSaveBoxes {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+.death-fail-input {
+    width: 20px;
+    height: 20px;
+    accent-color: #8b0000;
+}
+.inspirationCheckboxWrapper input {
+    width: 25px;
+    height: 25px;
+    accent-color: var(--accent-color, #ffcc00);
+    border-radius: 50%;
+}
+
+.stressConditionBlock {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.d20Button {
+    background: var(--bg-inputs, #2b2b2b);
+    border: 1px solid #555;
+    color: var(--text-color, #fff);
+    font-size: 24px;
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.3s;
+}
+.d20Button:active {
+    transform: scale(0.9);
+}
+.d20Button.glow-ready {
+    box-shadow: 0 0 10px var(--accent-color, #ffcc00);
+    border-color: var(--accent-color, #ffcc00);
+}
+.stressConditionBox {
+    flex: 1;
+    background: var(--bg-fieldset, #1c1c1c);
+    border: 1px solid #444;
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+    transition: all 0.3s ease;
+    min-height: 50px;
+    color: var(--text-color, #ffffff);
+}
+
+.stressConditionBox h4 {
+    margin: 0 0 5px 0;
+    font-size: 13px;
+    color: var(--text-color, #888);
+    font-family: var(--font-sub);
+}
+
+.stressConditionBox p {
+    margin: 0;
+    font-size: 14px;
+    font-weight: bold;
+    font-family: var(--font-body);
+}
+
+.stressConditionBox.is-virtuous {
+    border-color: #fff;
+    box-shadow: 0 0 15px rgba(255,255,255,0.6);
+}
+.stressConditionBox.is-virtuous h4, .stressConditionBox.is-virtuous p { color: #fff; text-shadow: 0 0 5px #fff; }
+.stressConditionBox.is-afflicted {
+    border-color: #8b0000;
+    box-shadow: 0 0 15px rgba(139,0,0,0.8);
+}
+.stressConditionBox.is-afflicted h4, .stressConditionBox.is-afflicted p { color: #ff4d4d; }
+
+.defMoraleBlock {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: var(--bg-fieldset, #1c1c1c);
+    padding: 15px 0;
+    border-radius: 6px;
+    border: 1px solid #333;
+}
+.shieldContainer, .moraleContainer {
+    position: relative;
+    font-size: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+}
+.shieldInput, .moraleInput {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    text-shadow: 2px 2px 4px #000, -1px -1px 0 #000;
+}
+</file>
+
+<file path="modules/status/status.js">
+export function updateInitiative() {
+    const inputDext = document.getElementById("dexterity");
+    const inputTempDext = document.getElementById("temp_dexterity");
+    const inputIniciative = document.getElementById("initiative");
+
+    if (inputDext && inputTempDext && inputIniciative) {
+        let base = parseInt(inputDext.value) || 0;
+        let temp = parseInt(inputTempDext.value) || 0;
+        let totalDestreza = base + temp;
+
+        let sinal = totalDestreza >= 0 ? `+ ${totalDestreza}` : `- ${Math.abs(totalDestreza)}`;
+        inputIniciative.value = `d20 ${sinal}`;
+    }
+}
+
+export function initStatus() {
+    // 1. LIMIAR DA MORTE (FALHAS)
+    const deathFail1 = document.getElementById("deathFail1");
+    const deathFail2 = document.getElementById("deathFail2");
+    const deathFail3 = document.getElementById("deathFail3");
+    const vitalityCurrentInput = document.getElementById("vitalityCurrent");
+    const vitalityTotalInput = document.getElementById("vitalityTotal");
+    const vitalityBarFill = document.getElementById("vitalityBarFill");
+
+    function checkDeathSaves() {
+        if (deathFail1 && deathFail2 && deathFail3 && vitalityCurrentInput) {
+            if (deathFail1.checked && deathFail2.checked && deathFail3.checked) {
+                vitalityCurrentInput.value = 0;
+                vitalityCurrentInput.disabled = true;
+            } else {
+                vitalityCurrentInput.disabled = false;
+            }
+        }
+    }
+
+    [deathFail1, deathFail2, deathFail3].forEach(checkbox => {
+        if (checkbox) {
+            checkbox.addEventListener("change", checkDeathSaves);
+        }
+    });
+
+    if (vitalityCurrentInput) {
+        vitalityCurrentInput.addEventListener("input", function() {
+            if (deathFail1?.checked && deathFail2?.checked && deathFail3?.checked) {
+                vitalityCurrentInput.value = 0;
+            }
+            updateVitalityBar();
+        });
+    }
+
+    if (vitalityTotalInput) {
+        vitalityTotalInput.addEventListener("input", updateVitalityBar);
+    }
+
+    function updateVitalityBar() {
+        const current = parseFloat(vitalityCurrentInput?.value) || 0;
+        const total = parseFloat(vitalityTotalInput?.value) || 1;
+        let percentage = (current / total) * 100;
+        percentage = Math.max(0, Math.min(100, percentage));
+        if (vitalityBarFill) {
+            vitalityBarFill.style.width = `${percentage}%`;
+        }
+    }
+
+    // 2. BARRA DE VONTADE
+    const willpowerCurrentInput = document.getElementById("willpowerCurrent");
+    const willpowerTotalInput = document.getElementById("willpowerTotal");
+    const willpowerBarFill = document.getElementById("willpowerBarFill");
+
+    function updateWillpowerBar() {
+        const current = parseFloat(willpowerCurrentInput?.value) || 0;
+        const total = parseFloat(willpowerTotalInput?.value) || 1;
+        let percentage = (current / total) * 100;
+        percentage = Math.max(0, Math.min(100, percentage));
+        if (willpowerBarFill) {
+            willpowerBarFill.style.width = `${percentage}%`;
+        }
+    }
+
+    [willpowerCurrentInput, willpowerTotalInput].forEach(el => {
+        if (el) el.addEventListener("input", updateWillpowerBar);
+    });
+
+    // 3. BARRA DE ESTRESSE E CAIXINHAS DO TOPO
+    const stressRange = document.getElementById("stressRange");
+    const stressNumberInput = document.getElementById("stress"); // Input numérico (0/200)
+    const stressFill = document.getElementById("stressFill");
+    const stressSquares = document.querySelectorAll(".stressSquare");
+    const headerStressCondition = document.getElementById("headerStressCondition");
+
+    // Botão D20 e Caixa de Condições
+    const rollStressBtn = document.getElementById("rollStressBtn");
+    const stressConditionBox = document.getElementById("stressConditionBox");
+    const stressConditionName = document.getElementById("stressConditionName");
+    const stressConditionDesc = document.getElementById("stressConditionDesc");
+
+    const conditionsList = [
+        { name: "Com medo", desc: "Você adquire desvantagem em todos os testes e sofre o dobro de estresse de todas as fontes.", type: "afflicted" },
+        { name: "Sem esperança", desc: "No início de seu turno você profere palavras que desmotivam e causam 2d12 de estresse nos seus aliados.", type: "afflicted" },
+        { name: "Inabalável", desc: "Você se torna imune a efeitos de estresse dos inimigos e alivia 1d10 de estresse aos seus aliados por rodada.", type: "virtuous" },
+        { name: "Egoísta", desc: "Você se torna incapaz de realizar testes de União. Sempre que auxiliar um aliado, deve ser bem-sucedido em Força de Vontade DT14 ou perde a ação.", type: "afflicted" },
+        { name: "Esperançoso", desc: "Você adquire vantagem em todos os testes.", type: "virtuous" },
+        { name: "Masoquista", desc: "A cada turno, realiza um teste de Força de Vontade. Se falhar, usa a arma para se atacar, reduzindo 3d12 de estresse.", type: "afflicted" },
+        { name: "Abusivo", desc: "Você deve escolher atacar ou difamar um aliado no alcance para reduzir 6d6 de estresse na rodada, causando o mesmo nele.", type: "afflicted" },
+        { name: "Paranóico", desc: "Existe um traidor entre vocês, e você deve encontrá-lo a todo custo (O personagem escolhe quem).", type: "afflicted" },
+        { name: "Irracional", desc: "No início de todo turno, role um teste de Existir. Se falhar, gasta 1d2 ações fazendo coisas desconexas.", type: "afflicted" },
+        { name: "Corajoso", desc: "Você ganha vantagem em testes de Luta e Arcanismo, e recupera 2d10 de estresse a cada acerto.", type: "virtuous" },
+        { name: "Paralisado", desc: "No início de todo turno lance um d20+Sabedoria. Se menor que 8, perde ações e causa 2d10 de estresse a aliados.", type: "afflicted" },
+        { name: "Errante", desc: "Fica Enfraquecido e Indisposto, sofrendo 2d12 de estresse ao errar ataques/falhar em resistências, sem conseguir críticos.", type: "afflicted" },
+        { name: "Tanatofóbico", desc: "A partir da metade da vitalidade, recebe 2d10 de estresse por golpe recebido. Ao cair morrendo, já tem uma falha garantida.", type: "afflicted" },
+        { name: "Obstinado", desc: "Se cair morrendo, role d20+Constituição (DT9 retorna sem penalidade e com 3d4 vit). Ao cair morrendo pela 1ª vez, possui um sucesso.", type: "virtuous" },
+        { name: "Ansioso", desc: "Você perde todas as condições positivas em si e suas habilidades perdem suas palavras-chave.", type: "afflicted" },
+        { name: "Suicida", desc: "Ganhou condição permanente de Marcado. Com vitalidade menor que 10, recebe +1 em testes (exceto Limiar da Morte e Resistência).", type: "afflicted" },
+        { name: "Imortal", desc: "No início de cada turno, regenera vitalidade com base na soma de todos seus modificadores.", type: "virtuous" },
+        { name: "Robusto", desc: "Você se torna imune a doenças e efeitos contínuos negativos até o fim dessa virtude.", type: "virtuous" },
+        { name: "Imunidade baixa", desc: "Você adquire uma doença imediatamente, e causa 3d10 de estresse nos aliados.", type: "afflicted" },
+        { name: "Depressivo", desc: "Seu turno passa a ser o último da rodada. Errar uma ação profere palavras que causam desvantagem ao aliado mais perto.", type: "afflicted" }
+    ];  
+
+    function updateStress(value) {
+        let val = parseInt(value);
+        if (isNaN(val)) val = 0;
+        val = Math.max(0, Math.min(200, val));
+
+        if (stressRange && stressRange.value != val) stressRange.value = val;
+        if (stressNumberInput && stressNumberInput.value != val) stressNumberInput.value = val;
+
+        const percentage = (val / 200) * 100;
+        if (stressFill) {
+            stressFill.style.width = `${percentage}%`;
+        }
+
+        // Ativa as 10 caixinhas do topo (1 a cada 10 pontos)
+        const activeBoxesCount = Math.floor(val / 10);
+        stressSquares.forEach((square, index) => {
+            if (index < activeBoxesCount) {
+                square.classList.add("active");
+            } else {
+                square.classList.remove("active");
+            }
+        });
+
+        // Brilho do botão D20 ao atingir 100+ de estresse
+        if (rollStressBtn) {
+            if (val >= 100) {
+                rollStressBtn.classList.add("glow-ready");
+            } else {
+                rollStressBtn.classList.remove("glow-ready");
+                if (val < 100 && stressConditionBox) {
+                    stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
+                }
+            }
+        }
+
+        if (val === 0) {
+            if (stressConditionName) stressConditionName.textContent = "Condições de Estresse";
+            if (stressConditionDesc) stressConditionDesc.textContent = "Nenhuma condição ativa.";
+            if (headerStressCondition) headerStressCondition.textContent = " ";
+            if (stressConditionBox) stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
+        }
+    }
+
+    if (stressRange) {
+        stressRange.addEventListener("input", () => updateStress(stressRange.value));
+    }
+    if (stressNumberInput) {
+        stressNumberInput.addEventListener("input", () => updateStress(stressNumberInput.value));
+    }
+
+    // 4. BOTÃO D20 (SORTEIO DE CONDIÇÃO DE ESTRESSE)
+    if (rollStressBtn) {
+        rollStressBtn.addEventListener("click", () => {
+            const currentStress = parseInt(stressNumberInput?.value) || 0;
+
+            if (currentStress < 100) {
+                const charName = document.getElementById("name")?.value || "o personagem";
+                alert(`Por sorte, ${charName} não está estressado(a) o suficiente…`);
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * conditionsList.length);
+            const chosen = conditionsList[randomIndex];
+
+            if (stressConditionName) stressConditionName.textContent = chosen.name;
+            if (stressConditionDesc) stressConditionDesc.textContent = chosen.desc;
+            if (headerStressCondition) headerStressCondition.textContent = chosen.name;
+
+            if (stressConditionBox) {
+                stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
+                if (chosen.type === "virtuous") {
+                    stressConditionBox.classList.add("is-virtuous");
+                } else {
+                    stressConditionBox.classList.add("is-afflicted");
+                }
+            }
+        });
+    }
+
+    // 5. MEDIDOR DE AMEAÇA
+    const threatLevelSelect = document.getElementById("threatLevel");
+    const threatMeterVisual = document.getElementById("threatMeterVisual");
+
+    function updateThreatMeter() {
+        const selectedThreat = threatLevelSelect?.value;
+        if (!threatMeterVisual) return;
+
+        const threatHeights = {
+            "nulo": "0%",
+            "sublime": "20%",
+            "besta": "40%",
+            "demonio": "60%",
+            "anciao": "80%",
+            "radiante": "100%"
+        };
+
+        threatMeterVisual.style.background = `linear-gradient(to top, #ff4d4d ${threatHeights[selectedThreat] || "0%"}, #111 ${threatHeights[selectedThreat] || "0%"})`;
+    }
+
+    if (threatLevelSelect) {
+        threatLevelSelect.addEventListener("change", updateThreatMeter);
+    }
+
+    // OUVINTE DE INICIATIVA
+    document.addEventListener("input", function(e) {
+        if (e.target && (e.target.id === "dexterity" || e.target.id === "temp_dexterity")) {
+            updateInitiative();
+        }
+    });
+
+    // INICIALIZAÇÃO
+    updateVitalityBar();
+    updateWillpowerBar();
+    updateStress(stressNumberInput ? stressNumberInput.value : 0);
+    updateThreatMeter();
+    updateInitiative();
+}
+</file>
+
+<file path="styles/global.css">
+/* ==========================================
+   GLOBAL.CSS - ORQUESTRADOR DE ESTILOS
+   ========================================== */
+
+@import url('variables.css');
+@import url('utilities.css');
+@import url('tabs.css');
+
+/* Módulos isolados por domínio */
+@import url('../modules/attributes/attributes.css');
+@import url('../modules/attributes/skills.css');
+@import url('../modules/header/basics.css');
+@import url('../modules/personal/personal.css');
+@import url('../modules/inventory/inventory.css');
+@import url('../modules/status/attrStatus.css');
+@import url('../modules/narrative/narrative.css');
+
+body {
+    background-color: var(--bg-main, #141414);
+    color: var(--text-color, #ffffff);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    font-family: var(--font-body, 'Arial', sans-serif);
+}
+
+.mainFile {
+    width: 85% !important;
+    max-width: 85% !important;
+    margin-left: 25px !important;
+    margin-right: auto !important;
+    margin-top: 20px;
+    margin-bottom: 40px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.characterTabsWrapper {
+    width: 100% !important;
+    box-sizing: border-box;
+}
+</file>
+
+<file path="styles/tabs.css">
+.characterTabsWrapper {
+    margin-top: 10px;
+}
+
+.characterTabsHeader {
+    display: flex;
+    gap: 4px;
+    padding-left: 10px;
+    margin-bottom: 0;
+    position: relative;
+    z-index: 2;
+    flex-wrap: wrap; 
+}
+
+.tabBtn {
+    background-color: #121212;
+    color: #777;
+    border: 1px solid #333;
+    border-bottom: none;
+    padding: 8px 18px; 
+    border-radius: 6px 6px 0 0;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.95rem;
+    font-family: var(--font-sub);
+    transition: background-color 0.2s, color 0.2s;
+    outline: none;
+}
+
+.tabBtn:hover {
+    background-color: #181818;
+    color: #bbb;
+}
+
+.tabBtn.active {
+    background-color: var(--bg-main); 
+    color: var(--accent-color);
+    border-color: #444;
+    border-top: 3px solid var(--accent-color);
+    position: relative;
+    z-index: 3;
+}
+
+.tabContent {
+    background-color: var(--bg-main); 
+    border: 1px solid #444;
+    padding: 20px;
+    border-radius: 0 6px 6px 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    position: relative;
+    z-index: 1;
+    margin-top: -1px;
+    color: var(--text-color);
+    font-family: var(--font-body);
+}
+
+.tabContent fieldset {
+    background-color: var(--bg-fieldset); 
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+    color: var(--text-color);
+}
+
+.tabContent fieldset legend {
+    font-family: var(--font-title);
+    font-size: 1.1rem;
+    color: var(--accent-color);
+    letter-spacing: 1px;
+}
+
+/* Container unificado das abas com ícones de fundo inteiros */
+.tabs-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 0;
+    padding-left: 2px;
+}
+
+.tab-btn {
+    background-color: transparent;
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    width: 55px;
+    height: 45px;
+    padding: 0;
+    position: relative;
+    opacity: 0.55;
+    filter: brightness(0.65);
+    transition: all 0.2s ease;
+}
+
+.tab-btn[data-tab="personagem"] {
+    background-image: url('../assets/icons/char.icon.png');
+}
+
+.tab-btn[data-tab="habilidades"] {
+    background-image: url('../assets/icons/habilities.icon.png');
+}
+
+.tab-btn[data-tab="detalhes"] {
+    background-image: url('../assets/icons/inventory.icon.png');
+}
+
+.tab-btn:hover {
+    opacity: 0.85;
+    filter: brightness(0.9);
+    transform: translateY(-2px);
+}
+
+.tab-btn.active {
+    opacity: 1;
+    filter: brightness(1.15);
+    transform: translateY(-4px);
+}
+</file>
+
+<file path="styles/utilities.css">
+/* Alinhamentos rápidos */
+.text-center { text-align: center !important; }
+.text-left { text-align: left !important; }
+.text-right { text-align: right !important; }
+
+/* Flexbox helpers */
+.flex { display: flex !important; }
+.flex-column { flex-direction: column !important; }
+.items-center { align-items: center !important; }
+.justify-between { justify-content: space-between !important; }
+.gap-10 { gap: 10px !important; }
+
+/* Visibilidade */
+.hidden { display: none !important; }
+
+/* Margens utilitárias rápidas */
+.mt-10 { margin-top: 10px !important; }
+.mt-20 { margin-top: 20px !important; }
+.mb-10 { margin-bottom: 10px !important; }
+</file>
+
+<file path="styles/variables.css">
+/* ==========================================
+   REGISTRO DAS FONTES DA FICHA LUTHERIAN
+   ========================================== */
+@font-face {
+    font-family: 'FjallaOne';
+    src: url('../assets/fonts/FjallaOne-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'GermaniaOne';
+    src: url('../assets/fonts/GermaniaOne-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Quintessential';
+    src: url('../assets/fonts/Quintessential-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+:root {
+    --bg-main: #141414;
+    --bg-fieldset: #1c1c1c;
+    --bg-inputs: #2b2b2b;
+    --text-color: #ffffff;
+    --accent-color: #ffcc00;
+    --negative-color: #c00101;
+    --positive-color: #ffcc00;
+    --line-color: #ffffff;
+
+    --font-body: 'FjallaOne', Arial, sans-serif;          
+    --font-sub: 'GermaniaOne', Arial, sans-serif;         
+    --font-title: 'Quintessential', Georgia, serif;
+}
+
+body, input, select, textarea, button {
+    font-family: var(--font-body);
+    background-color: var(--bg-main); 
+    color: var(--text-color);
+}
+
+fieldset {
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+legend {
+    color: var(--accent-color);
+    padding: 0 5px;
+    font-family: var(--font-title);
+}
+
+input[type="text"],
+input[type="number"],
+select {
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px 6px;
+    box-sizing: border-box;
+}
+
+/* Botões interativos dos ícones do cabeçalho */
+.headerIconBtn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+/* Tamanho maior e proporcional para encaixar com as linhas */
+.headerIconImg {
+    width: 36px;  /* Aumentado para acompanhar a altura do texto */
+    height: 36px; 
+    object-fit: contain;
+    filter: brightness(0.85);
+    transition: filter 0.15s ease;
+}
+
+/* Efeito ao passar o mouse */
+.headerIconBtn:hover .headerIconImg {
+    filter: brightness(1.15);
+    transform: scale(1.05);
+}
+
+/* Efeito ao clicar */
+.headerIconBtn:active {
+    transform: scale(0.95);
+}
+
+/* Afasta o bloco da classe e desce a linha divisória perfeitamente */
+.charClassRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 0; /* Alinha perfeitamente com o nome em cima */
+    margin-top: 12px; /* Dá mais respiro entre o nome e a classe */
+    margin-bottom: 12px; /* Afasta a linha de baixo em ~3px a mais */
+}
+
+/* Ajusta o espaçamento da linha divisória do cabeçalho */
+.headerDivider {
+    margin-top: 10px; /* Desce a linha um pouco mais */
+    border: 0;
+    height: 1px;
+    background: var(--line-color, #ffffff) !important;
+}
+
+/* ==========================================
+   APLICAÇÃO DOS TÍTULOS COM A QUINTESSENTIAL
+   ========================================== */
+.titleFont, h1, h2, h3, legend {
+    font-family: var(--font-title) !important;
+    font-weight: normal !important;
+    text-transform: none !important;
+    letter-spacing: 0.5px;
+}
+
+.sectionTitle {
+    font-size: 1.8rem !important; 
+}
+
+.subFont, label, .invTitle, .resourceTitle, .skillAttr {
+    font-family: var(--font-sub) !important;
+    font-style: normal !important;
+    font-weight: normal !important;
+}
+
+/* Container das abas */
+.tabs-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 0;
+    padding-left: 2px;
+}
+
+/* O botão VIRA a imagem quadrada e sem distorção */
+.tab-btn {
+    background-color: transparent;
+    background-size: cover; /* Garante que a imagem preencha o quadrado sem achatar */
+    background-position: center;
+    background-repeat: no-repeat;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    width: 48px;  /* Largura e altura iguais para ficar perfeitamente quadrado */
+    height: 48px; 
+    padding: 0;
+    position: relative;
+    opacity: 0.55; /* Apagada quando inativa */
+    filter: brightness(0.65);
+    transition: all 0.2s ease;
+}
+
+/* Imagens de fundo para cada aba */
+.tab-btn[data-tab="personagem"] {
+    background-image: url('../assets/icons/char.icon.png');
+}
+
+.tab-btn[data-tab="habilidades"] {
+    background-image: url('../assets/icons/habilities.icon.png');
+}
+
+.tab-btn[data-tab="detalhes"] {
+    background-image: url('../assets/icons/inventory.icon.png');
+}
+
+/* Efeito ao passar o mouse */
+.tab-btn:hover {
+    opacity: 0.85;
+    filter: brightness(0.9);
+    transform: translateY(-2px);
+}
+
+/* Aba ativa (selecionada) */
+.tab-btn.active {
+    opacity: 1;
+    filter: brightness(1.15);
+    transform: translateY(-4px);
+}
+</file>
+
+<file path="script.js">
+// Importações do Core
+import { initThemeEngine } from './core/themeEngine.js';
+import { initTabs } from './core/router.js';
+import { initLocalStorage } from './core/storage.js';
+
+// Importações dos Módulos
+import { initAttributes } from './modules/attributes/attributes.js';
+import { initSkills } from './modules/attributes/skills.js';
+import { initRaces } from './modules/background/races.js';
+import { initOrigins } from './modules/background/origins.js';
+import { initImageHandler } from './modules/header/imageHandler.js';
+import { initPersonalListeners } from './modules/personal/personal.js';
+import { initInventory } from './modules/inventory/inventory.js';
+import { initNarrative } from './modules/narrative/narrative.js';
+import { initStatus } from './modules/status/status.js';
+import { initLevelEmblem } from './modules/level/levelManager.js';
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Função para blindar a inicialização. Se um módulo quebrar, o resto sobrevive.
+    const safeInit = (moduleName, initFunction) => {
+        try {
+            initFunction();
+        } catch (error) {
+            console.error(`Falha ao iniciar o módulo [${moduleName}]:`, error);
+        }
+    };
+
+    // Inicializações de infraestrutura (Blindadas)
+    safeInit("ThemeEngine", initThemeEngine);
+    safeInit("Tabs", initTabs);
+    safeInit("LocalStorage", initLocalStorage); 
+    
+    // Inicializações de componentes da ficha (Blindadas)
+    safeInit("ImageHandler", initImageHandler);
+    safeInit("PersonalListeners", initPersonalListeners);
+    safeInit("Attributes", initAttributes);
+    safeInit("Skills", initSkills);
+    safeInit("Status", initStatus);
+    safeInit("Inventory", initInventory);
+    safeInit("Races", initRaces);
+    safeInit("Origins", initOrigins);
+    safeInit("Narrative", initNarrative);
+    safeInit("LevelEmblem", initLevelEmblem);
+
+    console.log("Ficha Lutherian iniciada com sistema anti-crash ativado!");
+});
+</file>
+
+<file path="index.html">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Ficha Lutherian</title>
+    <link rel="icon" type="image/png" href="assets/icons/page.icon.png">
+    <link rel="stylesheet" href="styles/global.css">
+    <link rel="stylesheet" href="modules/level/level.css">
+</head>
+<body>
+
+    <div class="mainFile">
+
+        <!-- MENU FLUTUANTE DE OPÇÕES (Canto Superior Direito) -->
+        <div class="optionsMenuWrapper" style="position: absolute; top: 0px; right: -200px; z-index: 1000;">
+            <button type="button" id="optionsMenuBtn" style="background: var(--bg-fieldset, #1c1c1c); border: 1px solid #444; color: var(--text-color, #fff); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4);" title="Opções">
+                ⋮
+            </button>
+            
+            <!-- Menu Principal de Opções -->
+            <div id="optionsDropdown" style="display: none; position: absolute; right: 0; top: 45px; background: #1a1a1a; border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: sans-serif; color: #fff; width: 200px; padding: 6px 0;">
+                <button type="button" id="menuOptTheme" style="width: 100%; text-align: left; background: none; border: none; color: #fff; padding: 10px 15px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    ✎ Personalizar Tema
+                </button>
+                
+                <button type="button" id="menuOptReset" style="width: 100%; text-align: left; background: none; border: none; color: #ff4d4d; padding: 10px 15px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px solid #333;">
+                    🗑️ Resetar Ficha
+                </button>
+            </div>
+
+            <!-- Modal de Confirmação de Reset -->
+            <div id="resetConfirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; font-family: sans-serif;">
+                <div style="background: #1a1a1a; border: 1px solid #555; padding: 25px; border-radius: 8px; max-width: 380px; width: 90%; text-align: center; color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+                    <h3 style="margin-top: 0; color: #ff4d4d; font-size: 18px;">⚠️ Atenção</h3>
+                    <p style="font-size: 14px; color: #ccc; line-height: 1.5; margin-bottom: 20px;">
+                        Ao confirmar, você apagará todas as informações da ficha para sempre!
+                    </p>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button type="button" id="cancelResetBtn" style="background: #333; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px;">Cancelar</button>
+                        <button type="button" id="confirmResetBtn" style="background: #d9534f; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold;">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sub-tela de Customização de Cores -->
+            <div id="themeCustomizerPanel" style="display: none; position: absolute; right: 0; top: 45px; background: #1a1a1a; border: 1px solid #444; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: sans-serif; color: #fff; width: 220px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #333; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                    ✏ Cores do Tema
+                    <button type="button" id="backToMenuBtn" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 12px;">Voltar</button>
+                </h4>
+                <div id="themeControls" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Fundo: <input type="color" id="colorBgMain" value="#141414">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Blocos: <input type="color" id="colorBgFieldset" value="#1c1c1c">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Linhas: <input type="color" id="colorLines" value="#ffffff">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Caixas de Texto: <input type="color" id="colorBgInputs" value="#2b2b2b">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Texto Geral: <input type="color" id="colorText" value="#ffffff">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Destaques: <input type="color" id="colorAccent" value="#ffffff">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Desvantagens: <input type="color" id="colorNegative" value="#c00101">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Vantagens: <input type="color" id="colorPositive" value="#ffcc00">
+                    </label>
+                    <button type="button" id="resetThemeBtn" style="margin-top: 5px; background: #333; color: #fff; border: none; padding: 6px; border-radius: 4px; cursor: pointer;">Restaurar Padrão</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="characterTabsWrapper">
+            <!-- BOTÕES DAS ABAS -->
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="personagem" title="Personagem"></button>
+                <button class="tab-btn" data-tab="habilidades" title="Habilidades"></button>
+                <button class="tab-btn" data-tab="detalhes" title="Detalhes e Inventário"></button>
+            </div>
+
+            <!-- ABA 1: PERSONAGEM -->
+            <div id="personagem" class="tabContent active">
+                
+                <!-- CABEÇALHO -->
+                <!-- CABEÇALHO -->
+                <div class="characterHeaderArea">
+                    <div class="charNameRow">
+                        <button type="button" class="headerIconBtn" onclick="document.getElementById('name').focus();" title="Focar no Nome">
+                            <img src="assets/images/pageChar/name.png" alt="Nome" class="headerIconImg">
+                        </button>
+                        <input type="text" id="name" class="invisibleInput titleFont charNameInput" placeholder="Nome do Personagem" autocomplete="off">
+                    </div>
+                    <div class="charClassRow">
+                        <button type="button" class="headerIconBtn" onclick="document.getElementById('chaClass').focus();" title="Focar na Classe">
+                            <img src="assets/images/pageChar/class.png" alt="Classe" class="headerIconImg">
+                        </button>
+                        <div class="classSubclassWrapper">
+                            <input type="text" id="chaClass" class="invisibleInput subFont classInput" placeholder="Classe">
+                            <input type="text" id="chaSubclass" class="invisibleInput subFont subclassInput" placeholder="Subclasse">
+                        </div>
+                    </div>
+                    <hr class="headerDivider">
+                </div>
+
+                <div class="topSplitContainer">
+                    <div class="leftProfileColumn">
+                        <div class="levelEmblemWrapper" id="levelEmblemContainer">
+                            <input type="number" id="level" min="1" max="9" value="1" class="levelInputEmblem">
+                        </div>
+                        <div id="threatMeterVisual" class="threatMeterBar"></div>
+                        <div id="stressSquaresVisual" class="stressSquaresContainer">
+                            <div class="stressSquare"></div><div class="stressSquare"></div>
+                            <div class="stressSquare"></div><div class="stressSquare"></div>
+                            <div class="stressSquare"></div><div class="stressSquare"></div>
+                            <div class="stressSquare"></div><div class="stressSquare"></div>
+                            <div class="stressSquare"></div><div class="stressSquare"></div>
+                        </div>
+                        <div id="headerStressCondition" class="stressConditionHeader">Normal</div>
+                        <div class="characterImageBox" id="imageUploadBox" title="Clique para enviar a imagem do personagem">
+                            <img id="charImageDisplay" src="" alt="Imagem" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                            <span id="imagePlaceholderText" style="color: #555; font-size: 12px; pointer-events: none;">IMAGEM</span>
+                            <input type="file" id="charImageInput" accept="image/*" style="display: none;">
+                        </div>
+                    </div>
+
+                    <div class="rightBasicColumn">
+                        <div class="sectionTitleWrapper" style="margin-top: 20px;">
+                            <hr class="titleLine"><h2 class="sectionTitle titleFont">BÁSICO</h2><hr class="titleLine">
+                        </div>
+                        <div class="basicSplitColumns">
+                            <div class="basicSubLeft">
+                                <div class="groupCamp lineStyle">
+                                    <label for="race">Raça:</label>
+                                    <select id="race" class="invisibleSelect">
+                                        <option value="">Selecione a Raça...</option>
+                                        <option value="human">Humano</option>
+                                        <option value="basilisk">Basilisco</option>
+                                        <option value="gray">Cinzento</option>
+                                        <option value="constructs">Constructo</option>
+                                        <option value="goblins">Goblin</option>
+                                        <option value="resonant">Ressonante</option>
+                                    </select>
+                                </div>
+                                <div class="raceTraitsContainer">
+                                    <div class="raceTraitBox">
+                                        <strong>Vantagem:</strong> <p id="raceAdvantageDescription">Nenhuma.</p>
+                                    </div>
+                                    <div class="raceTraitBox">
+                                        <strong>Maldição:</strong> <p id="raceCurseDescription">Nenhuma.</p>
+                                    </div>
+                                </div>
+                                <div class="groupCamp lineStyle" style="margin-top: 10px;">
+                                    <label for="origin">Origem:</label>
+                                    <select id="origin" class="invisibleSelect">
+                                        <option value="">Selecione uma origem...</option>
+                                    </select>
+                                </div>
+                                <div class="classTrait">
+                                    <p id="originTraitDescription">Nenhuma origem especificada.</p>
+                                </div>
+                            </div>
+                            <div class="basicSubRight">
+                                <div class="inlineDataCompactGroup">
+                                    <div class="inlineDataGroup">
+                                        <label for="height">Altura:</label>
+                                        <input type="text" id="height" class="smallBoxInput"> <span class="unit">m</span>
+                                    </div>
+                                    <div class="inlineDataGroup">
+                                        <label for="weight">Peso:</label>
+                                        <input type="text" id="weight" class="smallBoxInput"> <span class="unit">kg</span>
+                                    </div>
+                                    <div class="inlineDataGroup">
+                                        <label for="age">Idade:</label>
+                                        <input type="number" id="age" min="1" class="smallBoxInput"> <span class="unit">anos</span>
+                                    </div>
+                                </div>
+                                <div class="classCampfireBox" style="margin-top: 15px;">
+                                    <strong>Hab. Fogueira (Classe):</strong>
+                                    <textarea id="classCampfireSkill" placeholder="Descreva a habilidade..." class="invisibleTextarea"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sectionTitleWrapper" style="margin-top: 20px;">
+                    <hr class="titleLine"><h2 class="sectionTitle titleFont">ATRIBUTOS</h2><hr class="titleLine">
+                </div>
+                <fieldset style="border:none; padding:0; margin:0;">
+                    <div id="attributesContainer"></div>
+                </fieldset>
+
+                <div class="sectionTitleWrapper" style="margin-top: 20px;">
+                    <hr class="titleLine"><h2 class="sectionTitle titleFont">STATUS</h2><hr class="titleLine">
+                </div>
+                
+                <div class="statusSplitColumns">
+                    <div class="statusLeftColumn">
+                        <div class="resourceBlock">
+                            <h3 class="resourceTitle">Vitalidade</h3>
+                            <div class="resourceBarContainer vitalityBarContainer">
+                                <div id="vitalityBarFill" class="vitalityFill"></div>
+                            </div>
+                            <div class="resourceCounter">
+                                <input type="number" id="vitalityCurrent" value="0" class="invisibleInput resourceInput">
+                                <span>/</span>
+                                <input type="number" id="vitalityTotal" value="0" class="invisibleInput resourceInput">
+                            </div>
+                        </div>
+
+                        <div class="deathThresholdBlock">
+                            <h3 class="resourceTitle">Limiar da Morte</h3>
+                            <div class="deathSaveBoxes">
+                                <input type="checkbox" id="deathFail1" class="death-fail-input">
+                                <input type="checkbox" id="deathFail2" class="death-fail-input">
+                                <input type="checkbox" id="deathFail3" class="death-fail-input">
+                            </div>
+                        </div>
+
+                        <div class="resourceBlock stressBlock">
+                            <h3 class="resourceTitle">Estresse</h3>
+                            <div class="resourceBarContainer stressBarContainer">
+                                <div class="stressMark100"></div>
+                                <div id="stressFill" class="stressFill"></div>
+                                <input type="range" id="stressRange" min="0" max="200" value="0" class="stressRangeSlider">
+                            </div>
+                            <div class="resourceCounter">
+                                <input type="number" id="stress" min="0" max="200" value="0" class="invisibleInput resourceInput">
+                                <span>/ 200</span>
+                            </div>
+                        </div>
+
+                        <div class="statusBottomFields">
+                            <div class="inlineDataGroup">
+                                <label for="size">Tamanho:</label>
+                                <select id="size" class="invisibleSelect">
+                                    <option value="pequeno">Pequeno</option>
+                                    <option value="medio" selected>Médio</option>
+                                    <option value="grande">Grande</option>
+                                </select>
+                            </div>
+                            <div class="inlineDataGroup">
+                                <label for="speed">Deslocamento:</label>
+                                <input type="number" id="speed" min="0" value="6" class="smallBoxInput"> <span class="unit">qds</span>
+                            </div>
+                            <div class="inlineDataGroup">
+                                <label for="threatLevel">Nível de Ameaça:</label>
+                                <select id="threatLevel" class="invisibleSelect">
+                                    <option value="nulo">Nulo</option>
+                                    <option value="sublime">Sublime</option>
+                                    <option value="besta">Besta</option>
+                                    <option value="demonio">Demônio</option>
+                                    <option value="anciao">Ancião</option>
+                                    <option value="radiante">Radiante</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="statusRightColumn">
+                        <div class="resourceBlock">
+                            <h3 class="resourceTitle">Vontade</h3>
+                            <div class="resourceBarContainer willpowerBarContainer">
+                                <div id="willpowerBarFill" class="willpowerFill"></div>
+                            </div>
+                            <div class="resourceCounter">
+                                <input type="number" id="willpowerCurrent" value="0" class="invisibleInput resourceInput">
+                                <span>/</span>
+                                <input type="number" id="willpowerTotal" value="0" class="invisibleInput resourceInput">
+                            </div>
+                        </div>
+
+                        <div class="inspirationBlock">
+                            <h3 class="resourceTitle">Inspiração</h3>
+                            <div class="inspirationCheckboxWrapper">
+                                <input type="checkbox" id="inspiration" class="inspiration-check">
+                            </div>
+                        </div>
+
+                        <div class="stressConditionBlock">
+                            <button type="button" id="rollStressBtn" class="d20Button" title="Rolar Condição de Estresse">🎲</button>
+                            <div id="stressConditionBox" class="stressConditionBox">
+                                <h4 id="stressConditionName">Condições de Estresse</h4>
+                                <p id="stressConditionDesc">Nenhuma condição ativa.</p>
+                                <div style="display:none;">
+                                    <input type="checkbox" id="afflictedCheck">
+                                    <input type="checkbox" id="virtuousCheck">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="defMoraleBlock">
+                            <div class="shieldContainer" title="Classe de Defesa">
+                                <span class="icon-shield">🛡️</span>
+                                <input type="number" id="defense" min="0" value="0" class="invisibleInput shieldInput">
+                            </div>
+                            <div class="moraleContainer" title="Moral">
+                                <span class="icon-handshake">🤝</span>
+                                <input type="number" id="morale" value="0" class="invisibleInput moraleInput">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sectionTitleWrapper" style="margin-top: 20px;">
+                    <hr class="titleLine"><h2 class="sectionTitle titleFont">PERÍCIAS</h2><hr class="titleLine">
+                </div>
+                <fieldset style="border:none; padding:0; margin:0;">
+                    <div id="skillsContainer" class="skillsContainer"></div>
+                </fieldset>
+
+            </div>
+
+            <!-- ABA 2: HABILIDADES -->
+            <div id="habilidades" class="tabContent" style="display: none;">
+                <fieldset>
+                    <legend>Habilidades, Magias e Poderes</legend>
+                    <div class="notesGrid" style="margin-bottom: 20px;">
+                        <textarea id="abilityMainDesc" class="notesTextArea" placeholder="Descreva habilidades, magias ou poderes..."></textarea>
+                        <textarea id="abilityExtraDesc" class="notesTextArea" placeholder="Outras habilidades ou detalhes adicionais..."></textarea>
+                    </div>
+                </fieldset>
+
+                <!-- Espaço livre caso queira adicionar listas dinâmicas de magias/talentos de classe depois -->
+                <fieldset>
+                    <legend>Notas de Combate e Poderes Especiais</legend>
+                    <div class="fullWidthBlock">
+                        <textarea id="combatAbilitiesNotes" class="notesTextArea narrativeArea" placeholder="Detalhes de conjuração, efeitos ativos ou restrições..."></textarea>
+                    </div>
+                </fieldset>
+            </div>
+
+            <!-- ABA 3: DETALHES -->
+            <div id="detalhes" class="tabContent" style="display: none;">
+                <fieldset>
+                    <legend>Pessoal</legend>
+                    <div class="personalContainer">
+                        <div class="personalSection">
+                            <div class="personalSectionHeader">
+                                <h3>Proficiências</h3>
+                                <button type="button" class="addItemBtn" data-target="proficienciesList">+ Adicionar</button>
+                            </div>
+                            <div id="proficienciesList" class="dynamicList stringList"></div>
+                        </div>
+                        <div class="personalSection">
+                            <div class="personalSectionHeader">
+                                <h3>Talentos</h3>
+                                <button type="button" class="addItemBtn" data-target="talentsList">+ Adicionar</button>
+                            </div>
+                            <div id="talentsList" class="dynamicList cardList"></div>
+                        </div>
+                        <div class="personalSection">
+                            <div class="personalSectionHeader">
+                                <h3>Idiomas</h3>
+                                <button type="button" class="addItemBtn" data-target="languagesList">+ Adicionar</button>
+                            </div>
+                            <div id="languagesList" class="dynamicList stringList"></div>
+                        </div>
+                        <div class="personalSection">
+                            <div class="personalSectionHeader">
+                                <h3>Doenças</h3>
+                                <button type="button" class="addItemBtn" data-target="diseasesList">+ Adicionar</button>
+                            </div>
+                            <div id="diseasesList" class="dynamicList cardList"></div>
+                        </div>
+                        <div class="personalSection">
+                            <div class="personalSectionHeader">
+                                <h3>Traços e Manias</h3>
+                                <button type="button" class="addItemBtn" data-target="traitsList">+ Adicionar</button>
+                            </div>
+                            <div id="traitsList" class="dynamicList cardList"></div>
+                        </div>
+                        <div class="personalColumnsRow">
+                            <div class="personalColumnBox">
+                                <label for="scarsText">Marcas / Cicatrizes</label>
+                                <textarea id="scarsText" placeholder="Descreva marcas, cicatrizes ou características físicas marcantes..."></textarea>
+                            </div>
+                            <div class="personalColumnBox">
+                                <label for="idealsText">Ideais / Feitos</label>
+                                <textarea id="idealsText" placeholder="Descreva crenças, motivações ou grandes feitos..."></textarea>
+                            </div>
+                            <div class="personalColumnBox">
+                                <label for="bondsText">Laços</label>
+                                <textarea id="bondsText" placeholder="Descreva conexões, aliados ou promessas importantes..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Inventário</legend>
+                    <div class="inventoryContainer">
+                        <div class="inventoryTopGrid">
+                            <div class="inventoryBlock">
+                                <span class="invTitle">Moedas:</span>
+                                <div class="invInputWrapper">
+                                    <input type="text" id="coinsInput" value="4d6" class="invCoinsInput">
+                                    <span class="invTitle">valores</span>
+                                </div>
+                            </div>
+                            <div class="inventoryBlock">
+                                <div class="invCapacityHeader">
+                                    <span class="invTitle">Capacidade de Carga:</span>
+                                    <span id="loadDisplay" class="loadDisplayValue">0 / 3</span>
+                                </div>
+                                <div class="backpackOptions">
+                                    <label class="stressCheckboxLabel">
+                                        <input type="checkbox" id="backpackCheck"> Mochila? (+10 espaços)
+                                    </label>
+                                    <label class="stressCheckboxLabel">
+                                        <input type="checkbox" id="bigBackpackCheck"> Mochila grande? (+22 espaços, -1 Força)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="encumbranceAlerts" class="encumbranceAlerts"></div>
+                        <div class="personalSectionHeader" style="margin-top: 15px;">
+                            <h3>Itens</h3>
+                            <button type="button" class="addItemBtn" id="addInventoryItemBtn">+ Adicionar Item</button>
+                        </div>
+                        <div id="inventoryItemsList" class="dynamicList"></div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Narrativa e Anotações</legend>
+                    <div class="fullWidthBlock">
+                        <textarea id="narrativeNotes" class="notesTextArea narrativeArea" placeholder="História, anotações de campanha, pistas e diário de missões..."></textarea>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
+</file>
+
+</files>

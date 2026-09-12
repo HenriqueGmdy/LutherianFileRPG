@@ -1,111 +1,123 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <title>Ficha Lutherian</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="assets/icons/page.icon.png">
+    <link rel="stylesheet" href="styles/global.css">
+    <link rel="stylesheet" href="modules/level/level.css">
 </head>
 <body>
 
+    <audio id="easterEggAudio" src="assets/audio/chacal.mp3" preload="auto"></audio>
+
     <div class="mainFile">
 
-    <!-- MENU FLUTUANTE DE OPÇÕES (Canto Superior Direito) -->
-    <div class="optionsMenuWrapper" style="position: absolute; top: 20px; right: 20px; z-index: 1000;">
-        <button type="button" id="optionsMenuBtn" style="background: var(--bg-fieldset, #1c1c1c); border: 1px solid #444; color: var(--text-color, #fff); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4);" title="Opções">
-            ⋮
-        </button>
-        
-        <!-- Menu Principal de Opções -->
-        <div id="optionsDropdown" style="display: none; position: absolute; right: 0; top: 45px; background: #1a1a1a; border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: sans-serif; color: #fff; width: 200px; padding: 6px 0;">
-            <button type="button" id="menuOptTheme" style="width: 100%; text-align: left; background: none; border: none; color: #fff; padding: 10px 15px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                ✎ Personalizar Tema
+        <!-- MENU FLUTUANTE DE OPÇÕES (Canto Superior Direito) -->
+        <div class="optionsMenuWrapper" style="position: absolute; top: 0px; right: -200px; z-index: 1000;">
+            <button type="button" id="optionsMenuBtn" style="background: var(--bg-fieldset, #1c1c1c); border: 1px solid #444; color: var(--text-color, #fff); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4);" title="Opções">
+                ⋮
             </button>
             
-            <button type="button" id="menuOptReset" style="width: 100%; text-align: left; background: none; border: none; color: #ff4d4d; padding: 10px 15px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px solid #333;">
-                🗑️ Resetar Ficha
-            </button>
-        </div>
+            <!-- Menu Principal de Opções -->
+            <div id="optionsDropdown" style="display: none; position: absolute; right: 0; top: 45px; background: #1a1a1a; border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: sans-serif; color: #fff; width: 200px; padding: 6px 0;">
+                <button type="button" id="menuOptTheme" style="width: 100%; text-align: left; background: none; border: none; color: #fff; padding: 10px 15px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    ✎ Personalizar Tema
+                </button>
+                
+                <button type="button" id="menuOptReset" style="width: 100%; text-align: left; background: none; border: none; color: #ff4d4d; padding: 10px 15px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px solid #333;">
+                    🗑️ Resetar Ficha
+                </button>
+            </div>
 
-        <!-- Modal de Confirmação de Reset -->
-        <div id="resetConfirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; font-family: sans-serif;">
-            <div style="background: #1a1a1a; border: 1px solid #555; padding: 25px; border-radius: 8px; max-width: 380px; width: 90%; text-align: center; color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-                <h3 style="margin-top: 0; color: #ff4d4d; font-size: 18px;">⚠️ Atenção</h3>
-                <p style="font-size: 14px; color: #ccc; line-height: 1.5; margin-bottom: 20px;">
-                    Ao confirmar, você apagará todas as informações da ficha para sempre!
-                </p>
-                <div style="display: flex; gap: 10px; justify-content: center;">
-                    <button type="button" id="cancelResetBtn" style="background: #333; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px;">Cancelar</button>
-                    <button type="button" id="confirmResetBtn" style="background: #d9534f; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold;">Confirmar</button>
+            <!-- Modal de Confirmação de Reset -->
+            <div id="resetConfirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; font-family: sans-serif;">
+                <div style="background: #1a1a1a; border: 1px solid #555; padding: 25px; border-radius: 8px; max-width: 380px; width: 90%; text-align: center; color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+                    <h3 style="margin-top: 0; color: #ff4d4d; font-size: 18px;">⚠️ Atenção</h3>
+                    <p style="font-size: 14px; color: #ccc; line-height: 1.5; margin-bottom: 20px;">
+                        Ao confirmar, você apagará todas as informações da ficha para sempre!
+                    </p>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button type="button" id="cancelResetBtn" style="background: #333; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px;">Cancelar</button>
+                        <button type="button" id="confirmResetBtn" style="background: #d9534f; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold;">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sub-tela de Customização de Cores -->
+            <div id="themeCustomizerPanel" style="display: none; position: absolute; right: 0; top: 45px; background: #1a1a1a; border: 1px solid #444; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: sans-serif; color: #fff; width: 220px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #333; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+                    ✏ Cores do Tema
+                    <button type="button" id="backToMenuBtn" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 12px;">Voltar</button>
+                </h4>
+                <div id="themeControls" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Fundo: <input type="color" id="colorBgMain" value="#141414">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Blocos: <input type="color" id="colorBgFieldset" value="#1c1c1c">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Linhas: <input type="color" id="colorLines" value="#ffffff">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Caixas de Texto: <input type="color" id="colorBgInputs" value="#2b2b2b">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Texto Geral: <input type="color" id="colorText" value="#ffffff">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Destaques: <input type="color" id="colorAccent" value="#ffffff">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Desvantagens: <input type="color" id="colorNegative" value="#c00101">
+                    </label>
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        Vantagens: <input type="color" id="colorPositive" value="#ffcc00">
+                    </label>
+                    <button type="button" id="resetThemeBtn" style="margin-top: 5px; background: #333; color: #fff; border: none; padding: 6px; border-radius: 4px; cursor: pointer;">Restaurar Padrão</button>
                 </div>
             </div>
         </div>
 
-        <!-- Sub-tela de Customização de Cores (Abre ao clicar na opção acima) -->
-        <div id="themeCustomizerPanel" style="display: none; position: absolute; right: 0; top: 45px; background: #1a1a1a; border: 1px solid #444; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: sans-serif; color: #fff; width: 220px;">
-            <h4 style="margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #333; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
-                ✏  Cores do Tema
-                <button type="button" id="backToMenuBtn" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 12px;">Voltar</button>
-            </h4>
-            <div id="themeControls" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
-                <label style="display: flex; justify-content: space-between; align-items: center;">
-                    Fundo Geral: <input type="color" id="colorBgMain" value="#141414">
-                </label>
-                <label style="display: flex; justify-content: space-between; align-items: center;">
-                    Blocos (Fieldsets): <input type="color" id="colorBgFieldset" value="#1c1c1c">
-                </label>
-                <label style="display: flex; justify-content: space-between; align-items: center;">
-                    Caixas de Texto: <input type="color" id="colorBgInputs" value="#2b2b2b">
-                </label>
-                <label style="display: flex; justify-content: space-between; align-items: center;">
-                    Texto Geral: <input type="color" id="colorText" value="#ffffff">
-                </label>
-                <label style="display: flex; justify-content: space-between; align-items: center;">
-                    Destaque: <input type="color" id="colorAccent" value="#ffffff">
-                </label>
-                <button type="button" id="resetThemeBtn" style="margin-top: 5px; background: #333; color: #fff; border: none; padding: 6px; border-radius: 4px; cursor: pointer;">Restaurar Padrão</button>
-            </div>
-        </div>
-    </div>
-
         <div class="characterTabsWrapper">
             <!-- BOTÕES DAS ABAS -->
-            <div class="characterTabsHeader">
-                <button type="button" class="tabBtn active" data-tab="tab-personagem">Personagem</button>
-                <button type="button" class="tabBtn" data-tab="tab-detalhes">Detalhes</button>
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="personagem" title="Personagem"></button>
+                <button class="tab-btn" data-tab="habilidades" title="Habilidades"></button>
+                <button class="tab-btn" data-tab="detalhes" title="Detalhes e Inventário"></button>
             </div>
 
             <!-- ABA 1: PERSONAGEM -->
-            <div id="tab-personagem" class="tabContent active">
+            <div id="personagem" class="tabContent active">
                 
-                <!-- CABEÇALHO (Nome, Classe e Subclasse invisíveis) -->
+                <!-- CABEÇALHO -->
+                <!-- CABEÇALHO -->
                 <div class="characterHeaderArea">
                     <div class="charNameRow">
-                        <span class="icon-pencil">✎</span>
-                        <input type="text" id="name" class="invisibleInput titleFont" placeholder="Nome do Personagem">
+                        <button type="button" class="headerIconBtn" onclick="document.getElementById('name').focus();" title="Focar no Nome">
+                            <img src="assets/images/pageChar/name.png" alt="Nome" class="headerIconImg">
+                        </button>
+                        <input type="text" id="name" class="invisibleInput titleFont charNameInput" placeholder="Nome do Personagem" autocomplete="off">
                     </div>
                     <div class="charClassRow">
-                        <span class="icon-sword">⚔️</span>
-                        <input type="text" id="chaClass" class="invisibleInput subFont" placeholder="Classe">
-                        <input type="text" id="chaSubclass" class="invisibleInput subFont" placeholder="Subclasse">
+                        <button type="button" class="headerIconBtn" onclick="document.getElementById('chaClass').focus();" title="Focar na Classe">
+                            <img src="assets/images/pageChar/class.png" alt="Classe" class="headerIconImg">
+                        </button>
+                        <div class="classSubclassWrapper">
+                            <input type="text" id="chaClass" class="invisibleInput subFont classInput" placeholder="Classe">
+                            <input type="text" id="chaSubclass" class="invisibleInput subFont subclassInput" placeholder="Subclasse">
+                        </div>
                     </div>
                     <hr class="headerDivider">
                 </div>
 
-                <!-- BLOCO SUPERIOR DIVIDIDO (30% Esquerda / 70% Direita) -->
                 <div class="topSplitContainer">
-                    
-                    <!-- 30% ESQUERDA (Nível, Ameaça, Estresse Visual, Retrato) -->
                     <div class="leftProfileColumn">
-                        <!-- Círculo de Nível -->
-                        <div class="levelCircleWrapper">
-                            <input type="number" id="level" min="1" max="9" value="1" class="levelInputCircle">
+                        <div class="levelEmblemWrapper" id="levelEmblemContainer">
+                            <input type="number" id="level" min="1" max="9" value="1" class="levelInputEmblem">
                         </div>
-                        
-                        <!-- Medidor de Ameaça Visual (Preenchido via JS dps) -->
                         <div id="threatMeterVisual" class="threatMeterBar"></div>
-                        
-                        <!-- 10 Caixinhas de Estresse -->
                         <div id="stressSquaresVisual" class="stressSquaresContainer">
                             <div class="stressSquare"></div><div class="stressSquare"></div>
                             <div class="stressSquare"></div><div class="stressSquare"></div>
@@ -113,27 +125,19 @@
                             <div class="stressSquare"></div><div class="stressSquare"></div>
                             <div class="stressSquare"></div><div class="stressSquare"></div>
                         </div>
-                        
-                        <!-- Texto da Condição de Estresse Automático -->
                         <div id="headerStressCondition" class="stressConditionHeader">Normal</div>
-
-                        <!-- Espaço da Imagem -->
                         <div class="characterImageBox" id="imageUploadBox" title="Clique para enviar a imagem do personagem">
                             <img id="charImageDisplay" src="" alt="Imagem" style="display: none; width: 100%; height: 100%; object-fit: cover;">
                             <span id="imagePlaceholderText" style="color: #555; font-size: 12px; pointer-events: none;">IMAGEM</span>
-                            <!-- Input de arquivo invisível acionado ao clicar na caixa -->
                             <input type="file" id="charImageInput" accept="image/*" style="display: none;">
                         </div>
                     </div>
 
-                    <!-- 70% DIREITA (BÁSICO) -->
                     <div class="rightBasicColumn">
-                        <div class="sectionTitleWrapper">
+                        <div class="sectionTitleWrapper" style="margin-top: 20px;">
                             <hr class="titleLine"><h2 class="sectionTitle titleFont">BÁSICO</h2><hr class="titleLine">
                         </div>
-                        
                         <div class="basicSplitColumns">
-                            <!-- Coluna Esquerda do Básico (60%) -->
                             <div class="basicSubLeft">
                                 <div class="groupCamp lineStyle">
                                     <label for="race">Raça:</label>
@@ -155,7 +159,6 @@
                                         <strong>Maldição:</strong> <p id="raceCurseDescription">Nenhuma.</p>
                                     </div>
                                 </div>
-
                                 <div class="groupCamp lineStyle" style="margin-top: 10px;">
                                     <label for="origin">Origem:</label>
                                     <select id="origin" class="invisibleSelect">
@@ -166,23 +169,21 @@
                                     <p id="originTraitDescription">Nenhuma origem especificada.</p>
                                 </div>
                             </div>
-
-                            <!-- Coluna Direita do Básico (40%) -->
                             <div class="basicSubRight">
-                                <div class="inlineDataGroup">
-                                    <label for="height">Altura:</label>
-                                    <input type="text" id="height" class="smallBoxInput"> <span class="unit">m</span>
+                                <div class="inlineDataCompactGroup">
+                                    <div class="inlineDataGroup">
+                                        <label for="height">Altura:</label>
+                                        <input type="text" id="height" class="smallBoxInput"> <span class="unit">m</span>
+                                    </div>
+                                    <div class="inlineDataGroup">
+                                        <label for="weight">Peso:</label>
+                                        <input type="text" id="weight" class="smallBoxInput"> <span class="unit">kg</span>
+                                    </div>
+                                    <div class="inlineDataGroup">
+                                        <label for="age">Idade:</label>
+                                        <input type="number" id="age" min="1" class="smallBoxInput"> <span class="unit">anos</span>
+                                    </div>
                                 </div>
-                                <div class="inlineDataGroup">
-                                    <label for="weight">Peso:</label>
-                                    <input type="text" id="weight" class="smallBoxInput"> <span class="unit">kg</span>
-                                </div>
-                                <div class="inlineDataGroup">
-                                    <label for="age">Idade:</label>
-                                    <input type="number" id="age" min="1" class="smallBoxInput"> <span class="unit">anos</span>
-                                </div>
-
-                                <!-- Nova Habilidade de Fogueira da Classe -->
                                 <div class="classCampfireBox" style="margin-top: 15px;">
                                     <strong>Hab. Fogueira (Classe):</strong>
                                     <textarea id="classCampfireSkill" placeholder="Descreva a habilidade..." class="invisibleTextarea"></textarea>
@@ -192,7 +193,6 @@
                     </div>
                 </div>
 
-                <!-- ATRIBUTOS (Fica logo abaixo, 100% de largura) -->
                 <div class="sectionTitleWrapper" style="margin-top: 20px;">
                     <hr class="titleLine"><h2 class="sectionTitle titleFont">ATRIBUTOS</h2><hr class="titleLine">
                 </div>
@@ -200,20 +200,12 @@
                     <div id="attributesContainer"></div>
                 </fieldset>
 
-                <!-- STATUS E RECURSOS -->
-                <!-- ========================================== -->
-                <!-- BLOCO DE STATUS E RECURSOS                 -->
-                <!-- ========================================== -->
                 <div class="sectionTitleWrapper" style="margin-top: 20px;">
                     <hr class="titleLine"><h2 class="sectionTitle titleFont">STATUS</h2><hr class="titleLine">
                 </div>
                 
                 <div class="statusSplitColumns">
-                    
-                    <!-- COLUNA ESQUERDA (Vitalidade, Morte, Estresse, Infos) -->
                     <div class="statusLeftColumn">
-                        
-                        <!-- Barra de Vitalidade -->
                         <div class="resourceBlock">
                             <h3 class="resourceTitle">Vitalidade</h3>
                             <div class="resourceBarContainer vitalityBarContainer">
@@ -226,7 +218,6 @@
                             </div>
                         </div>
 
-                        <!-- Limiar da Morte -->
                         <div class="deathThresholdBlock">
                             <h3 class="resourceTitle">Limiar da Morte</h3>
                             <div class="deathSaveBoxes">
@@ -236,23 +227,19 @@
                             </div>
                         </div>
 
-                        <!-- Barra de Estresse -->
                         <div class="resourceBlock stressBlock">
                             <h3 class="resourceTitle">Estresse</h3>
                             <div class="resourceBarContainer stressBarContainer">
-                                <div class="stressMark100"></div> <!-- Marcação do meio (100) -->
+                                <div class="stressMark100"></div>
                                 <div id="stressFill" class="stressFill"></div>
-                                <!-- Input range para arrastar e alterar o valor de forma fluida -->
                                 <input type="range" id="stressRange" min="0" max="200" value="0" class="stressRangeSlider">
                             </div>
-                            <!-- Contador numérico de Estresse (Atual / 200) -->
                             <div class="resourceCounter">
                                 <input type="number" id="stress" min="0" max="200" value="0" class="invisibleInput resourceInput">
                                 <span>/ 200</span>
                             </div>
                         </div>
 
-                        <!-- Campos Inferiores (Tamanho, Deslocamento, Ameaça) -->
                         <div class="statusBottomFields">
                             <div class="inlineDataGroup">
                                 <label for="size">Tamanho:</label>
@@ -280,10 +267,7 @@
                         </div>
                     </div>
 
-                    <!-- COLUNA DIREITA (Vontade, Inspiração, Condição, Defesa/Moral) -->
                     <div class="statusRightColumn">
-                        
-                        <!-- Barra de Vontade -->
                         <div class="resourceBlock">
                             <h3 class="resourceTitle">Vontade</h3>
                             <div class="resourceBarContainer willpowerBarContainer">
@@ -296,7 +280,6 @@
                             </div>
                         </div>
 
-                        <!-- Inspiração (Agora é uma bolinha/checkbox, mas mantemos o ID para o storage funcionar) -->
                         <div class="inspirationBlock">
                             <h3 class="resourceTitle">Inspiração</h3>
                             <div class="inspirationCheckboxWrapper">
@@ -304,14 +287,11 @@
                             </div>
                         </div>
 
-                        <!-- Condições de Estresse e Dado D20 -->
                         <div class="stressConditionBlock">
                             <button type="button" id="rollStressBtn" class="d20Button" title="Rolar Condição de Estresse">🎲</button>
                             <div id="stressConditionBox" class="stressConditionBox">
                                 <h4 id="stressConditionName">Condições de Estresse</h4>
                                 <p id="stressConditionDesc">Nenhuma condição ativa.</p>
-                                
-                                <!-- Checkboxes antigos ocultos para não quebrar a matemática JS atual -->
                                 <div style="display:none;">
                                     <input type="checkbox" id="afflictedCheck">
                                     <input type="checkbox" id="virtuousCheck">
@@ -319,15 +299,12 @@
                             </div>
                         </div>
 
-                        <!-- Defesa e Moral (Escudo e Mãos) -->
                         <div class="defMoraleBlock">
                             <div class="shieldContainer" title="Classe de Defesa">
-                                <!-- Placeholder do ícone do escudo -->
                                 <span class="icon-shield">🛡️</span>
                                 <input type="number" id="defense" min="0" value="0" class="invisibleInput shieldInput">
                             </div>
                             <div class="moraleContainer" title="Moral">
-                                <!-- Placeholder do ícone de aperto de mãos -->
                                 <span class="icon-handshake">🤝</span>
                                 <input type="number" id="morale" value="0" class="invisibleInput moraleInput">
                             </div>
@@ -335,36 +312,36 @@
                     </div>
                 </div>
 
-                <!-- ========================================== -->
-                <!-- BLOCO DE PERÍCIAS                          -->
-                <!-- ========================================== -->
                 <div class="sectionTitleWrapper" style="margin-top: 20px;">
                     <hr class="titleLine"><h2 class="sectionTitle titleFont">PERÍCIAS</h2><hr class="titleLine">
                 </div>
-                <!-- O container de perícias renderizado pelo JS precisa estar dentro de um fieldset sem bordas para não quebrar seu script -->
                 <fieldset style="border:none; padding:0; margin:0;">
                     <div id="skillsContainer" class="skillsContainer"></div>
                 </fieldset>
 
-                <!-- ========================================== -->
-                <!-- BLOCO DE HABILIDADES (Antigo, logo abaixo) -->
-                <!-- ========================================== -->
-                <div class="sectionTitleWrapper" style="margin-top: 20px;">
-                    <hr class="titleLine"><h2 class="sectionTitle titleFont">HABILIDADES</h2><hr class="titleLine">
-                </div>
-                <fieldset style="border:none; padding:0; margin:0;">
-                    <div class="notesGrid">
+            </div>
+
+            <!-- ABA 2: HABILIDADES -->
+            <div id="habilidades" class="tabContent" style="display: none;">
+                <fieldset>
+                    <legend>Habilidades, Magias e Poderes</legend>
+                    <div class="notesGrid" style="margin-bottom: 20px;">
                         <textarea id="abilityMainDesc" class="notesTextArea" placeholder="Descreva habilidades, magias ou poderes..."></textarea>
                         <textarea id="abilityExtraDesc" class="notesTextArea" placeholder="Outras habilidades ou detalhes adicionais..."></textarea>
                     </div>
                 </fieldset>
 
-            </div> <!-- FIM DA ABA PERSONAGEM -->
+                <!-- Espaço livre caso queira adicionar listas dinâmicas de magias/talentos de classe depois -->
+                <fieldset>
+                    <legend>Notas de Combate e Poderes Especiais</legend>
+                    <div class="fullWidthBlock">
+                        <textarea id="combatAbilitiesNotes" class="notesTextArea narrativeArea" placeholder="Detalhes de conjuração, efeitos ativos ou restrições..."></textarea>
+                    </div>
+                </fieldset>
+            </div>
 
-            <!-- ABA 2: DETALHES (Pessoal, Inventário, Narrativa) -->
-            <div id="tab-detalhes" class="tabContent" style="display: none;">
-                
-                <!-- PESSOAL -->
+            <!-- ABA 3: DETALHES -->
+            <div id="detalhes" class="tabContent" style="display: none;">
                 <fieldset>
                     <legend>Pessoal</legend>
                     <div class="personalContainer">
@@ -420,12 +397,10 @@
                     </div>
                 </fieldset>
 
-                <!-- INVENTÁRIO -->
                 <fieldset>
                     <legend>Inventário</legend>
                     <div class="inventoryContainer">
                         <div class="inventoryTopGrid">
-                            <!-- Bloco de Moedas -->
                             <div class="inventoryBlock">
                                 <span class="invTitle">Moedas:</span>
                                 <div class="invInputWrapper">
@@ -433,8 +408,6 @@
                                     <span class="invTitle">valores</span>
                                 </div>
                             </div>
-
-                            <!-- Bloco de Capacidade de Carga -->
                             <div class="inventoryBlock">
                                 <div class="invCapacityHeader">
                                     <span class="invTitle">Capacidade de Carga:</span>
@@ -450,35 +423,25 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Alertas de Sobrecarga -->
                         <div id="encumbranceAlerts" class="encumbranceAlerts"></div>
-
-                        <!-- Lista Dinâmica de Itens -->
                         <div class="personalSectionHeader" style="margin-top: 15px;">
                             <h3>Itens</h3>
                             <button type="button" class="addItemBtn" id="addInventoryItemBtn">+ Adicionar Item</button>
                         </div>
-                        
                         <div id="inventoryItemsList" class="dynamicList"></div>
                     </div>
                 </fieldset>
 
-                <!-- NARRATIVA E ANOTAÇÕES -->
                 <fieldset>
                     <legend>Narrativa e Anotações</legend>
                     <div class="fullWidthBlock">
                         <textarea id="narrativeNotes" class="notesTextArea narrativeArea" placeholder="História, anotações de campanha, pistas e diário de missões..."></textarea>
                     </div>
                 </fieldset>
-
             </div>
         </div>
-
     </div>
 
-    <!-- Script principal -->
     <script type="module" src="script.js"></script>
 </body>
-
 </html>

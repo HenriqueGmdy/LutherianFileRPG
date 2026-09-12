@@ -1,0 +1,327 @@
+/* TIPOGRAFIA E CAMPOS INVISÍVEIS DO TOPO */
+.titleFont {
+    font-family: var(--font-title);
+    color: var(--accent-color, #ffcc00);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 1.4rem;
+}
+
+.subFont {
+    font-family: var(--font-sub);
+    color: var(--text-color, #ffffff);
+}
+.invisibleInput, .invisibleSelect, .invisibleTextarea {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: inherit;
+    font-family: inherit;
+}
+.invisibleInput:focus, .invisibleSelect:focus, .invisibleTextarea:focus {
+    border-bottom: 1px dashed #666;
+}
+.invisibleInput[type="number"]::-webkit-inner-spin-button, 
+.invisibleInput[type="number"]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; margin: 0; 
+}
+.invisibleInput[type="number"] { -moz-appearance: textfield; }
+
+.invisibleSelect option {
+    background-color: var(--bg-inputs, #2b2b2b);
+    color: var(--text-color, #ffffff);
+}
+
+/* CABEÇALHO */
+.characterHeaderArea {
+    margin-bottom: 25px;
+}
+.charNameRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-color, #ffffff);
+}
+.charNameRow input {
+    width: 100%;
+    font-size: 2rem;
+    text-align: left;
+    color: var(--text-color, #ffffff);
+}
+.charClassRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 2.5rem;
+    margin-top: 5px;
+}
+.charClassRow input {
+    font-size: 1.1rem;
+    width: 40%;
+    color: var(--text-color, #ffffff);
+}
+
+.titleLine, .headerDivider {
+    width: 100%;
+    border: 0;
+    height: 1px;
+    background: var(--line-color, #ffffff) !important;
+    margin: 0;
+}
+
+/* TÍTULOS DE SEÇÃO COM LINHAS HORIZONTAIS */
+.sectionTitleWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 15px;
+    width: 100%;
+}
+.titleLine {
+    width: 100%;
+    border: 0;
+    height: 1px;
+    background: var(--bg-fieldset, #555);
+    margin: 0;
+}
+.sectionTitle {
+    margin: 5px 0;
+    font-size: 1.3rem;
+    font-family: var(--font-title);
+}
+
+/* BLOCO SUPERIOR (30% / 70%) */
+.topSplitContainer {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    padding-right: 15px; /* Cria o pequeno espaço simétrico na direita do bloco Básico */
+    box-sizing: border-box;
+}
+.leftProfileColumn {
+    flex: 0 0 30%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+.rightBasicColumn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.threatMeterBar {
+    width: 12px;
+    height: 60px;
+    background: #111;
+    border: 1px solid var(--bg-fieldset, #444);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    margin-top: -26px;
+}
+.stressSquaresContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+.stressSquare {
+    width: 12px;
+    height: 12px;
+    background: #111;
+    border: 1px solid #555;
+    transition: background 0.3s ease;
+}
+.stressSquare.active {
+    background: #fff;
+    box-shadow: 0 0 5px #fff;
+}
+.stressConditionHeader {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--text-color, #aaa);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.characterImageBox {
+    width: 85%;
+    max-width: 290px;
+    aspect-ratio: 0.85;
+    border: 2px dashed #555;
+    background: var(--bg-fieldset, rgba(0,0,0,0.3));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.basicSplitColumns {
+    display: flex;
+    gap: 20px;
+}
+.basicSubLeft { flex: 0 0 55%; }
+
+.basicSubRight {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    margin-top: 35px; 
+}
+
+.smallBoxInput {
+    background: var(--bg-inputs, #2b2b2b);
+    border: 1px solid #444;
+    color: var(--text-color, #fff);
+    width: 45px;
+    text-align: center;
+    padding: 3px;
+    border-radius: 3px;
+}
+.inlineDataGroup {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    background: var(--bg-fieldset, #1c1c1c);
+    border: 1px solid #333;
+    padding: 5px 10px;
+    border-radius: 4px;
+    color: var(--text-color, #fff);
+}
+.classCampfireBox textarea {
+    width: 100%;
+    height: 80px;
+    margin-top: 5px;
+    background: var(--bg-inputs, #2b2b2b);
+    border: 1px solid #444;
+    padding: 8px;
+    color: var(--text-color, #fff);
+    resize: none;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+/* Restaura as caixas de Vantagem, Maldição e Origem */
+.raceTraitsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.raceTraitBox, .classTrait {
+    background: var(--bg-fieldset, #1c1c1c);
+    border: 1px solid #333;
+    padding: 10px;
+    border-radius: 4px;
+    color: var(--text-color, #fff);
+    
+}
+
+/* Container empilhado e compacto */
+.inlineDataCompactGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+/* Cada linha se comporta como um grid fixo para alinhar perfeitamente */
+.inlineDataCompactGroup .inlineDataGroup {
+    display: grid;
+    grid-template-columns: 75px 50px 45px; /* Rótulo fixo (75px), Input fixo (50px), Unidade (45px) */
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0;
+    padding: 6px 12px;
+    background: var(--bg-fieldset, #1c1c1c);
+    border: 1px solid #333;
+    border-radius: 4px;
+    width: fit-content;
+}
+
+.inlineDataCompactGroup .inlineDataGroup label {
+    text-align: left;
+    white-space: nowrap;
+}
+
+.inlineDataCompactGroup .smallBoxInput {
+    width: 100%; /* Ocupa os 50px reservados na coluna do grid */
+    text-align: center;
+}
+
+.inlineDataCompactGroup .unit {
+    font-size: 0.85rem;
+    color: var(--text-color);
+    opacity: 0.8;
+    text-align: left;
+}
+
+/* CABEÇALHO AJUSTADO */
+.characterHeaderArea {
+    margin-bottom: 25px;
+}
+
+.charNameRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-color, #ffffff);
+}
+
+.charNameInput {
+    width: 50% !important;
+    font-size: 2rem;
+    text-align: left;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    color: var(--text-color, #ffffff);
+    padding: 0;
+}
+
+.charNameInput:focus {
+    border-bottom: 1px dashed #666 !important;
+}
+
+.charClassRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 2.5rem;
+    margin-top: 8px;
+}
+
+/* Estilo individual dos inputs de classe e subclasse (metade da largura anterior) */
+.classInput, .subclassInput {
+    width: 120px !important;
+    font-size: 1.1rem;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    color: var(--text-color, #ffffff);
+    padding: 0;
+}
+
+.subclassInput {
+    width: 180px !important;
+    font-size: 1.1rem;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    color: var(--text-color, #ffffff);
+    padding: 0;
+}
+
+.classInput:focus, .subclassInput:focus {
+    border-bottom: 1px dashed #666 !important;
+}
+
