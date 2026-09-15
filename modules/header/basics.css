@@ -142,6 +142,11 @@
     background: #fff;
     box-shadow: 0 0 5px #fff;
 }
+.stressSquaresContainer.is-afflicted .stressSquare.active {
+    background: #160000;
+    border-color: #3d0808;
+    box-shadow: 0 0 2px rgba(100, 0, 0, 0.45);
+}
 .stressConditionHeader {
     font-size: 12px;
     font-weight: bold;

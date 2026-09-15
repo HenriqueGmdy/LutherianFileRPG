@@ -13,7 +13,7 @@
 @import url('../modules/header/basics.css');
 @import url('../modules/personal/personal.css');
 @import url('../modules/inventory/inventory.css');
-@import url('../modules/status/attrStatus.css');
+@import url('../modules/status/attrStatus.css?v=3');
 @import url('../modules/narrative/narrative.css');
 
 body {
