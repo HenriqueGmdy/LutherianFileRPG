@@ -64,8 +64,11 @@ export function renderAttributes() {
                 </div>
 
                 <div class="conditionBox">
-                    <input type="checkbox" id="${cond.id}" class="conditionCheckbox">
-                    <label for="${cond.id}"><strong>${cond.name}</strong></label>
+                    <label class="conditionControl" aria-label="${cond.name}">
+                        <input type="checkbox" id="${cond.id}" class="conditionCheckbox">
+                        <span class="conditionMark" aria-hidden="true"></span>
+                        <strong>${cond.name}</strong>
+                    </label>
                 </div>
             </div>
         `;

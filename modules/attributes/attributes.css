@@ -72,14 +72,56 @@
 }
 
 .conditionBox {
-    text-align: center;
-    padding: 8px;
+    padding: 5px 8px;
     background-color: var(--bg-inputs) !important;
     border-radius: 4px;
     border-top: 1px solid #444 !important;
     color: var(--text-color);
     margin-top: 5px;
     font-family: var(--font-sub);
+}
+
+.conditionControl {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 24px;
+    width: fit-content;
+    margin: 0 auto;
+    cursor: pointer;
+}
+
+.conditionControl input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.conditionMark {
+    position: relative;
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    background: url('../../assets/images/general/menu.check_box.png') center / contain no-repeat;
+}
+
+.conditionControl input:checked + .conditionMark::after {
+    content: "";
+    position: absolute;
+    inset: 20%;
+    background: url('../../assets/images/general/menu.check_mark.png') center / contain no-repeat;
+}
+
+.conditionControl input:focus-visible + .conditionMark {
+    outline: 2px solid var(--accent-color, #ffcc00);
+    outline-offset: 2px;
 }
 
 .diceToRoll.dice-negative {

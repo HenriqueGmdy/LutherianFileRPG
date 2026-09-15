@@ -8,7 +8,7 @@
 @import url('components.css');
 
 /* Módulos isolados por domínio */
-@import url('../modules/attributes/attributes.css');
+@import url('../modules/attributes/attributes.css?v=2');
 @import url('../modules/attributes/skills.css');
 @import url('../modules/header/basics.css');
 @import url('../modules/personal/personal.css');

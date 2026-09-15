@@ -49,7 +49,7 @@ export function initLocalStorage() {
 
             const identifier = field.id || field.name;
             if (!identifier) return;
-            if (identifier === 'speed') return;
+            if (['speed', 'stressRange', 'vitalityRange', 'willpowerRange'].includes(identifier)) return;
 
             if (field.type === 'checkbox') {
                 data[identifier] = field.checked;
@@ -171,7 +171,7 @@ export function initLocalStorage() {
         });
 
         Object.entries(data).forEach(([identifier, value]) => {
-            if (identifier === 'speed') return;
+            if (['speed', 'stressRange', 'vitalityRange', 'willpowerRange'].includes(identifier)) return;
 
             const normalizedIdentifier = identifier === 'chaClass'
                 ? 'characterClass'
