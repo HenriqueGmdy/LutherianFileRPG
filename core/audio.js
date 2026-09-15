@@ -69,6 +69,17 @@ export function playSoundAfter(name, previousAudio, options = {}) {
 }
 
 export function initAudioInteractions() {
+    document.addEventListener('pointerdown', (event) => {
+        const field = event.target.closest('input');
+        if (!field) return;
+
+        if (field.id === 'vitalityCurrent' && field.disabled) {
+            playSound('clickInvalid');
+        } else if (field.id === 'speed' && field.readOnly) {
+            playSound('clickInvalid');
+        }
+    }, true);
+
     document.addEventListener('mouseover', (event) => {
         const selectable = event.target.closest('button, select, input, textarea, .optionsMenuItem, .tab-btn');
         if (selectable && !selectable.contains(event.relatedTarget)) playSound('mouseOver', { volume: 0.35 });
@@ -77,6 +88,14 @@ export function initAudioInteractions() {
     document.addEventListener('click', (event) => {
         const button = event.target.closest('button');
         if (!button || button.dataset.audioHandled === 'true') return;
+        if (button.id === 'rollStressBtn') {
+            const stress = Number.parseInt(document.getElementById('stress')?.value, 10) || 0;
+            const hasActiveCondition = Boolean(localStorage.getItem('lutherian_active_condition'));
+            if (stress < 100 || hasActiveCondition) {
+                playSound('clickInvalid');
+                return;
+            }
+        }
         if (button.id === 'confirmResetBtn' || button.id === 'cancelResetBtn' || button.id === 'resetThemeBtn') {
             playSound('confirm');
             return;

@@ -131,6 +131,7 @@ export function initThemeEngine() {
     // Botão Confirmar do Modal (Apaga tudo e reinicia)
     if (confirmResetBtn) {
         confirmResetBtn.addEventListener('click', () => {
+            window.__lutherianResetInProgress = true;
             const sheetKeys = [
                 CONFIG.STORAGE_KEYS.SHEET_DATA,
                 CONFIG.STORAGE_KEYS.DYNAMIC_LISTS,

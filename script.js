@@ -39,6 +39,8 @@ document.addEventListener("DOMContentLoaded", () => {
     safeInit("PersonalListeners", initPersonalListeners);
     safeInit("Attributes", initAttributes);
     safeInit("Skills", initSkills);
+    safeInit("Races", initRaces);
+    safeInit("Origins", initOrigins);
 
     // O carregamento precisa acontecer antes dos módulos que calculam status,
     // inventário e efeitos derivados dos valores restaurados.
@@ -48,8 +50,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Inicializações dependentes dos dados restaurados.
     safeInit("Status", initStatus);
     safeInit("Inventory", initInventory);
-    safeInit("Races", initRaces);
-    safeInit("Origins", initOrigins);
     safeInit("Narrative", initNarrative);
     safeInit("LevelEmblem", initLevelEmblem);
     safeInit("Curios", initCurios);

@@ -105,13 +105,11 @@ export function initStress() {
         const hasActiveCondition = localStorage.getItem(CONFIG.STORAGE_KEYS.ACTIVE_CONDITION);
 
         if (currentStress < 100) {
-            playSound('clickInvalid');
             const charName = document.getElementById("name")?.value || "o personagem";
             alert(`Por sorte, ${charName} não está estressado(a) o suficiente…`);
             return;
         }
         if (hasActiveCondition) {
-            playSound('clickInvalid');
             alert("Você já possui uma condição de estresse ativa! É preciso zerar o estresse antes de rolar novamente.");
             return;
         }

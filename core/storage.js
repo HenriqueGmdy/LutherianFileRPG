@@ -35,7 +35,7 @@ export function initLocalStorage() {
 
     document.addEventListener('change', (e) => {
         if (isInitializing) return;
-        if (e.target.matches('input[type="checkbox"], input[type="range"], select')) {
+        if (e.target.matches('input, select, textarea')) {
             saveStaticData();
         }
     });
@@ -96,6 +96,16 @@ export function initLocalStorage() {
             saveAllDynamicLists();
         }
     });
+
+    document.addEventListener('blur', (e) => {
+        if (isInitializing) return;
+        if (e.target.matches('input, select, textarea')) {
+            saveStaticData();
+        }
+        if (e.target.closest('.dynamicList') || e.target.closest('#inventoryItemsList')) {
+            saveAllDynamicLists();
+        }
+    }, true);
 
     document.addEventListener('click', (e) => {
         if (e.target.classList.contains('removeItemBtn') || e.target.classList.contains('addItemBtn') || e.target.id === 'addInventoryItemBtn') {
@@ -192,6 +202,13 @@ export function initLocalStorage() {
         isInitializing = false;
         console.log('Dados estáticos e listas carregados.');
     }
+
+    window.addEventListener('pagehide', () => {
+        if (!isInitializing && !window.__lutherianResetInProgress) {
+            saveStaticData();
+            saveAllDynamicLists();
+        }
+    });
 
     loadData();
 }

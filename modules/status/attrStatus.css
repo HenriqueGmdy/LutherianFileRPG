@@ -97,16 +97,20 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 5px;
+    gap: 3px;
     margin-top: 8px;
     font-weight: bold;
     font-size: 14px;
     color: var(--text-color, #ffffff);
 }
 .resourceCounter input {
+    width: 48px;
+    min-width: 48px;
+    padding: 4px 3px;
     font-weight: bold;
     font-size: 14px;
     color: var(--text-color, #ffffff);
+    text-align: center;
 }
 #stress {
     width: 45px;
