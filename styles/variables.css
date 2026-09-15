@@ -31,6 +31,8 @@
     --negative-color: #c00101;
     --positive-color: #ffcc00;
     --line-color: #ffffff;
+    --resolve-affliction-text: #8b0000;
+    --resolve-virtue-text: #ffffff;
 
     --font-body: 'FjallaOne', Arial, sans-serif;          
     --font-sub: 'GermaniaOne', Arial, sans-serif;         

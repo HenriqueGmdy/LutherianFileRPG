@@ -13,7 +13,7 @@
 @import url('../modules/header/basics.css');
 @import url('../modules/personal/personal.css');
 @import url('../modules/inventory/inventory.css');
-@import url('../modules/status/attrStatus.css?v=3');
+@import url('../modules/status/attrStatus.css?v=4');
 @import url('../modules/narrative/narrative.css');
 
 body {
@@ -120,14 +120,14 @@ body {
 
 /* Regra estabelecida para Virtuoso (Glow Branco) */
 .resolve-text-wrapper.is-virtue span {
-    color: #ffffff;
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.9), 0 0 40px rgba(255, 255, 255, 0.6);
+    color: var(--resolve-virtue-text, #000000);
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.55);
 }
 
 /* Regra estabelecida para Aflito (Vermelho com glow/sombra preta) */
 .resolve-text-wrapper.is-affliction span {
-    color: #ff3333;
-    text-shadow: 5px 5px 0px #000000, -5px -5px 0px #000000, 5px -5px 0px #000000, -5px 5px 0px #000000, 0 0 25px rgba(255, 0, 0, 0.8);
+    color: var(--resolve-affliction-text, #ffffff);
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
 }
 
 @keyframes popInText {

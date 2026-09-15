@@ -186,7 +186,9 @@ export function initThemeEngine() {
         colorAccent: '#ffcc00',
         colorNegative: '#c00101',
         colorPositive: '#ffcc00',
-        colorLines: '#ffffff'
+        colorLines: '#ffffff',
+        colorAfflictionText: '#8b0000',
+        colorVirtueText: '#ffffff'
     };
 
     let savedTheme = readJSON(CONFIG.STORAGE_KEYS.THEME);
@@ -209,6 +211,8 @@ export function initThemeEngine() {
         applyColor('colorNegative', '--negative-color', themeSource.colorNegative || defaultColors.colorNegative);
         applyColor('colorPositive', '--positive-color', themeSource.colorPositive || defaultColors.colorPositive);
         applyColor('colorLines', '--line-color', themeSource.colorLines || defaultColors.colorLines);
+        applyColor('colorAfflictionText', '--resolve-affliction-text', themeSource.colorAfflictionText || defaultColors.colorAfflictionText);
+        applyColor('colorVirtueText', '--resolve-virtue-text', themeSource.colorVirtueText || defaultColors.colorVirtueText);
     };
 
     applyAllColors(savedTheme);
@@ -236,6 +240,8 @@ export function initThemeEngine() {
     bindColorInput('colorNegative', '--negative-color', 'colorNegative');
     bindColorInput('colorPositive', '--positive-color', 'colorPositive');
     bindColorInput('colorLines', '--line-color', 'colorLines');
+    bindColorInput('colorAfflictionText', '--resolve-affliction-text', 'colorAfflictionText');
+    bindColorInput('colorVirtueText', '--resolve-virtue-text', 'colorVirtueText');
 
     const resetThemeBtn = document.getElementById('resetThemeBtn');
     if (resetThemeBtn) {

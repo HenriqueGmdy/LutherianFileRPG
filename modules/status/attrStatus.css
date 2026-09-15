@@ -326,11 +326,9 @@
 
 /* Remove o excesso de glow do texto interno para ficar perfeitamente legível */
 .stressConditionBox.is-virtuous h4,
-.stressConditionBox.is-virtuous p,
-#stressConditionName,
-#stressConditionDesc {
+.stressConditionBox.is-virtuous p {
     text-shadow: none !important; /* Limpa o brilho estourado das letras */
-    color: #ffffff;
+    color: var(--resolve-virtue-text, #000000);
 }
 
 /* Caixa de Condição de Estresse - Estado Aflito */
@@ -343,7 +341,7 @@
 .stressConditionBox.is-afflicted h4,
 .stressConditionBox.is-afflicted p {
     text-shadow: none !important;
-    color: #ffcccc; /* Um tom levemente avermelhado claro, mas 100% legível */
+    color: var(--resolve-affliction-text, #ffffff);
 }
 
 .stressSquaresContainer.is-afflicted .stressSquare.active {
