@@ -24,6 +24,7 @@ export const attributeGroups = [
 
 import { updateInitiative } from '../status/status.js';
 import { updateAllSkills } from './skills.js';
+import { isCharacterOverloaded } from '../../core/appState.js';
 
 export function renderAttributes() {
     const container = document.getElementById("attributesContainer");
@@ -82,7 +83,7 @@ export function updateAttributeDice(attrId) {
         let total = baseVal + tempVal;
 
         let penalty = 0;
-        const isOverloaded = typeof window.isCharacterOverloaded === 'function' && window.isCharacterOverloaded();
+        const isOverloaded = isCharacterOverloaded();
         const bigBackpackEl = document.getElementById("bigBackpackCheck");
         const bigBackpackActive = bigBackpackEl ? bigBackpackEl.checked : false;
 

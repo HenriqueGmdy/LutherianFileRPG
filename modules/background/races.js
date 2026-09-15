@@ -23,17 +23,5 @@ export function initRaces() {
         applyRace(this.value);
     });
 
-    // Restaura automaticamente do localStorage assim que a página carrega
-    try {
-        const savedJSON = localStorage.getItem('lutherian_character_sheet_data');
-        if (savedJSON) {
-            const data = JSON.parse(savedJSON);
-            if (data['race'] && racesData[data['race']]) {
-                raceSelect.value = data['race'];
-                applyRace(data['race']);
-            }
-        }
-    } catch (e) {
-        console.error("Erro ao carregar raça:", e);
-    }
+    applyRace(raceSelect.value);
 }

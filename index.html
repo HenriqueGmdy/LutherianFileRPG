@@ -12,12 +12,12 @@
     <audio id="easterEggAudio" src="assets/audio/chacal.mp3" preload="auto"></audio>
 
     <!-- Pop-up Cinematográfico de Resolução de Determinação -->
-    <div id="resolveCinematicOverlay" class="resolve-cinematic-backdrop" style="display: none;">
+    <div id="resolveCinematicOverlay" class="resolve-cinematic-backdrop is-hidden">
         <div id="resolveCinematicBox" class="resolve-cinematic-message">
-            <img id="resolveCinematicImg" src="" alt="Determinação" style="display: none;">
+            <img id="resolveCinematicImg" src="" alt="Determinação" class="is-hidden">
             
             <!-- Container para a segunda etapa: Imagem de fundo + Texto centralizado -->
-            <div id="resolveTextContainer" class="resolve-text-wrapper" style="display: none;">
+            <div id="resolveTextContainer" class="resolve-text-wrapper is-hidden">
                 <img id="resolveBgTextImg" src="" alt="Fundo do Veredito">
                 <span id="resolveCinematicText"></span>
             </div>
@@ -28,68 +28,68 @@
     <div class="mainFile">
 
         <!-- MENU FLUTUANTE DE OPÇÕES (Canto Superior Direito) -->
-        <div class="optionsMenuWrapper" style="position: absolute; top: 0px; right: -200px; z-index: 1000;">
-            <button type="button" id="optionsMenuBtn" style="background: var(--bg-fieldset, #1c1c1c); border: 1px solid #444; color: var(--text-color, #fff); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4);" title="Opções">
+        <div class="optionsMenuWrapper">
+            <button type="button" id="optionsMenuBtn" class="optionsMenuButton" title="Opções">
                 ⋮
             </button>
             
             <!-- Menu Principal de Opções -->
-            <div id="optionsDropdown" style="display: none; position: absolute; right: 0; top: 45px; background: #1a1a1a; border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: sans-serif; color: #fff; width: 200px; padding: 6px 0;">
-                <button type="button" id="menuOptTheme" style="width: 100%; text-align: left; background: none; border: none; color: #fff; padding: 10px 15px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+            <div id="optionsDropdown" class="optionsDropdown">
+                <button type="button" id="menuOptTheme" class="optionsMenuItem">
                     ✎ Personalizar Tema
                 </button>
                 
-                <button type="button" id="menuOptReset" style="width: 100%; text-align: left; background: none; border: none; color: #ff4d4d; padding: 10px 15px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px solid #333;">
+                <button type="button" id="menuOptReset" class="optionsMenuItem optionsMenuItem--danger">
                     🗑️ Resetar Ficha
                 </button>
             </div>
 
             <!-- Modal de Confirmação de Reset -->
-            <div id="resetConfirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; font-family: sans-serif;">
-                <div style="background: #1a1a1a; border: 1px solid #555; padding: 25px; border-radius: 8px; max-width: 380px; width: 90%; text-align: center; color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-                    <h3 style="margin-top: 0; color: #ff4d4d; font-size: 18px;">⚠️ Atenção</h3>
-                    <p style="font-size: 14px; color: #ccc; line-height: 1.5; margin-bottom: 20px;">
+            <div id="resetConfirmModal" class="resetModal">
+                <div class="resetModalContent">
+                    <h3 class="resetModalTitle">⚠️ Atenção</h3>
+                    <p class="resetModalMessage">
                         Ao confirmar, você apagará todas as informações da ficha para sempre!
                     </p>
-                    <div style="display: flex; gap: 10px; justify-content: center;">
-                        <button type="button" id="cancelResetBtn" style="background: #333; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px;">Cancelar</button>
-                        <button type="button" id="confirmResetBtn" style="background: #d9534f; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold;">Confirmar</button>
+                    <div class="resetModalActions">
+                        <button type="button" id="cancelResetBtn" class="modalButton modalButton--cancel">Cancelar</button>
+                        <button type="button" id="confirmResetBtn" class="modalButton modalButton--confirm">Confirmar</button>
                     </div>
                 </div>
             </div>
 
             <!-- Sub-tela de Customização de Cores -->
-            <div id="themeCustomizerPanel" style="display: none; position: absolute; right: 0; top: 45px; background: #1a1a1a; border: 1px solid #444; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: sans-serif; color: #fff; width: 220px;">
-                <h4 style="margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #333; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+            <div id="themeCustomizerPanel" class="themeCustomizerPanel">
+                <h4 class="themePanelTitle">
                     ✏ Cores do Tema
-                    <button type="button" id="backToMenuBtn" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 12px;">Voltar</button>
+                    <button type="button" id="backToMenuBtn" class="themePanelBack">Voltar</button>
                 </h4>
-                <div id="themeControls" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                <div id="themeControls" class="themeControls">
+                    <label class="themeControl">
                         Fundo: <input type="color" id="colorBgMain" value="#141414">
                     </label>
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="themeControl">
                         Blocos: <input type="color" id="colorBgFieldset" value="#1c1c1c">
                     </label>
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="themeControl">
                         Linhas: <input type="color" id="colorLines" value="#ffffff">
                     </label>
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="themeControl">
                         Caixas de Texto: <input type="color" id="colorBgInputs" value="#2b2b2b">
                     </label>
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="themeControl">
                         Texto Geral: <input type="color" id="colorText" value="#ffffff">
                     </label>
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="themeControl">
                         Destaques: <input type="color" id="colorAccent" value="#ffffff">
                     </label>
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="themeControl">
                         Desvantagens: <input type="color" id="colorNegative" value="#c00101">
                     </label>
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="themeControl">
                         Vantagens: <input type="color" id="colorPositive" value="#ffcc00">
                     </label>
-                    <button type="button" id="resetThemeBtn" style="margin-top: 5px; background: #333; color: #fff; border: none; padding: 6px; border-radius: 4px; cursor: pointer;">Restaurar Padrão</button>
+                    <button type="button" id="resetThemeBtn" class="themeResetButton">Restaurar Padrão</button>
                 </div>
             </div>
         </div>
@@ -115,11 +115,11 @@
                         <input type="text" id="name" class="invisibleInput titleFont charNameInput" placeholder="Nome do Personagem" autocomplete="off">
                     </div>
                     <div class="charClassRow">
-                        <button type="button" class="headerIconBtn" onclick="document.getElementById('chaClass').focus();" title="Focar na Classe">
+                        <button type="button" class="headerIconBtn" onclick="document.getElementById('characterClass').focus();" title="Focar na Classe">
                             <img src="assets/images/pageChar/class.png" alt="Classe" class="headerIconImg">
                         </button>
                         <div class="classSubclassWrapper">
-                            <input type="text" id="chaClass" class="invisibleInput subFont classInput" placeholder="Classe">
+                            <input type="text" id="characterClass" class="invisibleInput subFont classInput" placeholder="Classe">
                             <input type="text" id="chaSubclass" class="invisibleInput subFont subclassInput" placeholder="Subclasse">
                         </div>
                     </div>
@@ -129,9 +129,9 @@
                 <div class="topSplitContainer">
                    <div class="leftProfileColumn">
                     <div class="levelEmblemWrapper" id="levelEmblemContainer">
-                        <div id="virtuousResolveOverlay" class="resolveOverlay virtuousBg" style="display: none;"></div>
+                        <div id="virtuousResolveOverlay" class="resolveOverlay virtuousBg is-hidden"></div>
                         <input type="number" id="level" min="1" max="9" value="1" class="levelInputEmblem">
-                        <div id="stressResolveOverlay" class="resolveOverlay stressTop" style="display: none;"></div>
+                        <div id="stressResolveOverlay" class="resolveOverlay stressTop is-hidden"></div>
                     </div>
                     
                     <div id="threatMeterVisual" class="threatMeterBar"></div>
@@ -144,14 +144,14 @@
                         </div>
                         <div id="headerStressCondition" class="stressConditionHeader">Normal</div>
                         <div class="characterImageBox" id="imageUploadBox" title="Clique para enviar a imagem do personagem">
-                            <img id="charImageDisplay" src="" alt="Imagem" style="display: none; width: 100%; height: 100%; object-fit: cover;">
-                            <span id="imagePlaceholderText" style="color: #555; font-size: 12px; pointer-events: none;">IMAGEM</span>
-                            <input type="file" id="charImageInput" accept="image/*" style="display: none;">
+                            <img id="charImageDisplay" src="" alt="Imagem" class="characterImage">
+                            <span id="imagePlaceholderText" class="imagePlaceholder">IMAGEM</span>
+                            <input type="file" id="charImageInput" accept="image/*" class="is-hidden">
                         </div>
                     </div>
 
                     <div class="rightBasicColumn">
-                        <div class="sectionTitleWrapper" style="margin-top: 20px;">
+                        <div class="sectionTitleWrapper sectionTitleWrapper--spaced">
                             <hr class="titleLine"><h2 class="sectionTitle titleFont">BÁSICO</h2><hr class="titleLine">
                         </div>
                         <div class="basicSplitColumns">
@@ -176,7 +176,7 @@
                                         <strong>Maldição:</strong> <p id="raceCurseDescription">Nenhuma.</p>
                                     </div>
                                 </div>
-                                <div class="groupCamp lineStyle" style="margin-top: 10px;">
+                                <div class="groupCamp lineStyle inlineDataGroup--spaced">
                                     <label for="origin">Origem:</label>
                                     <select id="origin" class="invisibleSelect">
                                         <option value="">Selecione uma origem...</option>
@@ -201,7 +201,7 @@
                                         <input type="number" id="age" min="1" class="smallBoxInput"> <span class="unit">anos</span>
                                     </div>
                                 </div>
-                                <div class="classCampfireBox" style="margin-top: 15px;">
+                                <div class="classCampfireBox classCampfireBox--spaced">
                                     <strong>Hab. Fogueira (Classe):</strong>
                                     <textarea id="classCampfireSkill" placeholder="Descreva a habilidade..." class="invisibleTextarea"></textarea>
                                 </div>
@@ -210,14 +210,14 @@
                     </div>
                 </div>
 
-                <div class="sectionTitleWrapper" style="margin-top: 20px;">
+                <div class="sectionTitleWrapper sectionTitleWrapper--spaced">
                     <hr class="titleLine"><h2 class="sectionTitle titleFont">ATRIBUTOS</h2><hr class="titleLine">
                 </div>
-                <fieldset style="border:none; padding:0; margin:0;">
+                <fieldset class="fieldset--unstyled">
                     <div id="attributesContainer"></div>
                 </fieldset>
 
-                <div class="sectionTitleWrapper" style="margin-top: 20px;">
+                <div class="sectionTitleWrapper sectionTitleWrapper--spaced">
                     <hr class="titleLine"><h2 class="sectionTitle titleFont">STATUS</h2><hr class="titleLine">
                 </div>
                 
@@ -267,8 +267,12 @@
                                 </select>
                             </div>
                             <div class="inlineDataGroup">
-                                <label for="speed">Deslocamento:</label>
-                                <input type="number" id="speed" min="0" value="6" class="smallBoxInput"> <span class="unit">qds</span>
+                                <label for="speedBase">Deslocamento base:</label>
+                                <input type="number" id="speedBase" min="0" value="6" class="smallBoxInput"> <span class="unit">qds</span>
+                            </div>
+                            <div class="inlineDataGroup">
+                                <label for="speed">Deslocamento final:</label>
+                                <input type="number" id="speed" min="0" value="6" class="smallBoxInput" readonly aria-label="Deslocamento final calculado"> <span class="unit">qds</span>
                             </div>
                             <div class="inlineDataGroup">
                                 <label for="threatLevel">Nível de Ameaça:</label>
@@ -309,7 +313,7 @@
                             <div id="stressConditionBox" class="stressConditionBox">
                                 <h4 id="stressConditionName">Condições de Estresse</h4>
                                 <p id="stressConditionDesc">Nenhuma condição ativa.</p>
-                                <div style="display:none;">
+                                <div class="is-hidden">
                                     <input type="checkbox" id="afflictedCheck">
                                     <input type="checkbox" id="virtuousCheck">
                                 </div>
@@ -329,20 +333,20 @@
                     </div>
                 </div>
 
-                <div class="sectionTitleWrapper" style="margin-top: 20px;">
+                <div class="sectionTitleWrapper sectionTitleWrapper--spaced">
                     <hr class="titleLine"><h2 class="sectionTitle titleFont">PERÍCIAS</h2><hr class="titleLine">
                 </div>
-                <fieldset style="border:none; padding:0; margin:0;">
+                <fieldset class="fieldset--unstyled">
                     <div id="skillsContainer" class="skillsContainer"></div>
                 </fieldset>
 
             </div>
 
             <!-- ABA 2: HABILIDADES -->
-            <div id="habilidades" class="tabContent" style="display: none;">
+            <div id="habilidades" class="tabContent">
                 <fieldset>
                     <legend>Habilidades, Magias e Poderes</legend>
-                    <div class="notesGrid" style="margin-bottom: 20px;">
+                    <div class="notesGrid mb-20">
                         <textarea id="abilityMainDesc" class="notesTextArea" placeholder="Descreva habilidades, magias ou poderes..."></textarea>
                         <textarea id="abilityExtraDesc" class="notesTextArea" placeholder="Outras habilidades ou detalhes adicionais..."></textarea>
                     </div>
@@ -358,7 +362,7 @@
             </div>
 
             <!-- ABA 3: DETALHES -->
-            <div id="detalhes" class="tabContent" style="display: none;">
+            <div id="detalhes" class="tabContent">
                 <fieldset>
                     <legend>Pessoal</legend>
                     <div class="personalContainer">
@@ -441,7 +445,7 @@
                             </div>
                         </div>
                         <div id="encumbranceAlerts" class="encumbranceAlerts"></div>
-                        <div class="personalSectionHeader" style="margin-top: 15px;">
+                        <div class="personalSectionHeader personalSectionHeader--spaced">
                             <h3>Itens</h3>
                             <button type="button" class="addItemBtn" id="addInventoryItemBtn">+ Adicionar Item</button>
                         </div>

@@ -6,7 +6,9 @@ export const CONFIG = {
         DYNAMIC_LISTS: 'lutherian_dynamic_lists_data',
         ACTIVE_TAB: 'lutherian_active_tab',
         THEME: 'lutherian_theme',
-        IMAGE: 'lutherian_char_image'
+        IMAGE: 'lutherian_char_image',
+        ACTIVE_CONDITION: 'lutherian_active_condition',
+        RESOLVE_STATE: 'lutherian_resolve_state'
     },
     LIMITS: {
         MAX_LEVEL: 9,

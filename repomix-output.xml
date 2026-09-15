@@ -42,7 +42,9 @@ The content is organized as follows:
 <directory_structure>
 assets/
   audio/
+    affliction.mp3
     chacal.mp3
+    virtue.mp3
   fonts/
     FjallaOne-Regular.ttf
     GermaniaOne-Regular.ttf
@@ -74,10 +76,14 @@ assets/
       level9.png
       stressResolve.png
       virtuousResolve.png
+    menus/
+      bg.stress.text.png
+      determination.png
     pageChar/
       class.png
       name.png
 core/
+  appState.js
   config.js
   router.js
   storage.js
@@ -112,8 +118,12 @@ modules/
     personal.js
   status/
     attrStatus.css
+    resources.js
     status.js
+    stress.js
+    threat.js
 styles/
+  components.css
   global.css
   tabs.css
   utilities.css
@@ -125,6 +135,495 @@ script.js
 <files>
 This section contains the contents of the repository's files.
 
+<file path="core/appState.js">
+let applicationStarted = false;
+let inventoryOverloadChecker = () => false;
+
+export function startApplicationOnce() {
+    if (applicationStarted) return false;
+
+    applicationStarted = true;
+    return true;
+}
+
+export function registerInventoryOverloadChecker(checker) {
+    inventoryOverloadChecker = typeof checker === 'function' ? checker : () => false;
+}
+
+export function isCharacterOverloaded() {
+    return inventoryOverloadChecker();
+}
+</file>
+
+<file path="modules/status/resources.js">
+export function initResources() {
+    const deathFailInputs = [
+        document.getElementById("deathFail1"),
+        document.getElementById("deathFail2"),
+        document.getElementById("deathFail3")
+    ];
+    const vitalityCurrentInput = document.getElementById("vitalityCurrent");
+    const vitalityTotalInput = document.getElementById("vitalityTotal");
+    const vitalityBarFill = document.getElementById("vitalityBarFill");
+
+    function updateVitalityBar() {
+        const current = parseFloat(vitalityCurrentInput?.value) || 0;
+        const total = parseFloat(vitalityTotalInput?.value) || 1;
+        const percentage = Math.max(0, Math.min(100, (current / total) * 100));
+
+        if (vitalityBarFill) vitalityBarFill.style.width = `${percentage}%`;
+    }
+
+    function updateDeathSaves() {
+        const allFailed = deathFailInputs.every(input => input?.checked);
+
+        if (vitalityCurrentInput) {
+            vitalityCurrentInput.disabled = allFailed;
+            if (allFailed) vitalityCurrentInput.value = 0;
+        }
+    }
+
+    deathFailInputs.forEach(input => {
+        input?.addEventListener("change", updateDeathSaves);
+    });
+
+    vitalityCurrentInput?.addEventListener("input", () => {
+        updateDeathSaves();
+        updateVitalityBar();
+    });
+
+    vitalityTotalInput?.addEventListener("input", updateVitalityBar);
+
+    const willpowerCurrentInput = document.getElementById("willpowerCurrent");
+    const willpowerTotalInput = document.getElementById("willpowerTotal");
+    const willpowerBarFill = document.getElementById("willpowerBarFill");
+
+    function updateWillpowerBar() {
+        const current = parseFloat(willpowerCurrentInput?.value) || 0;
+        const total = parseFloat(willpowerTotalInput?.value) || 1;
+        const percentage = Math.max(0, Math.min(100, (current / total) * 100));
+
+        if (willpowerBarFill) willpowerBarFill.style.width = `${percentage}%`;
+    }
+
+    willpowerCurrentInput?.addEventListener("input", updateWillpowerBar);
+    willpowerTotalInput?.addEventListener("input", updateWillpowerBar);
+
+    updateDeathSaves();
+    updateVitalityBar();
+    updateWillpowerBar();
+}
+</file>
+
+<file path="modules/status/stress.js">
+import { CONFIG } from '../../core/config.js';
+
+const conditionsList = [
+    { name: "Com medo", desc: "Você adquire desvantagem em todos os testes e sofre o dobro de estresse de todas as fontes.", type: "afflicted" },
+    { name: "Sem esperança", desc: "No início de seu turno você profere palavras que desmotivam e causam 2d12 de estresse nos seus aliados.", type: "afflicted" },
+    { name: "Inabalável", desc: "Você se torna imune a efeitos de estresse dos inimigos e alivia 1d10 de estresse aos seus aliados por rodada.", type: "virtuous" },
+    { name: "Egoísta", desc: "Você se torna incapaz de realizar testes de União. Sempre que auxiliar um aliado, deve ser bem-sucedido em Força de Vontade DT14 ou perde a ação.", type: "afflicted" },
+    { name: "Esperançoso", desc: "Você adquire vantagem em todos os testes.", type: "virtuous" },
+    { name: "Masoquista", desc: "A cada turno, realiza um teste de Força de Vontade. Se falhar, usa a arma para se atacar, reduzindo 3d12 de estresse.", type: "afflicted" },
+    { name: "Abusivo", desc: "Você deve escolher atacar ou difamar um aliado no alcance para reduzir 6d6 de estresse na rodada, causando o mesmo nele.", type: "afflicted" },
+    { name: "Paranóico", desc: "Existe um traidor entre vocês, e você deve encontrá-lo a todo custo (O personagem escolhe quem).", type: "afflicted" },
+    { name: "Irracional", desc: "No início de todo turno, role um teste de Existir. Se falhar, gasta 1d2 ações fazendo coisas desconexas.", type: "afflicted" },
+    { name: "Corajoso", desc: "Você ganha vantagem em testes de Luta e Arcanismo, e recupera 2d10 de estresse a cada acerto.", type: "virtuous" },
+    { name: "Paralisado", desc: "No início de todo turno lance um d20+Sabedoria. Se menor que 8, perde ações e causa 2d10 de estresse a aliados.", type: "afflicted" },
+    { name: "Errante", desc: "Fica Enfraquecido e Indisposto, sofrendo 2d12 de estresse ao errar ataques/falhar em resistências, sem conseguir críticos.", type: "afflicted" },
+    { name: "Tanatofóbico", desc: "A partir da metade da vitalidade, recebe 2d10 de estresse por golpe recebido. Ao cair morrendo, já tem uma falha garantida.", type: "afflicted" },
+    { name: "Obstinado", desc: "Se cair morrendo, role d20+Constituição (DT9 retorna sem penalidade e com 3d4 vit). Ao cair morrendo pela 1ª vez, possui um sucesso.", type: "virtuous" },
+    { name: "Ansioso", desc: "Você perde todas as condições positivas em si e suas habilidades perdem suas palavras-chave.", type: "afflicted" },
+    { name: "Suicida", desc: "Ganhou condição permanente de Marcado. Com vitalidade menor que 10, recebe +1 em testes (exceto Limiar da Morte e Resistência).", type: "afflicted" },
+    { name: "Imortal", desc: "No início de cada turno, regenera vitalidade com base na soma de todos seus modificadores.", type: "virtuous" },
+    { name: "Robusto", desc: "Você se torna imune a doenças e efeitos contínuos negativos até o fim dessa virtude.", type: "virtuous" },
+    { name: "Imunidade baixa", desc: "Você adquire uma doença imediatamente, e causa 3d10 de estresse aos aliados.", type: "afflicted" },
+    { name: "Depressivo", desc: "Seu turno passa a ser o último da rodada. Errar uma ação profere palavras que causam desvantagem ao aliado mais perto.", type: "afflicted" }
+];
+
+export function initStress() {
+    let isStarting = true;
+    const stressRange = document.getElementById("stressRange");
+    const stressNumberInput = document.getElementById("stress");
+    const stressFill = document.getElementById("stressFill");
+    const stressSquares = document.querySelectorAll(".stressSquare");
+    const headerStressCondition = document.getElementById("headerStressCondition");
+    const rollStressBtn = document.getElementById("rollStressBtn");
+    const stressConditionBox = document.getElementById("stressConditionBox");
+    const stressConditionName = document.getElementById("stressConditionName");
+    const stressConditionDesc = document.getElementById("stressConditionDesc");
+    const virtuousOverlay = document.getElementById("virtuousResolveOverlay");
+    const stressOverlay = document.getElementById("stressResolveOverlay");
+
+    function clearActiveCondition() {
+        if (stressConditionName) stressConditionName.textContent = "Condições de Estresse";
+        if (stressConditionDesc) stressConditionDesc.textContent = "Nenhuma condição ativa.";
+        if (headerStressCondition) headerStressCondition.textContent = "Normal";
+        stressConditionBox?.classList.remove("is-virtuous", "is-afflicted");
+        if (virtuousOverlay) virtuousOverlay.style.display = "none";
+        if (stressOverlay) stressOverlay.style.display = "none";
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.ACTIVE_CONDITION);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.RESOLVE_STATE);
+    }
+
+    function updateStress(value) {
+        let stress = Number.parseInt(value, 10);
+        if (!Number.isFinite(stress)) stress = 0;
+        stress = Math.max(0, Math.min(CONFIG.LIMITS.MAX_STRESS, stress));
+
+        if (stressRange && Number(stressRange.value) !== stress) stressRange.value = stress;
+        if (stressNumberInput && Number(stressNumberInput.value) !== stress) stressNumberInput.value = stress;
+        if (stressFill) stressFill.style.width = `${(stress / CONFIG.LIMITS.MAX_STRESS) * 100}%`;
+
+        const activeBoxesCount = Math.floor(stress / 10);
+        stressSquares.forEach((square, index) => {
+            square.classList.toggle("active", index < activeBoxesCount);
+        });
+
+        const hasActiveCondition = localStorage.getItem(CONFIG.STORAGE_KEYS.ACTIVE_CONDITION);
+        rollStressBtn?.classList.toggle("glow-ready", stress >= 100 && !hasActiveCondition);
+
+        if (!isStarting && stress === 0) clearActiveCondition();
+    }
+
+    function applySavedCondition() {
+        const savedConditionData = localStorage.getItem(CONFIG.STORAGE_KEYS.ACTIVE_CONDITION);
+        const savedResolve = localStorage.getItem(CONFIG.STORAGE_KEYS.RESOLVE_STATE);
+        if (!savedConditionData) return;
+
+        try {
+            const condition = JSON.parse(savedConditionData);
+            if (!condition || !condition.name || !condition.desc) return;
+
+            if (stressConditionName) stressConditionName.textContent = condition.name;
+            if (stressConditionDesc) stressConditionDesc.textContent = condition.desc;
+            if (headerStressCondition) headerStressCondition.textContent = condition.name;
+            stressConditionBox?.classList.remove("is-virtuous", "is-afflicted");
+            stressConditionBox?.classList.add(`is-${condition.type}`);
+            if (virtuousOverlay) virtuousOverlay.style.display = savedResolve === "virtuous" ? "block" : "none";
+            if (stressOverlay) stressOverlay.style.display = savedResolve === "afflicted" ? "block" : "none";
+            rollStressBtn?.classList.remove("glow-ready");
+        } catch (error) {
+            console.error("Erro ao carregar a condição de estresse:", error);
+        }
+    }
+
+    function resolveCondition() {
+        const currentStress = Number.parseInt(stressNumberInput?.value, 10) || 0;
+        const hasActiveCondition = localStorage.getItem(CONFIG.STORAGE_KEYS.ACTIVE_CONDITION);
+
+        if (currentStress < 100) {
+            const charName = document.getElementById("name")?.value || "o personagem";
+            alert(`Por sorte, ${charName} não está estressado(a) o suficiente…`);
+            return;
+        }
+        if (hasActiveCondition) {
+            alert("Você já possui uma condição de estresse ativa! É preciso zerar o estresse antes de rolar novamente.");
+            return;
+        }
+
+        const chosen = conditionsList[Math.floor(Math.random() * conditionsList.length)];
+        const overlay = document.getElementById("resolveCinematicOverlay");
+        const textSpan = document.getElementById("resolveCinematicText");
+        const imgEl = document.getElementById("resolveCinematicImg");
+        const textContainer = document.getElementById("resolveTextContainer");
+        const bgTextImg = document.getElementById("resolveBgTextImg");
+        if (!overlay || !textSpan || !imgEl || !textContainer || !bgTextImg) {
+            rollStressBtn?.classList.remove("glow-ready");
+            return;
+        }
+
+        const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+        textContainer.style.display = "none";
+        imgEl.src = `${window.location.origin}${basePath}/assets/images/menus/determination.png`;
+        imgEl.style.display = "block";
+        overlay.style.display = "flex";
+
+        const audioFile = chosen.type === "virtuous" ? "virtue.mp3" : "affliction.mp3";
+        const resolveAudio = new Audio(`${window.location.origin}${basePath}/assets/audio/${audioFile}`);
+        resolveAudio.volume = 0.7;
+        resolveAudio.play().catch(error => console.log("Erro ao reproduzir áudio de resolução:", error));
+
+        setTimeout(() => {
+            imgEl.style.display = "none";
+            bgTextImg.src = `${window.location.origin}${basePath}/assets/images/menus/bg.stress.text.png`;
+            textContainer.className = `resolve-text-wrapper is-${chosen.type === "virtuous" ? "virtue" : "affliction"}`;
+            textSpan.textContent = chosen.type === "virtuous" ? "Virtuoso!" : "Aflito!";
+            textContainer.style.display = "inline-flex";
+
+            setTimeout(() => {
+                overlay.style.display = "none";
+                if (stressConditionName) stressConditionName.textContent = chosen.name;
+                if (stressConditionDesc) stressConditionDesc.textContent = chosen.desc;
+                if (headerStressCondition) headerStressCondition.textContent = chosen.name;
+                stressConditionBox?.classList.remove("is-virtuous", "is-afflicted");
+                stressConditionBox?.classList.add(`is-${chosen.type}`);
+                if (virtuousOverlay) virtuousOverlay.style.display = chosen.type === "virtuous" ? "block" : "none";
+                if (stressOverlay) stressOverlay.style.display = chosen.type === "afflicted" ? "block" : "none";
+                localStorage.setItem(CONFIG.STORAGE_KEYS.ACTIVE_CONDITION, JSON.stringify(chosen));
+                localStorage.setItem(CONFIG.STORAGE_KEYS.RESOLVE_STATE, chosen.type);
+            }, 2500);
+        }, 2600);
+
+        rollStressBtn?.classList.remove("glow-ready");
+    }
+
+    stressRange?.addEventListener("input", () => updateStress(stressRange.value));
+    stressNumberInput?.addEventListener("input", () => updateStress(stressNumberInput.value));
+    rollStressBtn?.addEventListener("click", resolveCondition);
+
+    updateStress(stressNumberInput?.value || 0);
+    applySavedCondition();
+    isStarting = false;
+}
+</file>
+
+<file path="modules/status/threat.js">
+export function initThreat() {
+    const threatLevelSelect = document.getElementById("threatLevel");
+    const threatMeterVisual = document.getElementById("threatMeterVisual");
+
+    function updateThreatMeter() {
+        if (!threatMeterVisual) return;
+
+        const threatHeights = {
+            nulo: "0%",
+            sublime: "20%",
+            besta: "40%",
+            demonio: "60%",
+            anciao: "80%",
+            radiante: "100%"
+        };
+        const height = threatHeights[threatLevelSelect?.value] || "0%";
+
+        threatMeterVisual.style.background =
+            `linear-gradient(to top, #ff4d4d ${height}, #111 ${height})`;
+    }
+
+    threatLevelSelect?.addEventListener("change", updateThreatMeter);
+    updateThreatMeter();
+}
+</file>
+
+<file path="styles/components.css">
+.is-hidden {
+    display: none;
+}
+
+.resolve-cinematic-backdrop.is-hidden,
+.resolve-text-wrapper.is-hidden,
+#resolveCinematicImg.is-hidden {
+    display: none;
+}
+
+.optionsMenuWrapper {
+    position: absolute;
+    top: 0;
+    right: -200px;
+    z-index: 1000;
+}
+
+.optionsMenuButton {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: var(--bg-fieldset, #1c1c1c);
+    border: 1px solid #444;
+    border-radius: 50%;
+    color: var(--text-color, #fff);
+    cursor: pointer;
+    font-size: 18px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.optionsDropdown,
+.themeCustomizerPanel {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 45px;
+    background: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    font-family: sans-serif;
+}
+
+.optionsDropdown {
+    width: 200px;
+    padding: 6px 0;
+}
+
+.optionsMenuItem {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 15px;
+    border: none;
+    background: none;
+    color: #fff;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.optionsMenuItem--danger {
+    border-top: 1px solid #333;
+    color: #ff4d4d;
+}
+
+.resetModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    font-family: sans-serif;
+}
+
+.resetModalContent {
+    width: 90%;
+    max-width: 380px;
+    padding: 25px;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background: #1a1a1a;
+    color: #fff;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+.resetModalTitle {
+    margin-top: 0;
+    color: #ff4d4d;
+    font-size: 18px;
+}
+
+.resetModalMessage {
+    margin-bottom: 20px;
+    color: #ccc;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.resetModalActions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.modalButton {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.modalButton--cancel {
+    background: #333;
+}
+
+.modalButton--confirm {
+    background: #d9534f;
+    font-weight: bold;
+}
+
+.themeCustomizerPanel {
+    width: 220px;
+    padding: 15px;
+}
+
+.themePanelTitle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #333;
+    font-size: 14px;
+}
+
+.themePanelBack {
+    border: none;
+    background: none;
+    color: #aaa;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.themeControls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.themeControl {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.themeResetButton {
+    margin-top: 5px;
+    padding: 6px;
+    border: none;
+    border-radius: 4px;
+    background: #333;
+    color: #fff;
+    cursor: pointer;
+}
+
+.characterImage {
+    display: none;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.imagePlaceholder {
+    color: #555;
+    font-size: 12px;
+    pointer-events: none;
+}
+
+.sectionTitleWrapper--spaced {
+    margin-top: 20px;
+}
+
+.fieldset--unstyled {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.inlineDataGroup--spaced {
+    margin-top: 10px;
+}
+
+.classCampfireBox--spaced {
+    margin-top: 15px;
+}
+
+.personalSectionHeader--spaced {
+    margin-top: 15px;
+}
+
+.itemMetaLabel {
+    color: #aaa;
+    font-size: 0.75rem;
+}
+</file>
+
 <file path="core/config.js">
 //CONSTANTES E CONFIGURAÇÕES GLOBAIS
 
@@ -134,7 +633,9 @@ export const CONFIG = {
         DYNAMIC_LISTS: 'lutherian_dynamic_lists_data',
         ACTIVE_TAB: 'lutherian_active_tab',
         THEME: 'lutherian_theme',
-        IMAGE: 'lutherian_char_image'
+        IMAGE: 'lutherian_char_image',
+        ACTIVE_CONDITION: 'lutherian_active_condition',
+        RESOLVE_STATE: 'lutherian_resolve_state'
     },
     LIMITS: {
         MAX_LEVEL: 9,
@@ -152,6 +653,8 @@ export const CONFIG = {
 </file>
 
 <file path="core/router.js">
+import { CONFIG } from './config.js';
+
 export function initTabs() {
     const tabButtons = document.querySelectorAll(".tab-btn");
     const tabContents = document.querySelectorAll(".tabContent");
@@ -177,9 +680,8 @@ export function initTabs() {
             }
         });
 
-        // Salva a aba ativa no localStorage para persistir no F5
         if (saveState) {
-            localStorage.setItem('lutherian_active_tab', targetId);
+            localStorage.setItem(CONFIG.STORAGE_KEYS.ACTIVE_TAB, targetId);
         }
     }
 
@@ -191,254 +693,25 @@ export function initTabs() {
         });
     });
 
-    // Ao iniciar, restaura a última aba ativa salva ou mantém a padrão
-    const savedTab = localStorage.getItem('lutherian_active_tab');
+    const savedTab = localStorage.getItem(CONFIG.STORAGE_KEYS.ACTIVE_TAB);
     if (savedTab && document.getElementById(savedTab)) {
         switchTab(savedTab, false);
     }
 }
 </file>
 
-<file path="core/storage.js">
+<file path="core/themeEngine.js">
 import { CONFIG } from './config.js';
 
-export function initLocalStorage() {
-    const STORAGE_KEY = CONFIG.STORAGE_KEYS.SHEET_DATA;
-    const DYNAMIC_LISTS_KEY = CONFIG.STORAGE_KEYS.DYNAMIC_LISTS;
-
-    let isInitializing = true;
-
-    // 1. Salvar campos estáticos normais + estados de estresse/resolução
-    document.addEventListener('input', (e) => {
-        if (isInitializing) return;
-        if (e.target.matches('input, select, textarea') && !e.target.closest('.dynamicList') && !e.target.closest('#inventoryItemsList')) {
-            saveStaticData();
-        }
-    });
-
-    document.addEventListener('change', (e) => {
-        if (isInitializing) return;
-        if (e.target.matches('input[type="checkbox"], input[type="range"], select')) {
-            saveStaticData();
-        }
-    });
-
-    function saveStaticData() {
-        const data = {};
-        const fields = document.querySelectorAll('input, select, textarea');
-        
-        fields.forEach(field => {
-            if (field.closest('.dynamicList') || field.closest('#inventoryItemsList')) return;
-
-            const identifier = field.id || field.name;
-            if (!identifier) return;
-
-            if (field.type === 'checkbox') {
-                data[identifier] = field.checked;
-            } else {
-                data[identifier] = field.value;
-            }
-        });
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    }
-
-    // 2. Salvar listas dinâmicas e inventário
-    window.saveAllDynamicLists = function() {
-        if (isInitializing) return;
-        
-        const listsData = {};
-
-        document.querySelectorAll('.dynamicList').forEach(container => {
-            const containerId = container.id;
-            if (!containerId) return;
-
-            const rowsData = [];
-
-            container.querySelectorAll('.stringItemRow, .cardItemBox, .inventoryItemCard').forEach(row => {
-                const textInput = row.querySelector('input[type="text"]');
-                const numberInputs = row.querySelectorAll('input[type="number"]');
-                const textarea = row.querySelector('textarea');
-
-                rowsData.push({
-                    text: textInput ? textInput.value : "",
-                    qty: numberInputs[0] ? numberInputs[0].value : "1",
-                    weight: numberInputs[1] ? numberInputs[1].value : "0",
-                    desc: textarea ? textarea.value : ""
-                });
-            });
-
-            listsData[containerId] = rowsData;
-        });
-
-        localStorage.setItem(DYNAMIC_LISTS_KEY, JSON.stringify(listsData));
-    };
-
-    document.addEventListener('input', (e) => {
-        if (e.target.closest('.dynamicList') || e.target.closest('#inventoryItemsList')) {
-            window.saveAllDynamicLists();
-        }
-    });
-
-    document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('removeItemBtn') || e.target.classList.contains('addItemBtn') || e.target.id === 'addInventoryItemBtn') {
-            setTimeout(window.saveAllDynamicLists, 150);
-        }
-    });
-
-    // 3. Carregar e reconstruir os dados ao iniciar
-    function loadData() {
-        const savedJSON = localStorage.getItem(STORAGE_KEY);
-        const savedListsJSON = localStorage.getItem(DYNAMIC_LISTS_KEY);
-
-        try {
-            if (savedListsJSON) {
-                const listsData = JSON.parse(savedListsJSON);
-                
-                Object.keys(listsData).forEach(containerId => {
-                    const container = document.getElementById(containerId);
-                    if (!container) return;
-
-                    container.innerHTML = "";
-                    const items = listsData[containerId];
-
-                    items.forEach(itemData => {
-                        const itemDiv = document.createElement("div");
-                        const safeText = itemData.text !== undefined && itemData.text !== null ? itemData.text : "";
-                        const safeDesc = itemData.desc !== undefined && itemData.desc !== null ? itemData.desc : "";
-
-                        if (containerId === "inventoryItemsList") {
-                            itemDiv.className = "inventoryItemCard cardItemBox";
-                            itemDiv.innerHTML = `
-                                <div class="inventoryItemTop">
-                                    <input type="text" placeholder="Nome do item..." class="item-name-input" value="${safeText}">
-                                    <label style="font-size:0.75rem; color:#aaa;">Qtd:</label>
-                                    <input type="number" value="${itemData.qty || 1}" min="0" class="item-qty-input">
-                                    <label style="font-size:0.75rem; color:#aaa;">Peso:</label>
-                                    <input type="number" value="${itemData.weight || 0}" min="0" step="0.5" class="item-weight-input">
-                                    <button type="button" class="removeItemBtn" title="Excluir">X</button>
-                                </div>
-                                <textarea placeholder="Descrição do item...">${safeDesc}</textarea>
-                            `;
-                        } else {
-                            const isCard = container.classList.contains("cardList");
-
-                            if (isCard) {
-                                itemDiv.className = "cardItemBox";
-                                itemDiv.innerHTML = `
-                                    <div class="cardItemTop">
-                                        <input type="text" placeholder="Nome / Título..." class="personal-input" value="${safeText}">
-                                        <button type="button" class="removeItemBtn" title="Remover">X</button>
-                                    </div>
-                                    <textarea placeholder="Descrição...">${safeDesc}</textarea>
-                                `;
-                            } else {
-                                itemDiv.className = "stringItemRow";
-                                itemDiv.innerHTML = `
-                                    <input type="text" placeholder="Digite o nome..." class="personal-input" value="${safeText}">
-                                    <button type="button" class="removeItemBtn" title="Remover">X</button>
-                                `;
-                            }
-                        }
-
-                        const removeBtn = itemDiv.querySelector(".removeItemBtn");
-                        if (removeBtn) {
-                            removeBtn.addEventListener("click", () => {
-                                itemDiv.remove();
-                                window.saveAllDynamicLists();
-                            });
-                        }
-
-                        itemDiv.querySelectorAll("input, textarea").forEach(input => {
-                            input.addEventListener("input", () => window.saveAllDynamicLists());
-                        });
-
-                        container.appendChild(itemDiv);
-                    });
-                });
-            }
-
-            if (savedJSON) {
-                const data = JSON.parse(savedJSON);
-                Object.keys(data).forEach(identifier => {
-                    const field = document.getElementById(identifier) || document.querySelector(`[name="${identifier}"]`);
-                    if (!field) return;
-
-                    if (field.type === 'checkbox') {
-                        field.checked = data[identifier];
-                        field.dispatchEvent(new Event('change', { bubbles: true }));
-                    } else if (field.tagName === 'SELECT') {
-                        field.value = data[identifier];
-                        field.dispatchEvent(new Event('change', { bubbles: true }));
-                    } else {
-                        field.value = data[identifier];
-                        field.dispatchEvent(new Event('input', { bubbles: true }));
-                        field.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                });
-            }
-
-            // ==========================================
-            // RESTAURAÇÃO EXPLÍCITA DE ESTRESSE E RESOLUÇÃO
-            // ==========================================
-            const virtuousOverlay = document.getElementById("virtuousResolveOverlay");
-            const stressOverlay = document.getElementById("stressResolveOverlay");
-            const stressConditionBox = document.getElementById("stressConditionBox");
-            const stressConditionName = document.getElementById("stressConditionName");
-            const stressConditionDesc = document.getElementById("stressConditionDesc");
-            const headerStressCondition = document.getElementById("headerStressCondition");
-
-            const savedResolve = localStorage.getItem('lutherian_resolve_state');
-            if (savedResolve === 'virtuous' && virtuousOverlay) {
-                virtuousOverlay.style.display = "block";
-            } else if (savedResolve === 'afflicted' && stressOverlay) {
-                stressOverlay.style.display = "block";
-            }
-
-            const savedConditionData = localStorage.getItem('lutherian_active_condition');
-            if (savedConditionData) {
-                try {
-                    const savedCondition = JSON.parse(savedConditionData);
-                    if (stressConditionName) stressConditionName.textContent = savedCondition.name;
-                    if (stressConditionDesc) stressConditionDesc.textContent = savedCondition.desc;
-                    if (headerStressCondition) headerStressCondition.textContent = savedCondition.name;
-
-                    if (stressConditionBox) {
-                        stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
-                        if (savedCondition.type === "virtuous") {
-                            stressConditionBox.classList.add("is-virtuous");
-                        } else if (savedCondition.type === "afflicted") {
-                            stressConditionBox.classList.add("is-afflicted");
-                        }
-                    }
-                } catch (err) {
-                    console.error("Erro ao restaurar condição de estresse:", err);
-                }
-            }
-
-            console.log("Ficha totalmente restaurada com sucesso!");
-        } catch (e) {
-            console.error("Erro ao carregar dados do storage:", e);
-        } finally {
-            if (typeof window.updateInventoryStatusGlobal === 'function') {
-                window.updateInventoryStatusGlobal();
-            }
-
-            setTimeout(() => {
-                isInitializing = false;
-            }, 300);
-        }
-    }
-
-    if (document.readyState === 'loading') {
-        window.addEventListener('DOMContentLoaded', loadData);
-    } else {
-        loadData();
+function readJSON(key, fallback = {}) {
+    try {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : fallback;
+    } catch {
+        return fallback;
     }
 }
-</file>
 
-<file path="core/themeEngine.js">
 export function initThemeEngine() {
     const menuBtn = document.getElementById('optionsMenuBtn');
     const dropdown = document.getElementById('optionsDropdown');
@@ -495,7 +768,17 @@ export function initThemeEngine() {
     // Botão Confirmar do Modal (Apaga tudo e reinicia)
     if (confirmResetBtn) {
         confirmResetBtn.addEventListener('click', () => {
-            localStorage.clear();
+            const sheetKeys = [
+                CONFIG.STORAGE_KEYS.SHEET_DATA,
+                CONFIG.STORAGE_KEYS.DYNAMIC_LISTS,
+                CONFIG.STORAGE_KEYS.IMAGE,
+                CONFIG.STORAGE_KEYS.ACTIVE_CONDITION,
+                CONFIG.STORAGE_KEYS.RESOLVE_STATE
+            ];
+
+            sheetKeys.forEach(key => {
+                localStorage.removeItem(key);
+            });
             location.reload();
         });
     }
@@ -534,7 +817,7 @@ export function initThemeEngine() {
         colorLines: '#ffffff'
     };
 
-    let savedTheme = JSON.parse(localStorage.getItem('lutherian_theme')) || {};
+    let savedTheme = readJSON(CONFIG.STORAGE_KEYS.THEME);
     
     const applyColor = (key, cssVar, defaultVal) => {
         const val = savedTheme[key] || defaultVal;
@@ -559,7 +842,7 @@ export function initThemeEngine() {
     const updateColor = (property, value, key) => {
         rootStyles.setProperty(property, value);
         savedTheme[key] = value;
-        localStorage.setItem('lutherian_theme', JSON.stringify(savedTheme));
+        localStorage.setItem(CONFIG.STORAGE_KEYS.THEME, JSON.stringify(savedTheme));
     };
 
     const bindColorInput = (id, cssVar, key) => {
@@ -581,7 +864,7 @@ export function initThemeEngine() {
     const resetThemeBtn = document.getElementById('resetThemeBtn');
     if (resetThemeBtn) {
         resetThemeBtn.addEventListener('click', () => {
-            localStorage.removeItem('lutherian_theme');
+            localStorage.removeItem(CONFIG.STORAGE_KEYS.THEME);
             savedTheme = {};
 
             applyAllColors(defaultColors);
@@ -688,183 +971,6 @@ export function initThemeEngine() {
 }
 </file>
 
-<file path="modules/attributes/attributes.js">
-export const attributeGroups = [
-    {
-        attrCondition: { id: "weakened", name: "Enfraquecido" },
-        attributes: [
-            { id: "strength", name: "Força" },
-            { id: "dexterity", name: "Destreza" }
-        ]
-    },
-    {
-        attrCondition: { id: "unwell", name: "Indisposto" },
-        attributes: [
-            { id: "constitution", name: "Constituição" },
-            { id: "charisma", name: "Carisma" }
-        ]
-    },
-    {
-        attrCondition: { id: "miserable", name: "Miserável" },
-        attributes: [
-            { id: "psyche", name: "Psique" },
-            { id: "wisdom", name: "Sabedoria" }
-        ]
-    }
-];
-
-import { updateInitiative } from '../status/status.js';
-import { updateAllSkills } from './skills.js';
-
-export function renderAttributes() {
-    const container = document.getElementById("attributesContainer");
-    if (!container) return;
-
-    // Limpa o container antes de renderizar para evitar duplicações
-    container.innerHTML = "";
-
-    attributeGroups.forEach(group => {
-        const attr1 = group.attributes[0];
-        const attr2 = group.attributes[1];
-        const cond = group.attrCondition;
-
-        container.innerHTML += `
-            <div class="attributeGroup">
-                <!-- Atributo 1 -->
-                <div class="attributeRow">
-                    <div class="attribute-left">
-                        <label for="${attr1.id}">${attr1.name}:</label>
-                        <input type="number" id="${attr1.id}" min="-3" max="3" value="0" class="attr-input">
-                    </div>
-                    <div class="attribute-right">
-                        <label for="temp_${attr1.id}">Mod. temporário:</label>
-                        <input type="number" id="temp_${attr1.id}" min="-2" max="2" value="0" class="attr-input">
-                        <span id="dices_${attr1.id}" class="diceToRoll">d20</span>
-                    </div>
-                </div>
-
-                <!-- Atributo 2 -->
-                <div class="attributeRow">
-                    <div class="attribute-left">
-                        <label for="${attr2.id}">${attr2.name}:</label>
-                        <input type="number" id="${attr2.id}" min="-3" max="3" value="0" class="attr-input">
-                    </div>
-                    <div class="attribute-right">
-                        <label for="temp_${attr2.id}">Mod. temporário:</label>
-                        <input type="number" id="temp_${attr2.id}" min="-2" max="2" value="0" class="attr-input">
-                        <span id="dices_${attr2.id}" class="diceToRoll">d20</span>
-                    </div>
-                </div>
-
-                <!-- Condição -->
-                <div class="conditionBox">
-                    <input type="checkbox" id="${cond.id}" class="conditionCheckbox">
-                    <label for="${cond.id}"><strong>${cond.name}</strong></label>
-                </div>
-            </div>
-        `;
-    });
-}
-
-export function updateAttributeDice(attrId) {
-    const baseInput = document.getElementById(attrId);
-    const tempInput = document.getElementById(`temp_${attrId}`);
-    const diceSpan = document.getElementById(`dices_${attrId}`);
-
-    if (baseInput && tempInput && diceSpan) {
-        let baseVal = parseInt(baseInput.value) || 0;
-        let tempVal = parseInt(tempInput.value) || 0;
-        let total = baseVal + tempVal;
-
-        // Soma as penalidades ativas
-        let penalty = 0;
-        const isOverloaded = typeof window.isCharacterOverloaded === 'function' && window.isCharacterOverloaded();
-        const bigBackpackActive = document.getElementById("bigBackpackCheck")?.checked || false;
-
-        // Sobrecarga aplica penalidade de -1 em Força e Destreza
-        if (isOverloaded && (attrId === "strength" || attrId === "dexterity")) {
-            penalty += 1;
-        }
-
-        // Mochila grande aplica penalidade permanente de -1 apenas em Força
-        if (bigBackpackActive && attrId === "strength") {
-            penalty += 1;
-        }
-
-        // Aplica o acumulado das penalidades subtraindo do total
-        if (penalty > 0) {
-            if (total > 0) {
-                // Se houver bônus positivo, as penalidades abatem primeiro o bônus
-                total = Math.max(0, total - penalty);
-            } else {
-                // Se já for 0 ou negativo, as penalidades empurram ainda mais para o negativo
-                total -= penalty;
-            }
-        }
-
-        if (total === 0) {
-            diceSpan.textContent = "d20";
-            diceSpan.className = "diceToRoll dice-neutral";
-        } else if (total > 0) {
-            diceSpan.textContent = `d20 + ${total}d6`;
-            diceSpan.className = "diceToRoll dice-positive";
-        } else {
-            diceSpan.textContent = `d20 - ${Math.abs(total)}d6`;
-            diceSpan.className = "diceToRoll dice-negative";
-        }
-    }
-}
-
-export function updateAllAttributes() {
-    attributeGroups.forEach(group => {
-        group.attributes.forEach(attr => {
-            updateAttributeDice(attr.id);
-        });
-    });
-}
-
-export function initAttributesListeners() {
-    document.addEventListener("input", function(e) {
-        if (e.target && e.target.classList.contains("attr-input")) {
-            let attrId = e.target.id.replace("temp_", "");
-            updateAttributeDice(attrId);
-            
-            if (attrId === "dexterity") {
-                updateInitiative();
-            }
-            updateAllSkills();
-        }
-    });
-
-    document.querySelectorAll(".conditionCheckbox").forEach(checkbox => {
-        checkbox.addEventListener("change", function() {
-            setTimeout(() => {
-                updateAllAttributes();
-                updateAllSkills();
-            }, 10);
-        });
-    });
-
-    attributeGroups.forEach(group => {
-        const checkbox = document.getElementById(group.attrCondition.id);
-        if (checkbox) {
-            checkbox.addEventListener("change", function() {
-                updateAllAttributes();
-                updateInitiative();
-                updateAllSkills();
-            });
-        }
-    });
-}
-
-// Função principal que faltava e agora é exportada para o script.js
-export function initAttributes() {
-    renderAttributes();
-    initAttributesListeners();
-    updateAllAttributes();
-}
-</file>
-
 <file path="modules/attributes/skills.css">
 /* 4. SEÇÃO DE PERÍCIAS (5 COLUNAS) */
 .skillsContainer {
@@ -938,147 +1044,6 @@ export function initAttributes() {
 }
 </file>
 
-<file path="modules/attributes/skills.js">
-const skillColumnsData = [
-    [
-        { id: "atletismo", name: "Atletismo", attr: "For", attrId: "strength" },
-        { id: "luta", name: "Luta", attr: "For", attrId: "strength" },
-        { id: "limiar", name: "Limiar da morte", attr: "Con", attrId: "constitution" },
-        { id: "resistencia", name: "Resistência", attr: "Con", attrId: "constitution" },
-        { id: "vontade", name: "Força de vontade", attr: "Con", attrId: "constitution" }
-    ],
-    [
-        { id: "furtividade", name: "Furtividade", attr: "Des", attrId: "dexterity" },
-        { id: "pontaria", name: "Pontaria", attr: "Des", attrId: "dexterity" },
-        { id: "coordenacao", name: "Coordenação", attr: "Des", attrId: "dexterity" },
-        { id: "navegacao", name: "Navegação", attr: "Des", attrId: "dexterity" },
-        { id: "reacao", name: "Reação", attr: "Des", attrId: "dexterity" }
-    ],
-    [
-        { id: "arcanismo", name: "Arcanismo", attr: "Psi", attrId: "psyche" },
-        { id: "existir", name: "Existir", attr: "Psi", attrId: "psyche" },
-        { id: "logica", name: "Lógica", attr: "Psi", attrId: "psyche" },
-        { id: "percepcao", name: "Percepção", attr: "Psi", attrId: "psyche" },
-        { id: "interacao", name: "Interação", attr: "Psi", attrId: "psyche" }
-    ],
-    [
-        { id: "adestramento", name: "Adestramento", attr: "Sab", attrId: "wisdom" },
-        { id: "enciclopedia", name: "Enciclopédia", attr: "Sab", attrId: "wisdom" },
-        { id: "medicina", name: "Medicina", attr: "Sab", attrId: "wisdom" },
-        { id: "religiao", name: "Religião", attr: "Sab", attrId: "wisdom" },
-        { id: "sobrevivencia", name: "Sobrevivência", attr: "Sab", attrId: "wisdom" }
-    ],
-    [
-        { id: "autoridade", name: "Autoridade", attr: "Car", attrId: "charisma" },
-        { id: "compostura", name: "Compostura", attr: "Car", attrId: "charisma" },
-        { id: "drama", name: "Drama", attr: "Car", attrId: "charisma" },
-        { id: "empatia", name: "Empatia", attr: "Car", attrId: "charisma" },
-        { id: "uniao", name: "União", attr: "Car", attrId: "charisma" }
-    ]
-];
-
-const skillAttributeMap = {};
-
-export function renderSkills() {
-    const skillsContainer = document.getElementById("skillsContainer");
-    if (!skillsContainer) return;
-
-    skillColumnsData.forEach(column => {
-        let columnHTML = `<div class="skillColumn">`;
-        
-        column.forEach(skill => {
-            skillAttributeMap[skill.id] = skill.attrId;
-            columnHTML += `
-                <div class="skillGroup">
-                    <label for="skill_${skill.id}">${skill.name} <span class="skillAttr">(${skill.attr})</span></label>
-                    <input type="number" id="skill_${skill.id}" value="0" class="skill-input">
-                    <span id="mod_skill_${skill.id}" class="skillMod">d20</span>
-                </div>
-            `;
-        });
-
-        columnHTML += `</div>`;
-        skillsContainer.innerHTML += columnHTML;
-    });
-}
-
-export function updateSkillModifier(skillKey) {
-    const skillInput = document.getElementById(`skill_${skillKey}`);
-    const modSpan = document.getElementById(`mod_skill_${skillKey}`);
-    const attrId = skillAttributeMap[skillKey];
-
-    if (skillInput && modSpan && attrId) {
-        let skillRank = parseInt(skillInput.value) || 0;
-        
-        let attrBase = parseInt(document.getElementById(attrId)?.value) || 0;
-        let attrTemp = parseInt(document.getElementById(`temp_${attrId}`)?.value) || 0;
-        let attrTotal = attrBase + attrTemp;
-
-        // Soma as penalidades ativas para as perícias baseadas em Força e Destreza
-        let penalty = 0;
-        const isOverloaded = typeof window.isCharacterOverloaded === 'function' && window.isCharacterOverloaded();
-        const bigBackpackActive = document.getElementById("bigBackpackCheck")?.checked || false;
-
-        if (isOverloaded && (attrId === "strength" || attrId === "dexterity")) {
-            penalty += 1;
-        }
-        if (bigBackpackActive && attrId === "strength") {
-            penalty += 1;
-        }
-
-        if (penalty > 0) {
-            if (attrTotal > 0) {
-                attrTotal = Math.max(0, attrTotal - penalty);
-            } else {
-                attrTotal -= penalty;
-            }
-        }
-
-        if (attrTotal === 0) {
-            if (skillRank === 0) {
-                modSpan.textContent = "d20";
-                modSpan.className = "skillMod dice-neutral";
-            } else {
-                let sSign = skillRank > 0 ? `+ ${skillRank}` : `- ${Math.abs(skillRank)}`;
-                modSpan.textContent = `d20 ${sSign}`;
-                modSpan.className = "skillMod " + (skillRank > 0 ? "dice-positive" : "dice-negative");
-            }
-        } else if (attrTotal > 0) {
-            let rankPart = skillRank !== 0 ? (skillRank > 0 ? ` + ${skillRank}` : ` - ${Math.abs(skillRank)}`) : "";
-            modSpan.textContent = `d20 + ${attrTotal}d6${rankPart}`;
-            modSpan.className = "skillMod dice-positive";
-        } else {
-            let absAttr = Math.abs(attrTotal);
-            let rankPart = skillRank !== 0 ? (skillRank > 0 ? ` + ${skillRank}` : ` - ${Math.abs(skillRank)}`) : "";
-            modSpan.textContent = `d20 - ${absAttr}d6${rankPart}`;
-            modSpan.className = "skillMod dice-negative";
-        }
-    }
-}
-
-export function updateAllSkills() {
-    Object.keys(skillAttributeMap).forEach(skillKey => {
-        updateSkillModifier(skillKey);
-    });
-}
-
-export function initSkillsListeners() {
-    document.addEventListener("input", function(e) {
-        if (e.target && e.target.classList.contains("skill-input")) {
-            let skillKey = e.target.id.replace("skill_", "");
-            updateSkillModifier(skillKey);
-        }
-    });
-}
-
-// Função principal de inicialização exigida pelo script.js
-export function initSkills() {
-    renderSkills();
-    initSkillsListeners();
-    updateAllSkills();
-}
-</file>
-
 <file path="modules/background/origins.js">
 import { originsData } from '../background/originsData.js'; 
 import { updateAllSkills } from '../attributes/skills.js';
@@ -1087,7 +1052,7 @@ let lastTrainedSkills = [];
 
 export function initOrigins() {
     const originSelect = document.getElementById("origin");
-    const habilityDesc = document.getElementById("originTraitDescription");
+    const originDescription = document.getElementById("originTraitDescription");
 
     if (!originSelect) return;
 
@@ -1108,16 +1073,15 @@ export function initOrigins() {
         if (!isInitialLoad) {
             lastTrainedSkills.forEach(skillId => {
                 const input = document.getElementById(`skill_${skillId}`);
-                if (input) {
-                    input.value = Math.max(0, parseInt(input.value || 0) - 1);
-                }
+                if (input) input.value = Math.max(0, parseInt(input.value || 0) - 1);
             });
-            lastTrainedSkills = [];
         }
 
+        lastTrainedSkills = [];
+
         if (!selectedKey || !originsData[selectedKey]) {
-            if (habilityDesc) {
-                habilityDesc.textContent = "Nenhuma origem especificada.";
+            if (originDescription) {
+                originDescription.textContent = "Nenhuma origem especificada.";
             }
             updateAllSkills();
             return;
@@ -1129,17 +1093,21 @@ export function initOrigins() {
             origin.skills.forEach(skillId => {
                 const input = document.getElementById(`skill_${skillId}`);
                 if (input) {
-                    if (!isInitialLoad) {
-                        input.value = parseInt(input.value || 0) + 1;
-                    }
+                    if (!isInitialLoad) input.value = parseInt(input.value || 0) + 1;
                     lastTrainedSkills.push(skillId);
                 }
             });
         }
 
-        if (habilityDesc) {
-            let skillsText = origin.skillsName ? origin.skillsName : "À escolha do jogador";
-            habilityDesc.innerHTML = `Perícias Treinadas: ${skillsText}<br><br>${origin.campfireSkill}`;
+        if (originDescription) {
+            const skillsText = origin.skillsName || "À escolha do jogador";
+            originDescription.replaceChildren();
+            originDescription.append(
+                document.createTextNode(`Perícias Treinadas: ${skillsText}`),
+                document.createElement('br'),
+                document.createElement('br'),
+                document.createTextNode(origin.campfireSkill)
+            );
         }
 
         updateAllSkills();
@@ -1149,19 +1117,7 @@ export function initOrigins() {
         applyOrigin(this.value, false);
     });
 
-    // Restaura automaticamente do localStorage na inicialização
-    try {
-        const savedJSON = localStorage.getItem('lutherian_character_sheet_data');
-        if (savedJSON) {
-            const data = JSON.parse(savedJSON);
-            if (data['origin'] && originsData[data['origin']]) {
-                originSelect.value = data['origin'];
-                applyOrigin(data['origin'], true); // true evita somar bônus duplicado de perícia no F5
-            }
-        }
-    } catch (e) {
-        console.error("Erro ao carregar origem:", e);
-    }
+    applyOrigin(originSelect.value, true);
 }
 </file>
 
@@ -1322,19 +1278,7 @@ export function initRaces() {
         applyRace(this.value);
     });
 
-    // Restaura automaticamente do localStorage assim que a página carrega
-    try {
-        const savedJSON = localStorage.getItem('lutherian_character_sheet_data');
-        if (savedJSON) {
-            const data = JSON.parse(savedJSON);
-            if (data['race'] && racesData[data['race']]) {
-                raceSelect.value = data['race'];
-                applyRace(data['race']);
-            }
-        }
-    } catch (e) {
-        console.error("Erro ao carregar raça:", e);
-    }
+    applyRace(raceSelect.value);
 }
 </file>
 
@@ -1723,6 +1667,8 @@ export function initCurios() {
 </file>
 
 <file path="modules/header/imageHandler.js">
+import { CONFIG } from '../../core/config.js';
+
 export function initImageHandler(options = {}) {
     // Permite configurar múltiplos slots de imagem no futuro passando seletores, 
     // mas já começa configurando a principal por padrão.
@@ -1730,7 +1676,7 @@ export function initImageHandler(options = {}) {
     const inputId = options.inputId || "charImageInput";
     const displayId = options.displayId || "charImageDisplay";
     const placeholderId = options.placeholderId || "imagePlaceholderText";
-    const storageKey = options.storageKey || "lutherian_char_image";
+    const storageKey = options.storageKey || CONFIG.STORAGE_KEYS.IMAGE;
 
     const imageBox = document.getElementById(boxId);
     const imageInput = document.getElementById(inputId);
@@ -1747,16 +1693,33 @@ export function initImageHandler(options = {}) {
     // Processa o arquivo selecionado
     imageInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const base64Image = event.target.result;
-                
-                setImageVisuals(base64Image, imageDisplay, placeholderText);
-                localStorage.setItem(storageKey, base64Image);
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            alert('Selecione um arquivo de imagem válido.');
+            imageInput.value = '';
+            return;
         }
+
+        const reader = new FileReader();
+        reader.onload = event => compressImage(event.target.result, file.type)
+            .then(imageData => {
+                setImageVisuals(imageData, imageDisplay, placeholderText);
+
+                try {
+                    localStorage.setItem(storageKey, imageData);
+                } catch (error) {
+                    console.error('Não foi possível salvar a imagem:', error);
+                    alert('A imagem foi carregada, mas não pôde ser salva no navegador.');
+                }
+            })
+            .catch(error => {
+                console.error('Não foi possível processar a imagem:', error);
+                alert('Não foi possível processar essa imagem.');
+            });
+
+        reader.onerror = () => alert('Não foi possível ler o arquivo de imagem.');
+        reader.readAsDataURL(file);
     });
 
     // Carrega a imagem salva anteriormente do localStorage ao iniciar
@@ -1775,6 +1738,30 @@ function setImageVisuals(src, displayElement, placeholderElement) {
     if (placeholderElement) {
         placeholderElement.style.display = "none";
     }
+}
+
+function compressImage(source, mimeType) {
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+            const maxDimension = 1200;
+            const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(image.width * scale));
+            canvas.height = Math.max(1, Math.round(image.height * scale));
+
+            const context = canvas.getContext('2d');
+            if (!context) {
+                reject(new Error('Canvas indisponível.'));
+                return;
+            }
+
+            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL(mimeType === 'image/png' ? 'image/png' : 'image/jpeg', 0.82));
+        };
+        image.onerror = () => reject(new Error('Imagem inválida.'));
+        image.src = source;
+    });
 }
 </file>
 
@@ -1937,120 +1924,147 @@ function setImageVisuals(src, displayElement, placeholderElement) {
 </file>
 
 <file path="modules/inventory/inventory.js">
+import { CONFIG } from '../../core/config.js';
+import { registerInventoryOverloadChecker } from '../../core/appState.js';
 import { updateAllAttributes } from '../attributes/attributes.js';
 import { updateAllSkills } from '../attributes/skills.js';
 
 export function initInventory() {
-    const MAX_ITEMS = 50;
+    const MAX_ITEMS = CONFIG.LIMITS.MAX_INVENTORY_ITEMS;
+
     const itemsContainer = document.getElementById("inventoryItemsList");
     const addBtn = document.getElementById("addInventoryItemBtn");
     const loadDisplay = document.getElementById("loadDisplay");
     const alertsBox = document.getElementById("encumbranceAlerts");
-    
+
     const backpackCheck = document.getElementById("backpackCheck");
     const bigBackpackCheck = document.getElementById("bigBackpackCheck");
     const sizeSelect = document.getElementById("size");
+    const speedBaseInput = document.getElementById("speedBase");
+    const speedInput = document.getElementById("speed");
 
-    // Função para calcular a capacidade máxima e gerenciar o custo de Força da Mochila Grande
+    function getSizeSpeed() {
+        if (sizeSelect?.value === "pequeno") {
+            return CONFIG.DEFAULTS.SPEED_SMALL;
+        }
+
+        if (sizeSelect?.value === "grande") {
+            return CONFIG.DEFAULTS.SPEED_LARGE;
+        }
+
+        return CONFIG.DEFAULTS.SPEED_MEDIUM;
+    }
+
     function calculateMaxCapacity() {
         const strengthInput = document.getElementById("strength");
         const tempStrengthInput = document.getElementById("temp_strength");
 
-        let baseStr = parseInt(strengthInput?.value) || 0;
-        let tempStr = parseInt(tempStrengthInput?.value) || 0;
-        
-        // Se a mochila grande estiver ativa, aplica o -1 de penalidade na Força total para o cálculo
-        let strengthPenalty = (bigBackpackCheck && bigBackpackCheck.checked) ? 1 : 0;
-        let totalStr = (baseStr + tempStr) - strengthPenalty;
+        const baseStrength = Number(strengthInput?.value) || 0;
+        const temporaryStrength = Number(tempStrengthInput?.value) || 0;
+        const backpackPenalty = bigBackpackCheck?.checked ? 1 : 0;
 
-        let maxSlots = totalStr <= 0 ? 3 : totalStr * 6;
+        const totalStrength =
+            baseStrength + temporaryStrength - backpackPenalty;
 
-        if (backpackCheck && backpackCheck.checked) maxSlots += 10;
-        if (bigBackpackCheck && bigBackpackCheck.checked) maxSlots += 22;
+        let maxSlots = totalStrength <= 0 ? 3 : totalStrength * 6;
+
+        if (backpackCheck?.checked) {
+            maxSlots += 10;
+        }
+
+        if (bigBackpackCheck?.checked) {
+            maxSlots += 22;
+        }
 
         return maxSlots;
     }
 
     function calculateCurrentLoad() {
-        let currentLoad = 0;
-        if (!itemsContainer) return currentLoad;
-        const itemCards = itemsContainer.querySelectorAll(".inventoryItemCard");
+        if (!itemsContainer) {
+            return 0;
+        }
 
-        itemCards.forEach(card => {
-            const qtyInput = card.querySelector(".item-qty-input");
-            const weightInput = card.querySelector(".item-weight-input");
-            const qty = parseFloat(qtyInput?.value) || 0;
-            const weight = parseFloat(weightInput?.value) || 0;
-            currentLoad += qty * weight;
-        });
+        let currentLoad = 0;
+
+        itemsContainer
+            .querySelectorAll(".inventoryItemCard")
+            .forEach(card => {
+                const quantity =
+                    Number(card.querySelector(".item-qty-input")?.value) || 0;
+
+                const weight =
+                    Number(card.querySelector(".item-weight-input")?.value) || 0;
+
+                currentLoad += quantity * weight;
+            });
 
         return currentLoad;
     }
 
-    // Expõe globalmente se o inventário está sobrecarregado
-    window.isCharacterOverloaded = function() {
-        const current = calculateCurrentLoad();
-        const max = calculateMaxCapacity();
-        return current > max;
-    };
-
     function updateInventoryStatus() {
-        const current = calculateCurrentLoad();
-        const max = calculateMaxCapacity();
+        const currentLoad = calculateCurrentLoad();
+        const maxCapacity = calculateMaxCapacity();
 
         if (loadDisplay) {
-            loadDisplay.textContent = `${current} / ${max}`;
+            loadDisplay.textContent = `${currentLoad} / ${maxCapacity}`;
         }
 
-        const isOverloaded = current > max;
-        const isExcessive = current >= max * 2 && max > 0;
+        const isOverloaded = currentLoad > maxCapacity;
+        const isExcessive =
+            maxCapacity > 0 && currentLoad >= maxCapacity * 2;
 
-        // Define o deslocamento base de acordo com o tamanho escolhido (Pequeno: 5, Médio: 6, Grande: 7)
-        let baseSpeed = 6; // Padrão Médio
-        if (sizeSelect) {
-            if (sizeSelect.value === "pequeno") baseSpeed = 5;
-            else if (sizeSelect.value === "grande") baseSpeed = 7;
-            else baseSpeed = 6; // "medio"
-        }
+        const baseSpeed = getSizeSpeed();
 
-        const speedInput = document.getElementById("speed");
         if (speedInput) {
-            if (isExcessive) speedInput.value = 0;
-            else if (isOverloaded) speedInput.value = Math.max(0, baseSpeed - 2);
-            else speedInput.value = baseSpeed;
+            const speedBase = Number(speedBaseInput?.value);
+            const effectiveBaseSpeed = Number.isFinite(speedBase)
+                ? Math.max(0, speedBase)
+                : baseSpeed;
+
+            if (isExcessive) {
+                speedInput.value = 0;
+            } else if (isOverloaded) {
+                speedInput.value = Math.max(0, effectiveBaseSpeed - 2);
+            } else {
+                speedInput.value = effectiveBaseSpeed;
+            }
         }
 
-        // Força a atualização visual dos atributos e perícias
         updateAllAttributes();
         updateAllSkills();
 
-        if (alertsBox) {
-            let alerts = [];
-            if (bigBackpackCheck && bigBackpackCheck.checked) {
-                alerts.push("🎒 MOCHILA GRANDE: Penalidade ativa de -1 em Força.");
-            }
-            if (isOverloaded && !isExcessive) {
-                alerts.push("⚠️ SOBRECARGA: -2 qds de deslocamento e Desvantagem em Força e Destreza.");
-            }
-            if (isExcessive) {
-                alerts.push("❌ CARGA EXCESSIVA (Dobro do limite): Deslocamento reduzido a 0 e Incapaz de realizar ações!");
-            }
-
-            if (alerts.length > 0) {
-                alertsBox.innerHTML = alerts.join("<br>");
-                alertsBox.style.display = "block";
-            } else {
-                alertsBox.style.display = "none";
-            }
+        if (!alertsBox) {
+            return;
         }
+
+        const alerts = [];
+
+        if (bigBackpackCheck?.checked) {
+            alerts.push("🎒 MOCHILA GRANDE: Penalidade ativa de -1 em Força.");
+        }
+
+        if (isOverloaded && !isExcessive) {
+            alerts.push(
+                "⚠️ SOBRECARGA: -2 qds de deslocamento e Desvantagem em Força e Destreza."
+            );
+        }
+
+        if (isExcessive) {
+            alerts.push(
+                "❌ CARGA EXCESSIVA (Dobro do limite): Deslocamento reduzido a 0 e Incapaz de realizar ações!"
+            );
+        }
+
+        alertsBox.textContent = alerts.join("\n");
+        alertsBox.style.whiteSpace = "pre-line";
+        alertsBox.style.display = alerts.length > 0 ? "block" : "none";
     }
 
-    // Expõe globalmente para o storage acionar logo após recarregar os dados no F5
-    window.updateInventoryStatusGlobal = function() {
-        updateInventoryStatus();
-    };
-
     function addInventoryItem() {
+        if (!itemsContainer) {
+            return;
+        }
+
         if (itemsContainer.children.length >= MAX_ITEMS) {
             alert("Limite máximo de itens atingido.");
             return;
@@ -2058,44 +2072,105 @@ export function initInventory() {
 
         const card = document.createElement("div");
         card.className = "inventoryItemCard cardItemBox";
+
         card.innerHTML = `
             <div class="inventoryItemTop">
-                <input type="text" placeholder="Nome do item..." class="item-name-input">
-                <label style="font-size:0.75rem; color:#aaa;">Qtd:</label>
-                <input type="number" value="1" min="0" class="item-qty-input">
-                <label style="font-size:0.75rem; color:#aaa;">Peso:</label>
-                <input type="number" value="0" min="0" step="0.5" class="item-weight-input">
-                <button type="button" class="removeItemBtn" title="Excluir">X</button>
+                <input
+                    type="text"
+                    placeholder="Nome do item..."
+                    class="item-name-input"
+                >
+
+                    <label class="itemMetaLabel">
+                    Qtd:
+                </label>
+
+                <input
+                    type="number"
+                    value="1"
+                    min="0"
+                    class="item-qty-input"
+                >
+
+                    <label class="itemMetaLabel">
+                    Peso:
+                </label>
+
+                <input
+                    type="number"
+                    value="0"
+                    min="0"
+                    step="0.5"
+                    class="item-weight-input"
+                >
+
+                <button
+                    type="button"
+                    class="removeItemBtn"
+                    title="Excluir"
+                    aria-label="Excluir item"
+                >
+                    X
+                </button>
             </div>
+
             <textarea placeholder="Descrição do item..."></textarea>
         `;
 
-        card.querySelectorAll("input").forEach(input => {
-            input.addEventListener("input", updateInventoryStatus);
-        });
-
-        card.querySelector(".removeItemBtn").addEventListener("click", () => {
-            card.remove();
-            updateInventoryStatus();
-        });
-
         itemsContainer.appendChild(card);
         updateInventoryStatus();
+    }
+
+    // Eventos delegados: funcionam também para itens restaurados do localStorage.
+    if (itemsContainer) {
+        itemsContainer.addEventListener("input", event => {
+            if (
+                event.target.matches(
+                    ".item-qty-input, .item-weight-input"
+                )
+            ) {
+                updateInventoryStatus();
+            }
+        });
+
+        itemsContainer.addEventListener("click", event => {
+            const removeButton = event.target.closest(".removeItemBtn");
+
+            if (!removeButton) {
+                return;
+            }
+
+            removeButton.closest(".inventoryItemCard")?.remove();
+            updateInventoryStatus();
+        });
     }
 
     if (addBtn) {
         addBtn.addEventListener("click", addInventoryItem);
     }
 
-    // Ouvintes de mudanças nas opções de mochilas e tamanho
-    [backpackCheck, bigBackpackCheck, sizeSelect].forEach(element => {
-        if (element) element.addEventListener("change", updateInventoryStatus);
+    [backpackCheck, bigBackpackCheck].forEach(element => {
+        element?.addEventListener("change", updateInventoryStatus);
     });
 
-    document.addEventListener("input", (e) => {
-        if (e.target && (e.target.id === "strength" || e.target.id === "temp_strength")) {
+    sizeSelect?.addEventListener("change", () => {
+        if (speedBaseInput) speedBaseInput.value = getSizeSpeed();
+        updateInventoryStatus();
+    });
+
+    speedBaseInput?.addEventListener("input", updateInventoryStatus);
+
+    document.addEventListener("input", event => {
+        if (
+            event.target?.id === "strength" ||
+            event.target?.id === "temp_strength"
+        ) {
             updateInventoryStatus();
         }
+    });
+
+    registerInventoryOverloadChecker(() => {
+        return calculateCurrentLoad() > calculateMaxCapacity();
     });
 
     updateInventoryStatus();
@@ -2104,81 +2179,6 @@ export function initInventory() {
 
 <file path="modules/inventory/itemsData.js">
 
-</file>
-
-<file path="modules/level/level.css">
-.levelEmblemWrapper {
-    width: 95px;
-    height: 95px;
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-/* Camadas de resolução de estresse (Virtude / Aflição) */
-.resolveOverlay {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    pointer-events: none;
-}
-
-.virtuousBg {
-    background-image: url('../../assets/images/levels/virtuousResolve.png');
-    z-index: -1; /* O valor negativo joga a imagem para trás do background (emblema) da div pai */
-    bottom: -20px; 
-    left: -8px;
-    animation: spinVirtue 30s linear infinite;
-    transform-origin: 50% 40%;
-}
-
-/* Aflição fica posicionada por cima do emblema e mais alta */
-.stressTop {
-    background-image: url('../../assets/images/levels/stressResolve.png');
-    z-index: 3; 
-    top: -17px; /* Sobe a imagem */
-    transform: scale(1.6); 
-    left: -2px;
-}
-
-.levelInputEmblem::-webkit-inner-spin-button, 
-.levelInputEmblem::-webkit-outer-spin-button { 
-    -webkit-appearance: none; 
-    margin: 0; 
-}
-
-.levelInputEmblem {
-    -moz-appearance: textfield;
-    padding: 0;
-    width: 60%;
-    height: 60%;
-    box-sizing: border-box;
-    background: transparent !important;
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    font-size: 30px;
-    font-weight: bold;
-    text-align: center;
-    position: relative;
-    z-index: 2;
-}
-
-/* Cria a animação de rotação mantendo a escala de 6x */
-@keyframes spinVirtue {
-    0% { transform: scale(6) translate(0px, 0px) rotate(0deg); }
-    25% { transform: scale(6) translate(0px, -2px) rotate(90deg); }
-    50% { transform: scale(6) translate(0px, -4px) rotate(180deg); }
-    75% { transform: scale(6) translate(3px, 0px) rotate(270deg); }
-    100% { transform: scale(6) translate(0px, 0px) rotate(360deg); }
-}
 </file>
 
 <file path="modules/narrative/narrative.css">
@@ -2480,6 +2480,492 @@ export function initPersonalListeners() {
 }
 </file>
 
+<file path="styles/tabs.css">
+.characterTabsWrapper {
+    margin-top: 10px;
+}
+
+.tabContent {
+    background-color: var(--bg-main); 
+    border: 1px solid #444;
+    padding: 20px;
+    border-radius: 0 6px 6px 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    position: relative;
+    z-index: 1;
+    margin-top: -1px;
+    color: var(--text-color);
+    font-family: var(--font-body);
+}
+
+.tabContent fieldset {
+    background-color: var(--bg-fieldset); 
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+    color: var(--text-color);
+}
+
+.tabContent fieldset legend {
+    font-family: var(--font-title);
+    font-size: 1.1rem;
+    color: var(--accent-color);
+    letter-spacing: 1px;
+}
+
+/* Container unificado das abas com ícones de fundo inteiros */
+.tabs-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 0;
+    padding-left: 2px;
+}
+
+.tab-btn {
+    background-color: transparent;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    position: relative;
+    opacity: 0.55;
+    filter: brightness(0.65);
+    transition: all 0.2s ease;
+}
+
+.tab-btn[data-tab="personagem"] {
+    background-image: url('../assets/icons/char.icon.png');
+}
+
+.tab-btn[data-tab="habilidades"] {
+    background-image: url('../assets/icons/habilities.icon.png');
+}
+
+.tab-btn[data-tab="detalhes"] {
+    background-image: url('../assets/icons/inventory.icon.png');
+}
+
+.tab-btn:hover {
+    opacity: 0.85;
+    filter: brightness(0.9);
+    transform: translateY(-2px);
+}
+
+.tab-btn.active {
+    opacity: 1;
+    filter: brightness(1.15);
+    transform: translateY(-4px);
+}
+
+.tabContent:not(.active) {
+    display: none;
+}
+</file>
+
+<file path="styles/utilities.css">
+/* Alinhamentos rápidos */
+.text-center { text-align: center !important; }
+.text-left { text-align: left !important; }
+.text-right { text-align: right !important; }
+
+/* Flexbox helpers */
+.flex { display: flex !important; }
+.flex-column { flex-direction: column !important; }
+.items-center { align-items: center !important; }
+.justify-between { justify-content: space-between !important; }
+.gap-10 { gap: 10px !important; }
+
+/* Visibilidade */
+.hidden { display: none !important; }
+
+/* Margens utilitárias rápidas */
+.mt-10 { margin-top: 10px !important; }
+.mt-20 { margin-top: 20px !important; }
+.mb-10 { margin-bottom: 10px !important; }
+.mb-20 { margin-bottom: 20px !important; }
+</file>
+
+<file path="styles/variables.css">
+/* ==========================================
+   REGISTRO DAS FONTES DA FICHA LUTHERIAN
+   ========================================== */
+@font-face {
+    font-family: 'FjallaOne';
+    src: url('../assets/fonts/FjallaOne-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'GermaniaOne';
+    src: url('../assets/fonts/GermaniaOne-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Quintessential';
+    src: url('../assets/fonts/Quintessential-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+:root {
+    --bg-main: #141414;
+    --bg-fieldset: #1c1c1c;
+    --bg-inputs: #2b2b2b;
+    --text-color: #ffffff;
+    --accent-color: #ffcc00;
+    --negative-color: #c00101;
+    --positive-color: #ffcc00;
+    --line-color: #ffffff;
+
+    --font-body: 'FjallaOne', Arial, sans-serif;          
+    --font-sub: 'GermaniaOne', Arial, sans-serif;         
+    --font-title: 'Quintessential', Georgia, serif;
+}
+
+body, input, select, textarea, button {
+    font-family: var(--font-body);
+    background-color: var(--bg-main); 
+    color: var(--text-color);
+}
+
+fieldset {
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+legend {
+    color: var(--accent-color);
+    padding: 0 5px;
+    font-family: var(--font-title);
+}
+
+input[type="text"],
+input[type="number"],
+select {
+    background-color: var(--bg-inputs);
+    color: var(--text-color);
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px 6px;
+    box-sizing: border-box;
+}
+
+/* Botões interativos dos ícones do cabeçalho */
+.headerIconBtn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+/* Tamanho maior e proporcional para encaixar com as linhas */
+.headerIconImg {
+    width: 36px;  /* Aumentado para acompanhar a altura do texto */
+    height: 36px; 
+    object-fit: contain;
+    filter: brightness(0.85);
+    transition: filter 0.15s ease;
+}
+
+/* Efeito ao passar o mouse */
+.headerIconBtn:hover .headerIconImg {
+    filter: brightness(1.15);
+    transform: scale(1.05);
+}
+
+/* Efeito ao clicar */
+.headerIconBtn:active {
+    transform: scale(0.95);
+}
+
+/* Afasta o bloco da classe e desce a linha divisória perfeitamente */
+.charClassRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 0; /* Alinha perfeitamente com o nome em cima */
+    margin-top: 12px; /* Dá mais respiro entre o nome e a classe */
+    margin-bottom: 12px; /* Afasta a linha de baixo em ~3px a mais */
+}
+
+/* Ajusta o espaçamento da linha divisória do cabeçalho */
+.headerDivider {
+    margin-top: 10px; /* Desce a linha um pouco mais */
+    border: 0;
+    height: 1px;
+    background: var(--line-color, #ffffff) !important;
+}
+
+/* ==========================================
+   APLICAÇÃO DOS TÍTULOS COM A QUINTESSENTIAL
+   ========================================== */
+.titleFont, h1, h2, h3, legend {
+    font-family: var(--font-title) !important;
+    font-weight: normal !important;
+    text-transform: none !important;
+    letter-spacing: 0.5px;
+}
+
+.sectionTitle {
+    font-size: 1.8rem !important; 
+}
+
+.subFont, label, .invTitle, .resourceTitle, .skillAttr {
+    font-family: var(--font-sub) !important;
+    font-style: normal !important;
+    font-weight: normal !important;
+}
+</file>
+
+<file path="modules/attributes/skills.js">
+import { isCharacterOverloaded } from '../../core/appState.js';
+
+const skillColumnsData = [
+    [
+        { id: "atletismo", name: "Atletismo", attr: "For", attrId: "strength" },
+        { id: "luta", name: "Luta", attr: "For", attrId: "strength" },
+        { id: "limiar", name: "Limiar da morte", attr: "Con", attrId: "constitution" },
+        { id: "resistencia", name: "Resistência", attr: "Con", attrId: "constitution" },
+        { id: "vontade", name: "Força de vontade", attr: "Con", attrId: "constitution" }
+    ],
+    [
+        { id: "furtividade", name: "Furtividade", attr: "Des", attrId: "dexterity" },
+        { id: "pontaria", name: "Pontaria", attr: "Des", attrId: "dexterity" },
+        { id: "coordenacao", name: "Coordenação", attr: "Des", attrId: "dexterity" },
+        { id: "navegacao", name: "Navegação", attr: "Des", attrId: "dexterity" },
+        { id: "reacao", name: "Reação", attr: "Des", attrId: "dexterity" }
+    ],
+    [
+        { id: "arcanismo", name: "Arcanismo", attr: "Psi", attrId: "psyche" },
+        { id: "existir", name: "Existir", attr: "Psi", attrId: "psyche" },
+        { id: "logica", name: "Lógica", attr: "Psi", attrId: "psyche" },
+        { id: "percepcao", name: "Percepção", attr: "Psi", attrId: "psyche" },
+        { id: "interacao", name: "Interação", attr: "Psi", attrId: "psyche" }
+    ],
+    [
+        { id: "adestramento", name: "Adestramento", attr: "Sab", attrId: "wisdom" },
+        { id: "enciclopedia", name: "Enciclopédia", attr: "Sab", attrId: "wisdom" },
+        { id: "medicina", name: "Medicina", attr: "Sab", attrId: "wisdom" },
+        { id: "religiao", name: "Religião", attr: "Sab", attrId: "wisdom" },
+        { id: "sobrevivencia", name: "Sobrevivência", attr: "Sab", attrId: "wisdom" }
+    ],
+    [
+        { id: "autoridade", name: "Autoridade", attr: "Car", attrId: "charisma" },
+        { id: "compostura", name: "Compostura", attr: "Car", attrId: "charisma" },
+        { id: "drama", name: "Drama", attr: "Car", attrId: "charisma" },
+        { id: "empatia", name: "Empatia", attr: "Car", attrId: "charisma" },
+        { id: "uniao", name: "União", attr: "Car", attrId: "charisma" }
+    ]
+];
+
+const skillAttributeMap = {};
+
+export function renderSkills() {
+    const skillsContainer = document.getElementById("skillsContainer");
+    if (!skillsContainer) return;
+
+    skillColumnsData.forEach(column => {
+        let columnHTML = `<div class="skillColumn">`;
+        
+        column.forEach(skill => {
+            skillAttributeMap[skill.id] = skill.attrId;
+            columnHTML += `
+                <div class="skillGroup">
+                    <label for="skill_${skill.id}">${skill.name} <span class="skillAttr">(${skill.attr})</span></label>
+                    <input type="number" id="skill_${skill.id}" value="0" class="skill-input">
+                    <span id="mod_skill_${skill.id}" class="skillMod">d20</span>
+                </div>
+            `;
+        });
+
+        columnHTML += `</div>`;
+        skillsContainer.innerHTML += columnHTML;
+    });
+}
+
+export function updateSkillModifier(skillKey) {
+    const skillInput = document.getElementById(`skill_${skillKey}`);
+    const modSpan = document.getElementById(`mod_skill_${skillKey}`);
+    const attrId = skillAttributeMap[skillKey];
+
+    if (skillInput && modSpan && attrId) {
+        let skillRank = parseInt(skillInput.value) || 0;
+        
+        let attrBase = parseInt(document.getElementById(attrId)?.value) || 0;
+        let attrTemp = parseInt(document.getElementById(`temp_${attrId}`)?.value) || 0;
+        let attrTotal = attrBase + attrTemp;
+
+        let penalty = 0;
+        const isOverloaded = isCharacterOverloaded();
+        const bigBackpackEl = document.getElementById("bigBackpackCheck");
+        const bigBackpackActive = bigBackpackEl ? bigBackpackEl.checked : false;
+
+        // Checagem das condições nas perícias
+        const weakenedChecked = document.getElementById("weakened")?.checked || false;
+        const unwellChecked = document.getElementById("unwell")?.checked || false;
+        const miserableChecked = document.getElementById("miserable")?.checked || false;
+
+        if (weakenedChecked && (attrId === "strength" || attrId === "dexterity")) {
+            penalty += 1;
+        }
+        if (unwellChecked && (attrId === "constitution" || attrId === "charisma")) {
+            penalty += 1;
+        }
+        if (miserableChecked && (attrId === "psyche" || attrId === "wisdom")) {
+            penalty += 1;
+        }
+
+        if (isOverloaded && (attrId === "strength" || attrId === "dexterity")) {
+            penalty += 1;
+        }
+        
+        if (bigBackpackActive && attrId === "strength") {
+            penalty += 1;
+        }
+
+        if (penalty > 0) {
+            if (attrTotal > 0) {
+                attrTotal = Math.max(0, attrTotal - penalty);
+            } else {
+                attrTotal -= penalty;
+            }
+        }
+
+        if (attrTotal === 0) {
+            if (skillRank === 0) {
+                modSpan.textContent = "d20";
+                modSpan.className = "skillMod dice-neutral";
+            } else {
+                let sSign = skillRank > 0 ? `+ ${skillRank}` : `- ${Math.abs(skillRank)}`;
+                modSpan.textContent = `d20 ${sSign}`;
+                modSpan.className = "skillMod " + (skillRank > 0 ? "dice-positive" : "dice-negative");
+            }
+        } else if (attrTotal > 0) {
+            let rankPart = skillRank !== 0 ? (skillRank > 0 ? ` + ${skillRank}` : ` - ${Math.abs(skillRank)}`) : "";
+            modSpan.textContent = `d20 + ${attrTotal}d6${rankPart}`;
+            modSpan.className = "skillMod dice-positive";
+        } else {
+            let absAttr = Math.abs(attrTotal);
+            let rankPart = skillRank !== 0 ? (skillRank > 0 ? ` + ${skillRank}` : ` - ${Math.abs(skillRank)}`) : "";
+            modSpan.textContent = `d20 - ${absAttr}d6${rankPart}`;
+            modSpan.className = "skillMod dice-negative";
+        }
+    }
+}
+
+export function updateAllSkills() {
+    Object.keys(skillAttributeMap).forEach(skillKey => {
+        updateSkillModifier(skillKey);
+    });
+}
+
+export function initSkillsListeners() {
+    document.addEventListener("input", function(e) {
+        if (e.target && e.target.classList.contains("skill-input")) {
+            let skillKey = e.target.id.replace("skill_", "");
+            updateSkillModifier(skillKey);
+        }
+    });
+}
+
+export function initSkills() {
+    renderSkills();
+    initSkillsListeners();
+    updateAllSkills();
+}
+</file>
+
+<file path="modules/level/level.css">
+.levelEmblemWrapper {
+    width: 95px;
+    height: 95px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* Camadas de resolução de estresse (Virtude / Aflição) */
+.resolveOverlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    pointer-events: none;
+}
+
+.virtuousBg {
+    background-image: url('../../assets/images/levels/virtuousResolve.png');
+    z-index: -1; /* O valor negativo joga a imagem para trás do background (emblema) da div pai */
+    bottom: -20px; 
+    left: -8px;
+    animation: spinVirtue 30s linear infinite;
+    transform-origin: 50% 40%;
+}
+
+/* Aflição fica posicionada por cima do emblema e mais alta */
+.stressTop {
+    background-image: url('../../assets/images/levels/stressResolve.png');
+    z-index: 3; 
+    top: -17px; /* Sobe a imagem */
+    transform: scale(1.6); 
+    left: -2px;
+}
+
+.levelInputEmblem::-webkit-inner-spin-button, 
+.levelInputEmblem::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+}
+
+.levelInputEmblem {
+    -moz-appearance: textfield;
+    padding: 0;
+    width: 60%;
+    height: 60%;
+    box-sizing: border-box;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    font-size: 30px;
+    font-weight: bold;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+}
+
+/* Cria a animação de rotação mantendo a escala de 6x */
+@keyframes spinVirtue {
+    0% { transform: scale(6) translate(0px, 0px) rotate(0deg); }
+    25% { transform: scale(6) translate(0px, -2px) rotate(90deg); }
+    50% { transform: scale(6) translate(0px, -4px) rotate(180deg); }
+    75% { transform: scale(6) translate(3px, 0px) rotate(270deg); }
+    100% { transform: scale(6) translate(0px, 0px) rotate(360deg); }
+}
+</file>
+
 <file path="modules/status/attrStatus.css">
 .statusSplitColumns {
     display: flex;
@@ -2648,16 +3134,34 @@ export function initPersonalListeners() {
     font-family: var(--font-body);
 }
 
-.stressConditionBox.is-virtuous {
-    border-color: #fff;
-    box-shadow: 0 0 15px rgba(255,255,255,0.6);
+/* Caixa de Condição de Estresse - Estado Virtuoso */
+.stressConditionBox.is-virtuous, 
+#stressConditionBox.is-virtuous {
+    border-color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.6); /* Glow suave apenas na borda da caixa */
 }
-.stressConditionBox.is-virtuous h4, .stressConditionBox.is-virtuous p { color: #fff; text-shadow: 0 0 5px #fff; }
-.stressConditionBox.is-afflicted {
-    border-color: #8b0000;
-    box-shadow: 0 0 15px rgba(139,0,0,0.8);
+
+/* Remove o excesso de glow do texto interno para ficar perfeitamente legível */
+.stressConditionBox.is-virtuous h4,
+.stressConditionBox.is-virtuous p,
+#stressConditionName,
+#stressConditionDesc {
+    text-shadow: none !important; /* Limpa o brilho estourado das letras */
+    color: #ffffff;
 }
-.stressConditionBox.is-afflicted h4, .stressConditionBox.is-afflicted p { color: #ff4d4d; }
+
+/* Caixa de Condição de Estresse - Estado Aflito */
+.stressConditionBox.is-afflicted, 
+#stressConditionBox.is-afflicted {
+    border-color: #ff1a1a;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.6); /* Glow suave vermelho apenas na borda */
+}
+
+.stressConditionBox.is-afflicted h4,
+.stressConditionBox.is-afflicted p {
+    text-shadow: none !important;
+    color: #ffcccc; /* Um tom levemente avermelhado claro, mas 100% legível */
+}
 
 .defMoraleBlock {
     display: flex;
@@ -2688,295 +3192,6 @@ export function initPersonalListeners() {
 }
 </file>
 
-<file path="modules/status/status.js">
-export function updateInitiative() {
-    const inputDext = document.getElementById("dexterity");
-    const inputTempDext = document.getElementById("temp_dexterity");
-    const inputIniciative = document.getElementById("initiative");
-
-    if (inputDext && inputTempDext && inputIniciative) {
-        let base = parseInt(inputDext.value) || 0;
-        let temp = parseInt(inputTempDext.value) || 0;
-        let totalDestreza = base + temp;
-
-        let sinal = totalDestreza >= 0 ? `+ ${totalDestreza}` : `- ${Math.abs(totalDestreza)}`;
-        inputIniciative.value = `d20 ${sinal}`;
-    }
-}
-
-export function initStatus() {
-    // 1. LIMIAR DA MORTE (FALHAS)
-    const deathFail1 = document.getElementById("deathFail1");
-    const deathFail2 = document.getElementById("deathFail2");
-    const deathFail3 = document.getElementById("deathFail3");
-    const vitalityCurrentInput = document.getElementById("vitalityCurrent");
-    const vitalityTotalInput = document.getElementById("vitalityTotal");
-    const vitalityBarFill = document.getElementById("vitalityBarFill");
-
-    function checkDeathSaves() {
-        if (deathFail1 && deathFail2 && deathFail3 && vitalityCurrentInput) {
-            if (deathFail1.checked && deathFail2.checked && deathFail3.checked) {
-                vitalityCurrentInput.value = 0;
-                vitalityCurrentInput.disabled = true;
-            } else {
-                vitalityCurrentInput.disabled = false;
-            }
-        }
-    }
-
-    [deathFail1, deathFail2, deathFail3].forEach(checkbox => {
-        if (checkbox) {
-            checkbox.addEventListener("change", checkDeathSaves);
-        }
-    });
-
-    if (vitalityCurrentInput) {
-        vitalityCurrentInput.addEventListener("input", function() {
-            if (deathFail1?.checked && deathFail2?.checked && deathFail3?.checked) {
-                vitalityCurrentInput.value = 0;
-            }
-            updateVitalityBar();
-        });
-    }
-
-    if (vitalityTotalInput) {
-        vitalityTotalInput.addEventListener("input", updateVitalityBar);
-    }
-
-    function updateVitalityBar() {
-        const current = parseFloat(vitalityCurrentInput?.value) || 0;
-        const total = parseFloat(vitalityTotalInput?.value) || 1;
-        let percentage = (current / total) * 100;
-        percentage = Math.max(0, Math.min(100, percentage));
-        if (vitalityBarFill) {
-            vitalityBarFill.style.width = `${percentage}%`;
-        }
-    }
-
-    // 2. BARRA DE VONTADE
-    const willpowerCurrentInput = document.getElementById("willpowerCurrent");
-    const willpowerTotalInput = document.getElementById("willpowerTotal");
-    const willpowerBarFill = document.getElementById("willpowerBarFill");
-
-    function updateWillpowerBar() {
-        const current = parseFloat(willpowerCurrentInput?.value) || 0;
-        const total = parseFloat(willpowerTotalInput?.value) || 1;
-        let percentage = (current / total) * 100;
-        percentage = Math.max(0, Math.min(100, percentage));
-        if (willpowerBarFill) {
-            willpowerBarFill.style.width = `${percentage}%`;
-        }
-    }
-
-    [willpowerCurrentInput, willpowerTotalInput].forEach(el => {
-        if (el) el.addEventListener("input", updateWillpowerBar);
-    });
-
-    // 3. BARRA DE ESTRESSE E CAIXINHAS DO TOPO
-    const stressRange = document.getElementById("stressRange");
-    const stressNumberInput = document.getElementById("stress");
-    const stressFill = document.getElementById("stressFill");
-    const stressSquares = document.querySelectorAll(".stressSquare");
-    const headerStressCondition = document.getElementById("headerStressCondition");
-
-    // Botão D20 e Caixa de Condições
-    const rollStressBtn = document.getElementById("rollStressBtn");
-    const stressConditionBox = document.getElementById("stressConditionBox");
-    const stressConditionName = document.getElementById("stressConditionName");
-    const stressConditionDesc = document.getElementById("stressConditionDesc");
-
-    // Elementos visuais do emblema de nível (Resolução de Estresse)
-    const virtuousOverlay = document.getElementById("virtuousResolveOverlay");
-    const stressOverlay = document.getElementById("stressResolveOverlay");
-
-    const conditionsList = [
-        { name: "Com medo", desc: "Você adquire desvantagem em todos os testes e sofre o dobro de estresse de todas as fontes.", type: "afflicted" },
-        { name: "Sem esperança", desc: "No início de seu turno você profere palavras que desmotivam e causam 2d12 de estresse nos seus aliados.", type: "afflicted" },
-        { name: "Inabalável", desc: "Você se torna imune a efeitos de estresse dos inimigos e alivia 1d10 de estresse aos seus aliados por rodada.", type: "virtuous" },
-        { name: "Egoísta", desc: "Você se torna incapaz de realizar testes de União. Sempre que auxiliar um aliado, deve ser bem-sucedido em Força de Vontade DT14 ou perde a ação.", type: "afflicted" },
-        { name: "Esperançoso", desc: "Você adquire vantagem em todos os testes.", type: "virtuous" },
-        { name: "Masoquista", desc: "A cada turno, realiza um teste de Força de Vontade. Se falhar, usa a arma para se atacar, reduzindo 3d12 de estresse.", type: "afflicted" },
-        { name: "Abusivo", desc: "Você deve escolher atacar ou difamar um aliado no alcance para reduzir 6d6 de estresse na rodada, causando o mesmo nele.", type: "afflicted" },
-        { name: "Paranóico", desc: "Existe um traidor entre vocês, e você deve encontrá-lo a todo custo (O personagem escolhe quem).", type: "afflicted" },
-        { name: "Irracional", desc: "No início de todo turno, role um teste de Existir. Se falhar, gasta 1d2 ações fazendo coisas desconexas.", type: "afflicted" },
-        { name: "Corajoso", desc: "Você ganha vantagem em testes de Luta e Arcanismo, e recupera 2d10 de estresse a cada acerto.", type: "virtuous" },
-        { name: "Paralisado", desc: "No início de todo turno lance um d20+Sabedoria. Se menor que 8, perde ações e causa 2d10 de estresse a aliados.", type: "afflicted" },
-        { name: "Errante", desc: "Fica Enfraquecido e Indisposto, sofrendo 2d12 de estresse ao errar ataques/falhar em resistências, sem conseguir críticos.", type: "afflicted" },
-        { name: "Tanatofóbico", desc: "A partir da metade da vitalidade, recebe 2d10 de estresse por golpe recebido. Ao cair morrendo, já tem uma falha garantida.", type: "afflicted" },
-        { name: "Obstinado", desc: "Se cair morrendo, role d20+Constituição (DT9 retorna sem penalidade e com 3d4 vit). Ao cair morrendo pela 1ª vez, possui um sucesso.", type: "virtuous" },
-        { name: "Ansioso", desc: "Você perde todas as condições positivas em si e suas habilidades perdem suas palavras-chave.", type: "afflicted" },
-        { name: "Suicida", desc: "Ganhou condição permanente de Marcado. Com vitalidade menor que 10, recebe +1 em testes (exceto Limiar da Morte e Resistência).", type: "afflicted" },
-        { name: "Imortal", desc: "No início de cada turno, regenera vitalidade com base na soma de todos seus modificadores.", type: "virtuous" },
-        { name: "Robusto", desc: "Você se torna imune a doenças e efeitos contínuos negativos até o fim dessa virtude.", type: "virtuous" },
-        { name: "Imunidade baixa", desc: "Você adquire uma doença imediatamente, e causa 3d10 de estresse nos aliados.", type: "afflicted" },
-        { name: "Depressivo", desc: "Seu turno passa a ser o último da rodada. Errar uma ação profere palavras que causam desvantagem ao aliado mais perto.", type: "afflicted" }
-    ];  
-
-    function updateStress(value) {
-        let val = parseInt(value);
-        if (isNaN(val)) val = 0;
-        val = Math.max(0, Math.min(200, val));
-
-        if (stressRange && stressRange.value != val) stressRange.value = val;
-        if (stressNumberInput && stressNumberInput.value != val) stressNumberInput.value = val;
-
-        const percentage = (val / 200) * 100;
-        if (stressFill) {
-            stressFill.style.width = `${percentage}%`;
-        }
-
-        const activeBoxesCount = Math.floor(val / 10);
-        stressSquares.forEach((square, index) => {
-            if (index < activeBoxesCount) {
-                square.classList.add("active");
-            } else {
-                square.classList.remove("active");
-            }
-        });
-
-        if (rollStressBtn) {
-            if (val >= 100) {
-                rollStressBtn.classList.add("glow-ready");
-            } else {
-                rollStressBtn.classList.remove("glow-ready");
-            }
-        }
-
-        if (val < 100) {
-            if (virtuousOverlay) virtuousOverlay.style.display = "none";
-            if (stressOverlay) stressOverlay.style.display = "none";
-            if (stressConditionBox) stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
-        }
-        if (val === 0) {
-            if (stressConditionName) stressConditionName.textContent = "Condições de Estresse";
-            if (stressConditionDesc) stressConditionDesc.textContent = "Nenhuma condição ativa.";
-            if (headerStressCondition) headerStressCondition.textContent = " ";
-            localStorage.removeItem('lutherian_active_condition');
-        }
-    }
-
-    if (stressRange) {
-        stressRange.addEventListener("input", () => updateStress(stressRange.value));
-    }
-    if (stressNumberInput) {
-        stressNumberInput.addEventListener("input", () => updateStress(stressNumberInput.value));
-    }
-
-    // 4. BOTÃO D20 (SORTEIO DE CONDIÇÃO DE ESTRESSE)
-    if (rollStressBtn) {
-        rollStressBtn.addEventListener("click", () => {
-            const currentStress = parseInt(stressNumberInput?.value) || 0;
-
-            if (currentStress < 100) {
-                const charName = document.getElementById("name")?.value || "o personagem";
-                alert(`Por sorte, ${charName} não está estressado(a) o suficiente…`);
-                return;
-            }
-
-            const randomIndex = Math.floor(Math.random() * conditionsList.length);
-            const chosen = conditionsList[randomIndex];
-
-            if (stressConditionName) stressConditionName.textContent = chosen.name;
-            if (stressConditionDesc) stressConditionDesc.textContent = chosen.desc;
-            if (headerStressCondition) headerStressCondition.textContent = chosen.name;
-
-            // SALVAMENTO IMEDIATO DA CONDIÇÃO
-            localStorage.setItem('lutherian_active_condition', JSON.stringify(chosen));
-
-            if (stressConditionBox) {
-                stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
-                if (chosen.type === "virtuous") {
-                    stressConditionBox.classList.add("is-virtuous");
-                } else {
-                    stressConditionBox.classList.add("is-afflicted");
-                }
-            }
-
-            if (virtuousOverlay && stressOverlay) {
-                virtuousOverlay.style.display = "none";
-                stressOverlay.style.display = "none";
-
-                if (chosen.type === "virtuous") {
-                    virtuousOverlay.style.display = "block";
-                    localStorage.setItem('lutherian_resolve_state', 'virtuous');
-                } else if (chosen.type === "afflicted") {
-                    stressOverlay.style.display = "block";
-                    localStorage.setItem('lutherian_resolve_state', 'afflicted');
-                }
-            }
-        });
-    }
-
-    // 5. MEDIDOR DE AMEAÇA
-    const threatLevelSelect = document.getElementById("threatLevel");
-    const threatMeterVisual = document.getElementById("threatMeterVisual");
-
-    function updateThreatMeter() {
-        const selectedThreat = threatLevelSelect?.value;
-        if (!threatMeterVisual) return;
-
-        const threatHeights = {
-            "nulo": "0%",
-            "sublime": "20%",
-            "besta": "40%",
-            "demonio": "60%",
-            "anciao": "80%",
-            "radiante": "100%"
-        };
-
-        threatMeterVisual.style.background = `linear-gradient(to top, #ff4d4d ${threatHeights[selectedThreat] || "0%"}, #111 ${threatHeights[selectedThreat] || "0%"})`;
-    }
-
-    if (threatLevelSelect) {
-        threatLevelSelect.addEventListener("change", updateThreatMeter);
-    }
-
-    document.addEventListener("input", function(e) {
-        if (e.target && (e.target.id === "dexterity" || e.target.id === "temp_dexterity")) {
-            updateInitiative();
-        }
-    });
-
-    // INICIALIZAÇÃO
-    updateVitalityBar();
-    updateWillpowerBar();
-    updateStress(stressNumberInput ? stressNumberInput.value : 0);
-    updateThreatMeter();
-    updateInitiative();
-
-    // ==========================================
-    // RESTAURAÇÃO DEVE OCORRER POR ÚLTIMO NO STATUS
-    // ==========================================
-    const savedResolve = localStorage.getItem('lutherian_resolve_state');
-    if (savedResolve === 'virtuous' && virtuousOverlay) {
-        virtuousOverlay.style.display = "block";
-    } else if (savedResolve === 'afflicted' && stressOverlay) {
-        stressOverlay.style.display = "block";
-    }
-
-    const savedConditionData = localStorage.getItem('lutherian_active_condition');
-    if (savedConditionData) {
-        try {
-            const savedCondition = JSON.parse(savedConditionData);
-            if (stressConditionName) stressConditionName.textContent = savedCondition.name;
-            if (stressConditionDesc) stressConditionDesc.textContent = savedCondition.desc;
-            if (headerStressCondition) headerStressCondition.textContent = savedCondition.name;
-
-            if (stressConditionBox) {
-                stressConditionBox.classList.remove("is-virtuous", "is-afflicted");
-                if (savedCondition.type === "virtuous") {
-                    stressConditionBox.classList.add("is-virtuous");
-                } else if (savedCondition.type === "afflicted") {
-                    stressConditionBox.classList.add("is-afflicted");
-                }
-            }
-        } catch (error) {
-            console.error("Erro ao carregar a condição de estresse ativa.", error);
-        }
-    }
-}
-</file>
-
 <file path="styles/global.css">
 /* ==========================================
    GLOBAL.CSS - ORQUESTRADOR DE ESTILOS
@@ -2985,6 +3200,7 @@ export function initStatus() {
 @import url('variables.css');
 @import url('utilities.css');
 @import url('tabs.css');
+@import url('components.css');
 
 /* Módulos isolados por domínio */
 @import url('../modules/attributes/attributes.css');
@@ -3019,349 +3235,541 @@ body {
     width: 100% !important;
     box-sizing: border-box;
 }
-</file>
 
-<file path="styles/tabs.css">
-.characterTabsWrapper {
-    margin-top: 10px;
-}
-
-.characterTabsHeader {
+.resolve-cinematic-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
     display: flex;
-    gap: 4px;
-    padding-left: 10px;
-    margin-bottom: 0;
-    position: relative;
-    z-index: 2;
-    flex-wrap: wrap; 
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    animation: fadeInCinematic 0.3s ease;
 }
 
-.tabBtn {
-    background-color: #121212;
-    color: #777;
-    border: 1px solid #333;
-    border-bottom: none;
-    padding: 8px 18px; 
-    border-radius: 6px 6px 0 0;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 0.95rem;
-    font-family: var(--font-sub);
-    transition: background-color 0.2s, color 0.2s;
-    outline: none;
-}
-
-.tabBtn:hover {
-    background-color: #181818;
-    color: #bbb;
-}
-
-.tabBtn.active {
-    background-color: var(--bg-main); 
-    color: var(--accent-color);
-    border-color: #444;
-    border-top: 3px solid var(--accent-color);
-    position: relative;
-    z-index: 3;
-}
-
-.tabContent {
-    background-color: var(--bg-main); 
-    border: 1px solid #444;
-    padding: 20px;
-    border-radius: 0 6px 6px 6px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-    position: relative;
-    z-index: 1;
-    margin-top: -1px;
-    color: var(--text-color);
-    font-family: var(--font-body);
-}
-
-.tabContent fieldset {
-    background-color: var(--bg-fieldset); 
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 15px;
-    margin-bottom: 20px;
-    color: var(--text-color);
-}
-
-.tabContent fieldset legend {
-    font-family: var(--font-title);
-    font-size: 1.1rem;
-    color: var(--accent-color);
-    letter-spacing: 1px;
-}
-
-/* Container unificado das abas com ícones de fundo inteiros */
-.tabs-header {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 0;
-    padding-left: 2px;
-}
-
-.tab-btn {
-    background-color: transparent;
-    background-size: 100% 100%;
-    background-position: center;
-    background-repeat: no-repeat;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    width: 55px;
-    height: 45px;
+.resolve-cinematic-message {
     padding: 0;
-    position: relative;
-    opacity: 0.55;
-    filter: brightness(0.65);
-    transition: all 0.2s ease;
-}
-
-.tab-btn[data-tab="personagem"] {
-    background-image: url('../assets/icons/char.icon.png');
-}
-
-.tab-btn[data-tab="habilidades"] {
-    background-image: url('../assets/icons/habilities.icon.png');
-}
-
-.tab-btn[data-tab="detalhes"] {
-    background-image: url('../assets/icons/inventory.icon.png');
-}
-
-.tab-btn:hover {
-    opacity: 0.85;
-    filter: brightness(0.9);
-    transform: translateY(-2px);
-}
-
-.tab-btn.active {
-    opacity: 1;
-    filter: brightness(1.15);
-    transform: translateY(-4px);
-}
-</file>
-
-<file path="styles/utilities.css">
-/* Alinhamentos rápidos */
-.text-center { text-align: center !important; }
-.text-left { text-align: left !important; }
-.text-right { text-align: right !important; }
-
-/* Flexbox helpers */
-.flex { display: flex !important; }
-.flex-column { flex-direction: column !important; }
-.items-center { align-items: center !important; }
-.justify-between { justify-content: space-between !important; }
-.gap-10 { gap: 10px !important; }
-
-/* Visibilidade */
-.hidden { display: none !important; }
-
-/* Margens utilitárias rápidas */
-.mt-10 { margin-top: 10px !important; }
-.mt-20 { margin-top: 20px !important; }
-.mb-10 { margin-bottom: 10px !important; }
-</file>
-
-<file path="styles/variables.css">
-/* ==========================================
-   REGISTRO DAS FONTES DA FICHA LUTHERIAN
-   ========================================== */
-@font-face {
-    font-family: 'FjallaOne';
-    src: url('../assets/fonts/FjallaOne-Regular.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'GermaniaOne';
-    src: url('../assets/fonts/GermaniaOne-Regular.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'Quintessential';
-    src: url('../assets/fonts/Quintessential-Regular.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-:root {
-    --bg-main: #141414;
-    --bg-fieldset: #1c1c1c;
-    --bg-inputs: #2b2b2b;
-    --text-color: #ffffff;
-    --accent-color: #ffcc00;
-    --negative-color: #c00101;
-    --positive-color: #ffcc00;
-    --line-color: #ffffff;
-
-    --font-body: 'FjallaOne', Arial, sans-serif;          
-    --font-sub: 'GermaniaOne', Arial, sans-serif;         
-    --font-title: 'Quintessential', Georgia, serif;
-}
-
-body, input, select, textarea, button {
-    font-family: var(--font-body);
-    background-color: var(--bg-main); 
-    color: var(--text-color);
-}
-
-fieldset {
-    border: 1px solid #444;
-    border-radius: 6px;
-    padding: 15px;
-    margin-bottom: 20px;
-}
-
-legend {
-    color: var(--accent-color);
-    padding: 0 5px;
-    font-family: var(--font-title);
-}
-
-input[type="text"],
-input[type="number"],
-select {
-    background-color: var(--bg-inputs);
-    color: var(--text-color);
-    border: 1px solid #555;
-    border-radius: 4px;
-    padding: 4px 6px;
-    box-sizing: border-box;
-}
-
-/* Botões interativos dos ícones do cabeçalho */
-.headerIconBtn {
     background: transparent;
     border: none;
-    padding: 0;
-    cursor: pointer;
+    box-shadow: none;
+    text-align: center;
     display: flex;
-    align-items: center;
     justify-content: center;
-    outline: none;
-    transition: transform 0.15s ease, filter 0.15s ease;
-}
-
-/* Tamanho maior e proporcional para encaixar com as linhas */
-.headerIconImg {
-    width: 36px;  /* Aumentado para acompanhar a altura do texto */
-    height: 36px; 
-    object-fit: contain;
-    filter: brightness(0.85);
-    transition: filter 0.15s ease;
-}
-
-/* Efeito ao passar o mouse */
-.headerIconBtn:hover .headerIconImg {
-    filter: brightness(1.15);
-    transform: scale(1.05);
-}
-
-/* Efeito ao clicar */
-.headerIconBtn:active {
-    transform: scale(0.95);
-}
-
-/* Afasta o bloco da classe e desce a linha divisória perfeitamente */
-.charClassRow {
-    display: flex;
     align-items: center;
-    gap: 10px;
-    margin-left: 0; /* Alinha perfeitamente com o nome em cima */
-    margin-top: 12px; /* Dá mais respiro entre o nome e a classe */
-    margin-bottom: 12px; /* Afasta a linha de baixo em ~3px a mais */
+    overflow: visible;
 }
 
-/* Ajusta o espaçamento da linha divisória do cabeçalho */
-.headerDivider {
-    margin-top: 10px; /* Desce a linha um pouco mais */
-    border: 0;
-    height: 1px;
-    background: var(--line-color, #ffffff) !important;
+#resolveCinematicImg {
+    max-width: 840px; /* Dobro de 420px */
+    width: 90vw;
+    height: auto;
+    animation: zoomInDetermination 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-/* ==========================================
-   APLICAÇÃO DOS TÍTULOS COM A QUINTESSENTIAL
-   ========================================== */
-.titleFont, h1, h2, h3, legend {
-    font-family: var(--font-title) !important;
-    font-weight: normal !important;
-    text-transform: none !important;
-    letter-spacing: 0.5px;
+@keyframes zoomInDetermination {
+    0% {
+        transform: scale(0.90);
+        opacity: 0;
+    }
+    20% {
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
 }
 
-.sectionTitle {
-    font-size: 1.8rem !important; 
-}
-
-.subFont, label, .invTitle, .resourceTitle, .skillAttr {
-    font-family: var(--font-sub) !important;
-    font-style: normal !important;
-    font-weight: normal !important;
-}
-
-/* Container das abas */
-.tabs-header {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 0;
-    padding-left: 2px;
-}
-
-/* O botão VIRA a imagem quadrada e sem distorção */
-.tab-btn {
-    background-color: transparent;
-    background-size: cover; /* Garante que a imagem preencha o quadrado sem achatar */
-    background-position: center;
-    background-repeat: no-repeat;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    width: 48px;  /* Largura e altura iguais para ficar perfeitamente quadrado */
-    height: 48px; 
-    padding: 0;
+/* Container de sobreposição para a segunda etapa */
+.resolve-text-wrapper {
     position: relative;
-    opacity: 0.55; /* Apagada quando inativa */
-    filter: brightness(0.65);
-    transition: all 0.2s ease;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    animation: popInText 0.3s ease forwards;
 }
 
-/* Imagens de fundo para cada aba */
-.tab-btn[data-tab="personagem"] {
-    background-image: url('../assets/icons/char.icon.png');
+/* Banner de fundo do veredito (bg.stress.text.png - Dobro do tamanho anterior) */
+#resolveBgTextImg {
+    max-width: 900px; /* Dobro de 450px */
+    width: 95vw;
+    height: auto;
+    display: block;
 }
 
-.tab-btn[data-tab="habilidades"] {
-    background-image: url('../assets/icons/habilities.icon.png');
+/* O texto centralizado com tamanho de fonte proporcional ao novo banner */
+#resolveCinematicText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: inherit;
+    font-size: 4rem; /* Dobro do tamanho anterior para preencher bem o banner maior */
+    font-weight: bold;
+    white-space: nowrap;
+    letter-spacing: 2px;
 }
 
-.tab-btn[data-tab="detalhes"] {
-    background-image: url('../assets/icons/inventory.icon.png');
+/* Regra estabelecida para Virtuoso (Glow Branco) */
+.resolve-text-wrapper.is-virtue span {
+    color: #ffffff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.9), 0 0 40px rgba(255, 255, 255, 0.6);
 }
 
-/* Efeito ao passar o mouse */
-.tab-btn:hover {
-    opacity: 0.85;
-    filter: brightness(0.9);
-    transform: translateY(-2px);
+/* Regra estabelecida para Aflito (Vermelho com glow/sombra preta) */
+.resolve-text-wrapper.is-affliction span {
+    color: #ff3333;
+    text-shadow: 5px 5px 0px #000000, -5px -5px 0px #000000, 5px -5px 0px #000000, -5px 5px 0px #000000, 0 0 25px rgba(255, 0, 0, 0.8);
 }
 
-/* Aba ativa (selecionada) */
-.tab-btn.active {
-    opacity: 1;
-    filter: brightness(1.15);
-    transform: translateY(-4px);
+@keyframes popInText {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInCinematic {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+</file>
+
+<file path="core/storage.js">
+import { CONFIG } from './config.js';
+
+let storageInitialized = false;
+
+function safeNumber(value, fallback = 0) {
+    const number = Number(value);
+    return Number.isFinite(number) && number >= 0 ? number : fallback;
+}
+
+function readJSON(key, fallback) {
+    try {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : fallback;
+    } catch (error) {
+        console.warn(`Dados inválidos ignorados no armazenamento: ${key}`, error);
+        return fallback;
+    }
+}
+
+export function initLocalStorage() {
+    if (storageInitialized) return;
+    storageInitialized = true;
+
+    const STORAGE_KEY = CONFIG.STORAGE_KEYS.SHEET_DATA;
+    const DYNAMIC_LISTS_KEY = CONFIG.STORAGE_KEYS.DYNAMIC_LISTS;
+
+    let isInitializing = true;
+
+    document.addEventListener('input', (e) => {
+        if (isInitializing) return;
+        if (e.target.matches('input, select, textarea') && !e.target.closest('.dynamicList') && !e.target.closest('#inventoryItemsList')) {
+            saveStaticData();
+        }
+    });
+
+    document.addEventListener('change', (e) => {
+        if (isInitializing) return;
+        if (e.target.matches('input[type="checkbox"], input[type="range"], select')) {
+            saveStaticData();
+        }
+    });
+
+    function saveStaticData() {
+        const data = {};
+        const fields = document.querySelectorAll('input, select, textarea');
+        
+        fields.forEach(field => {
+            if (field.closest('.dynamicList') || field.closest('#inventoryItemsList')) return;
+
+            const identifier = field.id || field.name;
+            if (!identifier) return;
+            if (identifier === 'speed') return;
+
+            if (field.type === 'checkbox') {
+                data[identifier] = field.checked;
+            } else {
+                data[identifier] = field.value;
+            }
+        });
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function saveAllDynamicLists() {
+        if (isInitializing) return;
+        
+        const listsData = {};
+
+        document.querySelectorAll('.dynamicList').forEach(container => {
+            const containerId = container.id;
+            if (!containerId) return;
+
+            const rowsData = [];
+
+            container.querySelectorAll('.stringItemRow, .cardItemBox, .inventoryItemCard').forEach(row => {
+                const textInput = row.querySelector('input[type="text"]');
+                const numberInputs = row.querySelectorAll('input[type="number"]');
+                const textarea = row.querySelector('textarea');
+
+                rowsData.push({
+                    text: textInput ? textInput.value : "",
+                    qty: numberInputs[0] ? numberInputs[0].value : "1",
+                    weight: numberInputs[1] ? numberInputs[1].value : "0",
+                    desc: textarea ? textarea.value : ""
+                });
+            });
+
+            listsData[containerId] = rowsData;
+        });
+
+        localStorage.setItem(DYNAMIC_LISTS_KEY, JSON.stringify(listsData));
+    };
+
+    document.addEventListener('input', (e) => {
+        if (e.target.closest('.dynamicList') || e.target.closest('#inventoryItemsList')) {
+            saveAllDynamicLists();
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('removeItemBtn') || e.target.classList.contains('addItemBtn') || e.target.id === 'addInventoryItemBtn') {
+            setTimeout(saveAllDynamicLists, 150);
+        }
+    });
+
+    function loadData() {
+        const savedData = readJSON(STORAGE_KEY, {});
+        const savedLists = readJSON(DYNAMIC_LISTS_KEY, {});
+        const data = savedData && typeof savedData === 'object' && !Array.isArray(savedData)
+            ? savedData
+            : {};
+        const listsData = savedLists && typeof savedLists === 'object' && !Array.isArray(savedLists)
+            ? savedLists
+            : {};
+
+        Object.entries(listsData).forEach(([containerId, savedItems]) => {
+            const container = document.getElementById(containerId);
+            if (!container || !Array.isArray(savedItems)) return;
+
+            container.replaceChildren();
+            const maxItems = containerId === 'inventoryItemsList'
+                ? CONFIG.LIMITS.MAX_INVENTORY_ITEMS
+                : CONFIG.LIMITS.MAX_DYNAMIC_ITEMS;
+
+            savedItems.slice(0, maxItems).forEach(itemData => {
+                const itemDiv = document.createElement('div');
+                const isInventory = containerId === 'inventoryItemsList';
+                const isCard = container.classList.contains('cardList');
+
+                if (isInventory) {
+                    itemDiv.className = 'inventoryItemCard cardItemBox';
+                    itemDiv.innerHTML = `
+                        <div class="inventoryItemTop">
+                            <input type="text" placeholder="Nome do item..." class="item-name-input">
+                            <label class="itemMetaLabel">Qtd:</label>
+                            <input type="number" min="0" class="item-qty-input">
+                            <label class="itemMetaLabel">Peso:</label>
+                            <input type="number" min="0" step="0.5" class="item-weight-input">
+                            <button type="button" class="removeItemBtn" title="Excluir" aria-label="Excluir item">X</button>
+                        </div>
+                        <textarea placeholder="Descrição do item..."></textarea>
+                    `;
+                } else if (isCard) {
+                    itemDiv.className = 'cardItemBox';
+                    itemDiv.innerHTML = `
+                        <div class="cardItemTop">
+                            <input type="text" placeholder="Nome / Título..." class="personal-input">
+                            <button type="button" class="removeItemBtn" title="Remover" aria-label="Remover item">X</button>
+                        </div>
+                        <textarea placeholder="Descrição..."></textarea>
+                    `;
+                } else {
+                    itemDiv.className = 'stringItemRow';
+                    itemDiv.innerHTML = `
+                        <input type="text" placeholder="Digite o nome..." class="personal-input">
+                        <button type="button" class="removeItemBtn" title="Remover" aria-label="Remover item">X</button>
+                    `;
+                }
+
+                const textInput = itemDiv.querySelector('input[type="text"]');
+                const numberInputs = itemDiv.querySelectorAll('input[type="number"]');
+                const textarea = itemDiv.querySelector('textarea');
+
+                if (textInput) textInput.value = String(itemData?.text ?? '');
+                if (numberInputs[0]) numberInputs[0].value = safeNumber(itemData?.qty, 1);
+                if (numberInputs[1]) numberInputs[1].value = safeNumber(itemData?.weight, 0);
+                if (textarea) textarea.value = String(itemData?.desc ?? '');
+
+                container.appendChild(itemDiv);
+            });
+        });
+
+        Object.entries(data).forEach(([identifier, value]) => {
+            if (identifier === 'speed') return;
+
+            const normalizedIdentifier = identifier === 'chaClass'
+                ? 'characterClass'
+                : identifier;
+            const field = document.getElementById(normalizedIdentifier);
+            if (!field) return;
+
+            if (field.type === 'checkbox') {
+                field.checked = Boolean(value);
+                field.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+                field.value = String(value ?? '');
+                field.dispatchEvent(new Event('input', { bubbles: true }));
+                field.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+
+        isInitializing = false;
+        console.log('Dados estáticos e listas carregados.');
+    }
+
+    loadData();
+}
+</file>
+
+<file path="modules/attributes/attributes.js">
+export const attributeGroups = [
+    {
+        attrCondition: { id: "weakened", name: "Enfraquecido" },
+        attributes: [
+            { id: "strength", name: "Força" },
+            { id: "dexterity", name: "Destreza" }
+        ]
+    },
+    {
+        attrCondition: { id: "unwell", name: "Indisposto" },
+        attributes: [
+            { id: "constitution", name: "Constituição" },
+            { id: "charisma", name: "Carisma" }
+        ]
+    },
+    {
+        attrCondition: { id: "miserable", name: "Miserável" },
+        attributes: [
+            { id: "psyche", name: "Psique" },
+            { id: "wisdom", name: "Sabedoria" }
+        ]
+    }
+];
+
+import { updateInitiative } from '../status/status.js';
+import { updateAllSkills } from './skills.js';
+import { isCharacterOverloaded } from '../../core/appState.js';
+
+export function renderAttributes() {
+    const container = document.getElementById("attributesContainer");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    attributeGroups.forEach(group => {
+        const attr1 = group.attributes[0];
+        const attr2 = group.attributes[1];
+        const cond = group.attrCondition;
+
+        container.innerHTML += `
+            <div class="attributeGroup">
+                <div class="attributeRow">
+                    <div class="attribute-left">
+                        <label for="${attr1.id}">${attr1.name}:</label>
+                        <input type="number" id="${attr1.id}" min="-3" max="3" value="0" class="attr-input">
+                    </div>
+                    <div class="attribute-right">
+                        <label for="temp_${attr1.id}">Mod. temporário:</label>
+                        <input type="number" id="temp_${attr1.id}" min="-2" max="2" value="0" class="attr-input">
+                        <span id="dices_${attr1.id}" class="diceToRoll">d20</span>
+                    </div>
+                </div>
+
+                <div class="attributeRow">
+                    <div class="attribute-left">
+                        <label for="${attr2.id}">${attr2.name}:</label>
+                        <input type="number" id="${attr2.id}" min="-3" max="3" value="0" class="attr-input">
+                    </div>
+                    <div class="attribute-right">
+                        <label for="temp_${attr2.id}">Mod. temporário:</label>
+                        <input type="number" id="temp_${attr2.id}" min="-2" max="2" value="0" class="attr-input">
+                        <span id="dices_${attr2.id}" class="diceToRoll">d20</span>
+                    </div>
+                </div>
+
+                <div class="conditionBox">
+                    <input type="checkbox" id="${cond.id}" class="conditionCheckbox">
+                    <label for="${cond.id}"><strong>${cond.name}</strong></label>
+                </div>
+            </div>
+        `;
+    });
+}
+
+export function updateAttributeDice(attrId) {
+    const baseInput = document.getElementById(attrId);
+    const tempInput = document.getElementById(`temp_${attrId}`);
+    const diceSpan = document.getElementById(`dices_${attrId}`);
+
+    if (baseInput && tempInput && diceSpan) {
+        let baseVal = parseInt(baseInput.value) || 0;
+        let tempVal = parseInt(tempInput.value) || 0;
+        let total = baseVal + tempVal;
+
+        let penalty = 0;
+        const isOverloaded = isCharacterOverloaded();
+        const bigBackpackEl = document.getElementById("bigBackpackCheck");
+        const bigBackpackActive = bigBackpackEl ? bigBackpackEl.checked : false;
+
+        // Checagem das condições dos atributos
+        const weakenedChecked = document.getElementById("weakened")?.checked || false;
+        const unwellChecked = document.getElementById("unwell")?.checked || false;
+        const miserableChecked = document.getElementById("miserable")?.checked || false;
+
+        if (weakenedChecked && (attrId === "strength" || attrId === "dexterity")) {
+            penalty += 1;
+        }
+        if (unwellChecked && (attrId === "constitution" || attrId === "charisma")) {
+            penalty += 1;
+        }
+        if (miserableChecked && (attrId === "psyche" || attrId === "wisdom")) {
+            penalty += 1;
+        }
+
+        if (isOverloaded && (attrId === "strength" || attrId === "dexterity")) {
+            penalty += 1;
+        }
+
+        if (bigBackpackActive && attrId === "strength") {
+            penalty += 1;
+        }
+
+        if (penalty > 0) {
+            if (total > 0) {
+                total = Math.max(0, total - penalty);
+            } else {
+                total -= penalty;
+            }
+        }
+
+        if (total === 0) {
+            diceSpan.textContent = "d20";
+            diceSpan.className = "diceToRoll dice-neutral";
+        } else if (total > 0) {
+            diceSpan.textContent = `d20 + ${total}d6`;
+            diceSpan.className = "diceToRoll dice-positive";
+        } else {
+            diceSpan.textContent = `d20 - ${Math.abs(total)}d6`;
+            diceSpan.className = "diceToRoll dice-negative";
+        }
+    }
+}
+
+export function updateAllAttributes() {
+    attributeGroups.forEach(group => {
+        group.attributes.forEach(attr => {
+            updateAttributeDice(attr.id);
+        });
+    });
+}
+
+export function initAttributesListeners() {
+    document.addEventListener("input", function(e) {
+        if (e.target && e.target.classList.contains("attr-input")) {
+            let attrId = e.target.id.replace("temp_", "");
+            updateAttributeDice(attrId);
+            
+            if (attrId === "dexterity") {
+                updateInitiative();
+            }
+            updateAllSkills();
+        }
+    });
+
+    document.querySelectorAll(".conditionCheckbox").forEach(checkbox => {
+        checkbox.addEventListener("change", function() {
+            setTimeout(() => {
+                updateAllAttributes();
+                updateAllSkills();
+            }, 10);
+        });
+    });
+
+    attributeGroups.forEach(group => {
+        const checkbox = document.getElementById(group.attrCondition.id);
+        if (checkbox) {
+            checkbox.addEventListener("change", function() {
+                updateAllAttributes();
+                updateInitiative();
+                updateAllSkills();
+            });
+        }
+    });
+}
+
+export function initAttributes() {
+    renderAttributes();
+    initAttributesListeners();
+    updateAllAttributes();
+}
+</file>
+
+<file path="modules/status/status.js">
+import { initResources } from './resources.js';
+import { initStress } from './stress.js';
+import { initThreat } from './threat.js';
+
+let statusInitialized = false;
+
+export function updateInitiative() {
+    const dexterityInput = document.getElementById("dexterity");
+    const temporaryDexterityInput = document.getElementById("temp_dexterity");
+    const initiativeInput = document.getElementById("initiative");
+
+    if (!dexterityInput || !temporaryDexterityInput || !initiativeInput) return;
+
+    const totalDexterity =
+        (parseInt(dexterityInput.value, 10) || 0) +
+        (parseInt(temporaryDexterityInput.value, 10) || 0);
+    const sign = totalDexterity >= 0
+        ? `+ ${totalDexterity}`
+        : `- ${Math.abs(totalDexterity)}`;
+
+    initiativeInput.value = `d20 ${sign}`;
+}
+
+export function initStatus() {
+    if (statusInitialized) return;
+    statusInitialized = true;
+
+    initResources();
+    initStress();
+    initThreat();
+
+    document.addEventListener("input", event => {
+        if (event.target?.id === "dexterity" || event.target?.id === "temp_dexterity") {
+            updateInitiative();
+        }
+    });
+
+    updateInitiative();
 }
 </file>
 
 <file path="modules/level/levelManager.js">
+import { CONFIG } from '../../core/config.js';
+
 export function initLevelEmblem() {
     const levelInput = document.getElementById('level');
     const container = document.getElementById('levelEmblemContainer');
@@ -3389,35 +3797,23 @@ export function initLevelEmblem() {
     });
 
     updateEmblem(levelInput.value);
-
-    const savedState = localStorage.getItem('characterResolveState') || 'normal';
-    setResolveState(savedState);
-    
 }
 
-// Função para aplicar o estresse/virtude e salvar o estado
 export function setResolveState(state) {
     const virtuousOverlay = document.getElementById('virtuousResolveOverlay');
     const stressOverlay = document.getElementById('stressResolveOverlay');
 
-    virtuousOverlay.style.display = 'none';
-    stressOverlay.style.display = 'none';
+    if (virtuousOverlay) virtuousOverlay.style.display = 'none';
+    if (stressOverlay) stressOverlay.style.display = 'none';
 
-    if (state === 'virtuous') {
+    if (state === 'virtuous' && virtuousOverlay) {
         virtuousOverlay.style.display = 'block';
-    } else if (state === 'stress') {
+    } else if ((state === 'afflicted' || state === 'stress') && stressOverlay) {
         stressOverlay.style.display = 'block';
     }
 
-    localStorage.setItem('characterResolveState', state);
+    localStorage.setItem(CONFIG.STORAGE_KEYS.RESOLVE_STATE, state);
 }
-
-// Carrega o estado salvo ao abrir a ficha
-document.addEventListener('DOMContentLoaded', () => {
-    // Busca o estado salvo. Se não houver nenhum, assume que está 'normal'
-    const savedState = localStorage.getItem('characterResolveState') || 'normal';
-    setResolveState(savedState);
-});
 </file>
 
 <file path="script.js">
@@ -3438,8 +3834,11 @@ import { initNarrative } from './modules/narrative/narrative.js';
 import { initStatus } from './modules/status/status.js';
 import { initLevelEmblem } from './modules/level/levelManager.js';
 import { initCurios } from './modules/header/curios.js';
+import { startApplicationOnce } from './core/appState.js';
 
 document.addEventListener("DOMContentLoaded", () => {
+    if (!startApplicationOnce()) return;
+
     // Função para blindar a inicialização. Se um módulo quebrar, o resto sobrevive.
     const safeInit = (moduleName, initFunction) => {
         try {
@@ -3453,11 +3852,17 @@ document.addEventListener("DOMContentLoaded", () => {
     safeInit("ThemeEngine", initThemeEngine);
     safeInit("Tabs", initTabs); 
     
-    // Inicializações de componentes da ficha (Blindadas)
+    // Renderiza os campos dinâmicos antes de restaurar os dados persistidos.
     safeInit("ImageHandler", initImageHandler);
     safeInit("PersonalListeners", initPersonalListeners);
     safeInit("Attributes", initAttributes);
     safeInit("Skills", initSkills);
+
+    // O carregamento precisa acontecer antes dos módulos que calculam status,
+    // inventário e efeitos derivados dos valores restaurados.
+    safeInit("LocalStorage", initLocalStorage);
+
+    // Inicializações dependentes dos dados restaurados.
     safeInit("Status", initStatus);
     safeInit("Inventory", initInventory);
     safeInit("Races", initRaces);
@@ -3465,9 +3870,6 @@ document.addEventListener("DOMContentLoaded", () => {
     safeInit("Narrative", initNarrative);
     safeInit("LevelEmblem", initLevelEmblem);
     safeInit("Curios", initCurios);
-
-    // Sempre o último.
-    safeInit("LocalStorage", initLocalStorage);
 
     console.log("Ficha Lutherian iniciada com sistema anti-crash ativado!");
 });
@@ -3487,71 +3889,85 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <audio id="easterEggAudio" src="assets/audio/chacal.mp3" preload="auto"></audio>
 
+    <!-- Pop-up Cinematográfico de Resolução de Determinação -->
+    <div id="resolveCinematicOverlay" class="resolve-cinematic-backdrop is-hidden">
+        <div id="resolveCinematicBox" class="resolve-cinematic-message">
+            <img id="resolveCinematicImg" src="" alt="Determinação" class="is-hidden">
+            
+            <!-- Container para a segunda etapa: Imagem de fundo + Texto centralizado -->
+            <div id="resolveTextContainer" class="resolve-text-wrapper is-hidden">
+                <img id="resolveBgTextImg" src="" alt="Fundo do Veredito">
+                <span id="resolveCinematicText"></span>
+            </div>
+        </div>
+    </div>
+
+
     <div class="mainFile">
 
         <!-- MENU FLUTUANTE DE OPÇÕES (Canto Superior Direito) -->
-        <div class="optionsMenuWrapper" style="position: absolute; top: 0px; right: -200px; z-index: 1000;">
-            <button type="button" id="optionsMenuBtn" style="background: var(--bg-fieldset, #1c1c1c); border: 1px solid #444; color: var(--text-color, #fff); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.4);" title="Opções">
+        <div class="optionsMenuWrapper">
+            <button type="button" id="optionsMenuBtn" class="optionsMenuButton" title="Opções">
                 ⋮
             </button>
             
             <!-- Menu Principal de Opções -->
-            <div id="optionsDropdown" style="display: none; position: absolute; right: 0; top: 45px; background: #1a1a1a; border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: sans-serif; color: #fff; width: 200px; padding: 6px 0;">
-                <button type="button" id="menuOptTheme" style="width: 100%; text-align: left; background: none; border: none; color: #fff; padding: 10px 15px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+            <div id="optionsDropdown" class="optionsDropdown">
+                <button type="button" id="menuOptTheme" class="optionsMenuItem">
                     ✎ Personalizar Tema
                 </button>
                 
-                <button type="button" id="menuOptReset" style="width: 100%; text-align: left; background: none; border: none; color: #ff4d4d; padding: 10px 15px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px solid #333;">
+                <button type="button" id="menuOptReset" class="optionsMenuItem optionsMenuItem--danger">
                     🗑️ Resetar Ficha
                 </button>
             </div>
 
             <!-- Modal de Confirmação de Reset -->
-            <div id="resetConfirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; font-family: sans-serif;">
-                <div style="background: #1a1a1a; border: 1px solid #555; padding: 25px; border-radius: 8px; max-width: 380px; width: 90%; text-align: center; color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-                    <h3 style="margin-top: 0; color: #ff4d4d; font-size: 18px;">⚠️ Atenção</h3>
-                    <p style="font-size: 14px; color: #ccc; line-height: 1.5; margin-bottom: 20px;">
+            <div id="resetConfirmModal" class="resetModal">
+                <div class="resetModalContent">
+                    <h3 class="resetModalTitle">⚠️ Atenção</h3>
+                    <p class="resetModalMessage">
                         Ao confirmar, você apagará todas as informações da ficha para sempre!
                     </p>
-                    <div style="display: flex; gap: 10px; justify-content: center;">
-                        <button type="button" id="cancelResetBtn" style="background: #333; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px;">Cancelar</button>
-                        <button type="button" id="confirmResetBtn" style="background: #d9534f; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold;">Confirmar</button>
+                    <div class="resetModalActions">
+                        <button type="button" id="cancelResetBtn" class="modalButton modalButton--cancel">Cancelar</button>
+                        <button type="button" id="confirmResetBtn" class="modalButton modalButton--confirm">Confirmar</button>
                     </div>
                 </div>
             </div>
 
             <!-- Sub-tela de Customização de Cores -->
-            <div id="themeCustomizerPanel" style="display: none; position: absolute; right: 0; top: 45px; background: #1a1a1a; border: 1px solid #444; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: sans-serif; color: #fff; width: 220px;">
-                <h4 style="margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #333; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+            <div id="themeCustomizerPanel" class="themeCustomizerPanel">
+                <h4 class="themePanelTitle">
                     ✏ Cores do Tema
-                    <button type="button" id="backToMenuBtn" style="background: none; border: none; color: #aaa; cursor: pointer; font-size: 12px;">Voltar</button>
+                    <button type="button" id="backToMenuBtn" class="themePanelBack">Voltar</button>
                 </h4>
-                <div id="themeControls" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                <div id="themeControls" class="themeControls">
+                    <label class="themeControl">
                         Fundo: <input type="color" id="colorBgMain" value="#141414">
                     </label>
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="themeControl">
                         Blocos: <input type="color" id="colorBgFieldset" value="#1c1c1c">
                     </label>
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="themeControl">
                         Linhas: <input type="color" id="colorLines" value="#ffffff">
                     </label>
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="themeControl">
                         Caixas de Texto: <input type="color" id="colorBgInputs" value="#2b2b2b">
                     </label>
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="themeControl">
                         Texto Geral: <input type="color" id="colorText" value="#ffffff">
                     </label>
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="themeControl">
                         Destaques: <input type="color" id="colorAccent" value="#ffffff">
                     </label>
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="themeControl">
                         Desvantagens: <input type="color" id="colorNegative" value="#c00101">
                     </label>
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="themeControl">
                         Vantagens: <input type="color" id="colorPositive" value="#ffcc00">
                     </label>
-                    <button type="button" id="resetThemeBtn" style="margin-top: 5px; background: #333; color: #fff; border: none; padding: 6px; border-radius: 4px; cursor: pointer;">Restaurar Padrão</button>
+                    <button type="button" id="resetThemeBtn" class="themeResetButton">Restaurar Padrão</button>
                 </div>
             </div>
         </div>
@@ -3577,11 +3993,11 @@ document.addEventListener("DOMContentLoaded", () => {
                         <input type="text" id="name" class="invisibleInput titleFont charNameInput" placeholder="Nome do Personagem" autocomplete="off">
                     </div>
                     <div class="charClassRow">
-                        <button type="button" class="headerIconBtn" onclick="document.getElementById('chaClass').focus();" title="Focar na Classe">
+                        <button type="button" class="headerIconBtn" onclick="document.getElementById('characterClass').focus();" title="Focar na Classe">
                             <img src="assets/images/pageChar/class.png" alt="Classe" class="headerIconImg">
                         </button>
                         <div class="classSubclassWrapper">
-                            <input type="text" id="chaClass" class="invisibleInput subFont classInput" placeholder="Classe">
+                            <input type="text" id="characterClass" class="invisibleInput subFont classInput" placeholder="Classe">
                             <input type="text" id="chaSubclass" class="invisibleInput subFont subclassInput" placeholder="Subclasse">
                         </div>
                     </div>
@@ -3591,9 +4007,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="topSplitContainer">
                    <div class="leftProfileColumn">
                     <div class="levelEmblemWrapper" id="levelEmblemContainer">
-                        <div id="virtuousResolveOverlay" class="resolveOverlay virtuousBg" style="display: none;"></div>
+                        <div id="virtuousResolveOverlay" class="resolveOverlay virtuousBg is-hidden"></div>
                         <input type="number" id="level" min="1" max="9" value="1" class="levelInputEmblem">
-                        <div id="stressResolveOverlay" class="resolveOverlay stressTop" style="display: none;"></div>
+                        <div id="stressResolveOverlay" class="resolveOverlay stressTop is-hidden"></div>
                     </div>
                     
                     <div id="threatMeterVisual" class="threatMeterBar"></div>
@@ -3606,14 +4022,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                         <div id="headerStressCondition" class="stressConditionHeader">Normal</div>
                         <div class="characterImageBox" id="imageUploadBox" title="Clique para enviar a imagem do personagem">
-                            <img id="charImageDisplay" src="" alt="Imagem" style="display: none; width: 100%; height: 100%; object-fit: cover;">
-                            <span id="imagePlaceholderText" style="color: #555; font-size: 12px; pointer-events: none;">IMAGEM</span>
-                            <input type="file" id="charImageInput" accept="image/*" style="display: none;">
+                            <img id="charImageDisplay" src="" alt="Imagem" class="characterImage">
+                            <span id="imagePlaceholderText" class="imagePlaceholder">IMAGEM</span>
+                            <input type="file" id="charImageInput" accept="image/*" class="is-hidden">
                         </div>
                     </div>
 
                     <div class="rightBasicColumn">
-                        <div class="sectionTitleWrapper" style="margin-top: 20px;">
+                        <div class="sectionTitleWrapper sectionTitleWrapper--spaced">
                             <hr class="titleLine"><h2 class="sectionTitle titleFont">BÁSICO</h2><hr class="titleLine">
                         </div>
                         <div class="basicSplitColumns">
@@ -3638,7 +4054,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                         <strong>Maldição:</strong> <p id="raceCurseDescription">Nenhuma.</p>
                                     </div>
                                 </div>
-                                <div class="groupCamp lineStyle" style="margin-top: 10px;">
+                                <div class="groupCamp lineStyle inlineDataGroup--spaced">
                                     <label for="origin">Origem:</label>
                                     <select id="origin" class="invisibleSelect">
                                         <option value="">Selecione uma origem...</option>
@@ -3663,7 +4079,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                         <input type="number" id="age" min="1" class="smallBoxInput"> <span class="unit">anos</span>
                                     </div>
                                 </div>
-                                <div class="classCampfireBox" style="margin-top: 15px;">
+                                <div class="classCampfireBox classCampfireBox--spaced">
                                     <strong>Hab. Fogueira (Classe):</strong>
                                     <textarea id="classCampfireSkill" placeholder="Descreva a habilidade..." class="invisibleTextarea"></textarea>
                                 </div>
@@ -3672,14 +4088,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 </div>
 
-                <div class="sectionTitleWrapper" style="margin-top: 20px;">
+                <div class="sectionTitleWrapper sectionTitleWrapper--spaced">
                     <hr class="titleLine"><h2 class="sectionTitle titleFont">ATRIBUTOS</h2><hr class="titleLine">
                 </div>
-                <fieldset style="border:none; padding:0; margin:0;">
+                <fieldset class="fieldset--unstyled">
                     <div id="attributesContainer"></div>
                 </fieldset>
 
-                <div class="sectionTitleWrapper" style="margin-top: 20px;">
+                <div class="sectionTitleWrapper sectionTitleWrapper--spaced">
                     <hr class="titleLine"><h2 class="sectionTitle titleFont">STATUS</h2><hr class="titleLine">
                 </div>
                 
@@ -3729,8 +4145,12 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </select>
                             </div>
                             <div class="inlineDataGroup">
-                                <label for="speed">Deslocamento:</label>
-                                <input type="number" id="speed" min="0" value="6" class="smallBoxInput"> <span class="unit">qds</span>
+                                <label for="speedBase">Deslocamento base:</label>
+                                <input type="number" id="speedBase" min="0" value="6" class="smallBoxInput"> <span class="unit">qds</span>
+                            </div>
+                            <div class="inlineDataGroup">
+                                <label for="speed">Deslocamento final:</label>
+                                <input type="number" id="speed" min="0" value="6" class="smallBoxInput" readonly aria-label="Deslocamento final calculado"> <span class="unit">qds</span>
                             </div>
                             <div class="inlineDataGroup">
                                 <label for="threatLevel">Nível de Ameaça:</label>
@@ -3771,7 +4191,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div id="stressConditionBox" class="stressConditionBox">
                                 <h4 id="stressConditionName">Condições de Estresse</h4>
                                 <p id="stressConditionDesc">Nenhuma condição ativa.</p>
-                                <div style="display:none;">
+                                <div class="is-hidden">
                                     <input type="checkbox" id="afflictedCheck">
                                     <input type="checkbox" id="virtuousCheck">
                                 </div>
@@ -3791,20 +4211,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 </div>
 
-                <div class="sectionTitleWrapper" style="margin-top: 20px;">
+                <div class="sectionTitleWrapper sectionTitleWrapper--spaced">
                     <hr class="titleLine"><h2 class="sectionTitle titleFont">PERÍCIAS</h2><hr class="titleLine">
                 </div>
-                <fieldset style="border:none; padding:0; margin:0;">
+                <fieldset class="fieldset--unstyled">
                     <div id="skillsContainer" class="skillsContainer"></div>
                 </fieldset>
 
             </div>
 
             <!-- ABA 2: HABILIDADES -->
-            <div id="habilidades" class="tabContent" style="display: none;">
+            <div id="habilidades" class="tabContent">
                 <fieldset>
                     <legend>Habilidades, Magias e Poderes</legend>
-                    <div class="notesGrid" style="margin-bottom: 20px;">
+                    <div class="notesGrid mb-20">
                         <textarea id="abilityMainDesc" class="notesTextArea" placeholder="Descreva habilidades, magias ou poderes..."></textarea>
                         <textarea id="abilityExtraDesc" class="notesTextArea" placeholder="Outras habilidades ou detalhes adicionais..."></textarea>
                     </div>
@@ -3820,7 +4240,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <!-- ABA 3: DETALHES -->
-            <div id="detalhes" class="tabContent" style="display: none;">
+            <div id="detalhes" class="tabContent">
                 <fieldset>
                     <legend>Pessoal</legend>
                     <div class="personalContainer">
@@ -3903,7 +4323,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                         </div>
                         <div id="encumbranceAlerts" class="encumbranceAlerts"></div>
-                        <div class="personalSectionHeader" style="margin-top: 15px;">
+                        <div class="personalSectionHeader personalSectionHeader--spaced">
                             <h3>Itens</h3>
                             <button type="button" class="addItemBtn" id="addInventoryItemBtn">+ Adicionar Item</button>
                         </div>

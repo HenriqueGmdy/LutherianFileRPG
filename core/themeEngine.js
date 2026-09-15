@@ -1,3 +1,14 @@
+import { CONFIG } from './config.js';
+
+function readJSON(key, fallback = {}) {
+    try {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : fallback;
+    } catch {
+        return fallback;
+    }
+}
+
 export function initThemeEngine() {
     const menuBtn = document.getElementById('optionsMenuBtn');
     const dropdown = document.getElementById('optionsDropdown');
@@ -54,7 +65,17 @@ export function initThemeEngine() {
     // Botão Confirmar do Modal (Apaga tudo e reinicia)
     if (confirmResetBtn) {
         confirmResetBtn.addEventListener('click', () => {
-            localStorage.clear();
+            const sheetKeys = [
+                CONFIG.STORAGE_KEYS.SHEET_DATA,
+                CONFIG.STORAGE_KEYS.DYNAMIC_LISTS,
+                CONFIG.STORAGE_KEYS.IMAGE,
+                CONFIG.STORAGE_KEYS.ACTIVE_CONDITION,
+                CONFIG.STORAGE_KEYS.RESOLVE_STATE
+            ];
+
+            sheetKeys.forEach(key => {
+                localStorage.removeItem(key);
+            });
             location.reload();
         });
     }
@@ -93,7 +114,7 @@ export function initThemeEngine() {
         colorLines: '#ffffff'
     };
 
-    let savedTheme = JSON.parse(localStorage.getItem('lutherian_theme')) || {};
+    let savedTheme = readJSON(CONFIG.STORAGE_KEYS.THEME);
     
     const applyColor = (key, cssVar, defaultVal) => {
         const val = savedTheme[key] || defaultVal;
@@ -118,7 +139,7 @@ export function initThemeEngine() {
     const updateColor = (property, value, key) => {
         rootStyles.setProperty(property, value);
         savedTheme[key] = value;
-        localStorage.setItem('lutherian_theme', JSON.stringify(savedTheme));
+        localStorage.setItem(CONFIG.STORAGE_KEYS.THEME, JSON.stringify(savedTheme));
     };
 
     const bindColorInput = (id, cssVar, key) => {
@@ -140,7 +161,7 @@ export function initThemeEngine() {
     const resetThemeBtn = document.getElementById('resetThemeBtn');
     if (resetThemeBtn) {
         resetThemeBtn.addEventListener('click', () => {
-            localStorage.removeItem('lutherian_theme');
+            localStorage.removeItem(CONFIG.STORAGE_KEYS.THEME);
             savedTheme = {};
 
             applyAllColors(defaultColors);

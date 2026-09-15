@@ -1,3 +1,5 @@
+import { isCharacterOverloaded } from '../../core/appState.js';
+
 const skillColumnsData = [
     [
         { id: "atletismo", name: "Atletismo", attr: "For", attrId: "strength" },
@@ -74,7 +76,7 @@ export function updateSkillModifier(skillKey) {
         let attrTotal = attrBase + attrTemp;
 
         let penalty = 0;
-        const isOverloaded = typeof window.isCharacterOverloaded === 'function' && window.isCharacterOverloaded();
+        const isOverloaded = isCharacterOverloaded();
         const bigBackpackEl = document.getElementById("bigBackpackCheck");
         const bigBackpackActive = bigBackpackEl ? bigBackpackEl.checked : false;
 

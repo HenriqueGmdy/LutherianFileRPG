@@ -1,3 +1,5 @@
+import { CONFIG } from './config.js';
+
 export function initTabs() {
     const tabButtons = document.querySelectorAll(".tab-btn");
     const tabContents = document.querySelectorAll(".tabContent");
@@ -23,9 +25,8 @@ export function initTabs() {
             }
         });
 
-        // Salva a aba ativa no localStorage para persistir no F5
         if (saveState) {
-            localStorage.setItem('lutherian_active_tab', targetId);
+            localStorage.setItem(CONFIG.STORAGE_KEYS.ACTIVE_TAB, targetId);
         }
     }
 
@@ -37,8 +38,7 @@ export function initTabs() {
         });
     });
 
-    // Ao iniciar, restaura a última aba ativa salva ou mantém a padrão
-    const savedTab = localStorage.getItem('lutherian_active_tab');
+    const savedTab = localStorage.getItem(CONFIG.STORAGE_KEYS.ACTIVE_TAB);
     if (savedTab && document.getElementById(savedTab)) {
         switchTab(savedTab, false);
     }

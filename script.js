@@ -15,8 +15,11 @@ import { initNarrative } from './modules/narrative/narrative.js';
 import { initStatus } from './modules/status/status.js';
 import { initLevelEmblem } from './modules/level/levelManager.js';
 import { initCurios } from './modules/header/curios.js';
+import { startApplicationOnce } from './core/appState.js';
 
 document.addEventListener("DOMContentLoaded", () => {
+    if (!startApplicationOnce()) return;
+
     // Função para blindar a inicialização. Se um módulo quebrar, o resto sobrevive.
     const safeInit = (moduleName, initFunction) => {
         try {
@@ -30,11 +33,17 @@ document.addEventListener("DOMContentLoaded", () => {
     safeInit("ThemeEngine", initThemeEngine);
     safeInit("Tabs", initTabs); 
     
-    // Inicializações de componentes da ficha (Blindadas)
+    // Renderiza os campos dinâmicos antes de restaurar os dados persistidos.
     safeInit("ImageHandler", initImageHandler);
     safeInit("PersonalListeners", initPersonalListeners);
     safeInit("Attributes", initAttributes);
     safeInit("Skills", initSkills);
+
+    // O carregamento precisa acontecer antes dos módulos que calculam status,
+    // inventário e efeitos derivados dos valores restaurados.
+    safeInit("LocalStorage", initLocalStorage);
+
+    // Inicializações dependentes dos dados restaurados.
     safeInit("Status", initStatus);
     safeInit("Inventory", initInventory);
     safeInit("Races", initRaces);
@@ -42,9 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
     safeInit("Narrative", initNarrative);
     safeInit("LevelEmblem", initLevelEmblem);
     safeInit("Curios", initCurios);
-
-    // Sempre o último.
-    safeInit("LocalStorage", initLocalStorage);
 
     console.log("Ficha Lutherian iniciada com sistema anti-crash ativado!");
 });

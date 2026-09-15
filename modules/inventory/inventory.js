@@ -1,117 +1,144 @@
+import { CONFIG } from '../../core/config.js';
+import { registerInventoryOverloadChecker } from '../../core/appState.js';
 import { updateAllAttributes } from '../attributes/attributes.js';
 import { updateAllSkills } from '../attributes/skills.js';
 
 export function initInventory() {
-    const MAX_ITEMS = 50;
+    const MAX_ITEMS = CONFIG.LIMITS.MAX_INVENTORY_ITEMS;
+
     const itemsContainer = document.getElementById("inventoryItemsList");
     const addBtn = document.getElementById("addInventoryItemBtn");
     const loadDisplay = document.getElementById("loadDisplay");
     const alertsBox = document.getElementById("encumbranceAlerts");
-    
+
     const backpackCheck = document.getElementById("backpackCheck");
     const bigBackpackCheck = document.getElementById("bigBackpackCheck");
     const sizeSelect = document.getElementById("size");
+    const speedBaseInput = document.getElementById("speedBase");
+    const speedInput = document.getElementById("speed");
 
-    // Função para calcular a capacidade máxima e gerenciar o custo de Força da Mochila Grande
+    function getSizeSpeed() {
+        if (sizeSelect?.value === "pequeno") {
+            return CONFIG.DEFAULTS.SPEED_SMALL;
+        }
+
+        if (sizeSelect?.value === "grande") {
+            return CONFIG.DEFAULTS.SPEED_LARGE;
+        }
+
+        return CONFIG.DEFAULTS.SPEED_MEDIUM;
+    }
+
     function calculateMaxCapacity() {
         const strengthInput = document.getElementById("strength");
         const tempStrengthInput = document.getElementById("temp_strength");
 
-        let baseStr = parseInt(strengthInput?.value) || 0;
-        let tempStr = parseInt(tempStrengthInput?.value) || 0;
-        
-        // Se a mochila grande estiver ativa, aplica o -1 de penalidade na Força total para o cálculo
-        let strengthPenalty = (bigBackpackCheck && bigBackpackCheck.checked) ? 1 : 0;
-        let totalStr = (baseStr + tempStr) - strengthPenalty;
+        const baseStrength = Number(strengthInput?.value) || 0;
+        const temporaryStrength = Number(tempStrengthInput?.value) || 0;
+        const backpackPenalty = bigBackpackCheck?.checked ? 1 : 0;
 
-        let maxSlots = totalStr <= 0 ? 3 : totalStr * 6;
+        const totalStrength =
+            baseStrength + temporaryStrength - backpackPenalty;
 
-        if (backpackCheck && backpackCheck.checked) maxSlots += 10;
-        if (bigBackpackCheck && bigBackpackCheck.checked) maxSlots += 22;
+        let maxSlots = totalStrength <= 0 ? 3 : totalStrength * 6;
+
+        if (backpackCheck?.checked) {
+            maxSlots += 10;
+        }
+
+        if (bigBackpackCheck?.checked) {
+            maxSlots += 22;
+        }
 
         return maxSlots;
     }
 
     function calculateCurrentLoad() {
-        let currentLoad = 0;
-        if (!itemsContainer) return currentLoad;
-        const itemCards = itemsContainer.querySelectorAll(".inventoryItemCard");
+        if (!itemsContainer) {
+            return 0;
+        }
 
-        itemCards.forEach(card => {
-            const qtyInput = card.querySelector(".item-qty-input");
-            const weightInput = card.querySelector(".item-weight-input");
-            const qty = parseFloat(qtyInput?.value) || 0;
-            const weight = parseFloat(weightInput?.value) || 0;
-            currentLoad += qty * weight;
-        });
+        let currentLoad = 0;
+
+        itemsContainer
+            .querySelectorAll(".inventoryItemCard")
+            .forEach(card => {
+                const quantity =
+                    Number(card.querySelector(".item-qty-input")?.value) || 0;
+
+                const weight =
+                    Number(card.querySelector(".item-weight-input")?.value) || 0;
+
+                currentLoad += quantity * weight;
+            });
 
         return currentLoad;
     }
 
-    // Expõe globalmente se o inventário está sobrecarregado
-    window.isCharacterOverloaded = function() {
-        const current = calculateCurrentLoad();
-        const max = calculateMaxCapacity();
-        return current > max;
-    };
-
     function updateInventoryStatus() {
-        const current = calculateCurrentLoad();
-        const max = calculateMaxCapacity();
+        const currentLoad = calculateCurrentLoad();
+        const maxCapacity = calculateMaxCapacity();
 
         if (loadDisplay) {
-            loadDisplay.textContent = `${current} / ${max}`;
+            loadDisplay.textContent = `${currentLoad} / ${maxCapacity}`;
         }
 
-        const isOverloaded = current > max;
-        const isExcessive = current >= max * 2 && max > 0;
+        const isOverloaded = currentLoad > maxCapacity;
+        const isExcessive =
+            maxCapacity > 0 && currentLoad >= maxCapacity * 2;
 
-        // Define o deslocamento base de acordo com o tamanho escolhido (Pequeno: 5, Médio: 6, Grande: 7)
-        let baseSpeed = 6; // Padrão Médio
-        if (sizeSelect) {
-            if (sizeSelect.value === "pequeno") baseSpeed = 5;
-            else if (sizeSelect.value === "grande") baseSpeed = 7;
-            else baseSpeed = 6; // "medio"
-        }
+        const baseSpeed = getSizeSpeed();
 
-        const speedInput = document.getElementById("speed");
         if (speedInput) {
-            if (isExcessive) speedInput.value = 0;
-            else if (isOverloaded) speedInput.value = Math.max(0, baseSpeed - 2);
-            else speedInput.value = baseSpeed;
+            const speedBase = Number(speedBaseInput?.value);
+            const effectiveBaseSpeed = Number.isFinite(speedBase)
+                ? Math.max(0, speedBase)
+                : baseSpeed;
+
+            if (isExcessive) {
+                speedInput.value = 0;
+            } else if (isOverloaded) {
+                speedInput.value = Math.max(0, effectiveBaseSpeed - 2);
+            } else {
+                speedInput.value = effectiveBaseSpeed;
+            }
         }
 
-        // Força a atualização visual dos atributos e perícias
         updateAllAttributes();
         updateAllSkills();
 
-        if (alertsBox) {
-            let alerts = [];
-            if (bigBackpackCheck && bigBackpackCheck.checked) {
-                alerts.push("🎒 MOCHILA GRANDE: Penalidade ativa de -1 em Força.");
-            }
-            if (isOverloaded && !isExcessive) {
-                alerts.push("⚠️ SOBRECARGA: -2 qds de deslocamento e Desvantagem em Força e Destreza.");
-            }
-            if (isExcessive) {
-                alerts.push("❌ CARGA EXCESSIVA (Dobro do limite): Deslocamento reduzido a 0 e Incapaz de realizar ações!");
-            }
-
-            if (alerts.length > 0) {
-                alertsBox.innerHTML = alerts.join("<br>");
-                alertsBox.style.display = "block";
-            } else {
-                alertsBox.style.display = "none";
-            }
+        if (!alertsBox) {
+            return;
         }
+
+        const alerts = [];
+
+        if (bigBackpackCheck?.checked) {
+            alerts.push("🎒 MOCHILA GRANDE: Penalidade ativa de -1 em Força.");
+        }
+
+        if (isOverloaded && !isExcessive) {
+            alerts.push(
+                "⚠️ SOBRECARGA: -2 qds de deslocamento e Desvantagem em Força e Destreza."
+            );
+        }
+
+        if (isExcessive) {
+            alerts.push(
+                "❌ CARGA EXCESSIVA (Dobro do limite): Deslocamento reduzido a 0 e Incapaz de realizar ações!"
+            );
+        }
+
+        alertsBox.textContent = alerts.join("\n");
+        alertsBox.style.whiteSpace = "pre-line";
+        alertsBox.style.display = alerts.length > 0 ? "block" : "none";
     }
 
-    // Expõe globalmente para o storage acionar logo após recarregar os dados no F5
-    window.updateInventoryStatusGlobal = function() {
-        updateInventoryStatus();
-    };
-
     function addInventoryItem() {
+        if (!itemsContainer) {
+            return;
+        }
+
         if (itemsContainer.children.length >= MAX_ITEMS) {
             alert("Limite máximo de itens atingido.");
             return;
@@ -119,45 +146,106 @@ export function initInventory() {
 
         const card = document.createElement("div");
         card.className = "inventoryItemCard cardItemBox";
+
         card.innerHTML = `
             <div class="inventoryItemTop">
-                <input type="text" placeholder="Nome do item..." class="item-name-input">
-                <label style="font-size:0.75rem; color:#aaa;">Qtd:</label>
-                <input type="number" value="1" min="0" class="item-qty-input">
-                <label style="font-size:0.75rem; color:#aaa;">Peso:</label>
-                <input type="number" value="0" min="0" step="0.5" class="item-weight-input">
-                <button type="button" class="removeItemBtn" title="Excluir">X</button>
+                <input
+                    type="text"
+                    placeholder="Nome do item..."
+                    class="item-name-input"
+                >
+
+                    <label class="itemMetaLabel">
+                    Qtd:
+                </label>
+
+                <input
+                    type="number"
+                    value="1"
+                    min="0"
+                    class="item-qty-input"
+                >
+
+                    <label class="itemMetaLabel">
+                    Peso:
+                </label>
+
+                <input
+                    type="number"
+                    value="0"
+                    min="0"
+                    step="0.5"
+                    class="item-weight-input"
+                >
+
+                <button
+                    type="button"
+                    class="removeItemBtn"
+                    title="Excluir"
+                    aria-label="Excluir item"
+                >
+                    X
+                </button>
             </div>
+
             <textarea placeholder="Descrição do item..."></textarea>
         `;
 
-        card.querySelectorAll("input").forEach(input => {
-            input.addEventListener("input", updateInventoryStatus);
-        });
-
-        card.querySelector(".removeItemBtn").addEventListener("click", () => {
-            card.remove();
-            updateInventoryStatus();
-        });
-
         itemsContainer.appendChild(card);
         updateInventoryStatus();
+    }
+
+    // Eventos delegados: funcionam também para itens restaurados do localStorage.
+    if (itemsContainer) {
+        itemsContainer.addEventListener("input", event => {
+            if (
+                event.target.matches(
+                    ".item-qty-input, .item-weight-input"
+                )
+            ) {
+                updateInventoryStatus();
+            }
+        });
+
+        itemsContainer.addEventListener("click", event => {
+            const removeButton = event.target.closest(".removeItemBtn");
+
+            if (!removeButton) {
+                return;
+            }
+
+            removeButton.closest(".inventoryItemCard")?.remove();
+            updateInventoryStatus();
+        });
     }
 
     if (addBtn) {
         addBtn.addEventListener("click", addInventoryItem);
     }
 
-    // Ouvintes de mudanças nas opções de mochilas e tamanho
-    [backpackCheck, bigBackpackCheck, sizeSelect].forEach(element => {
-        if (element) element.addEventListener("change", updateInventoryStatus);
+    [backpackCheck, bigBackpackCheck].forEach(element => {
+        element?.addEventListener("change", updateInventoryStatus);
     });
 
-    document.addEventListener("input", (e) => {
-        if (e.target && (e.target.id === "strength" || e.target.id === "temp_strength")) {
+    sizeSelect?.addEventListener("change", () => {
+        if (speedBaseInput) speedBaseInput.value = getSizeSpeed();
+        updateInventoryStatus();
+    });
+
+    speedBaseInput?.addEventListener("input", updateInventoryStatus);
+
+    document.addEventListener("input", event => {
+        if (
+            event.target?.id === "strength" ||
+            event.target?.id === "temp_strength"
+        ) {
             updateInventoryStatus();
         }
     });
 
+    registerInventoryOverloadChecker(() => {
+        return calculateCurrentLoad() > calculateMaxCapacity();
+    });
+
     updateInventoryStatus();
-} 
+}

@@ -1,3 +1,5 @@
+import { CONFIG } from '../../core/config.js';
+
 export function initLevelEmblem() {
     const levelInput = document.getElementById('level');
     const container = document.getElementById('levelEmblemContainer');
@@ -40,5 +42,5 @@ export function setResolveState(state) {
         stressOverlay.style.display = 'block';
     }
 
-    localStorage.setItem('lutherian_resolve_state', state);
+    localStorage.setItem(CONFIG.STORAGE_KEYS.RESOLVE_STATE, state);
 }

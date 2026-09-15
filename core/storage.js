@@ -1,6 +1,26 @@
 import { CONFIG } from './config.js';
 
+let storageInitialized = false;
+
+function safeNumber(value, fallback = 0) {
+    const number = Number(value);
+    return Number.isFinite(number) && number >= 0 ? number : fallback;
+}
+
+function readJSON(key, fallback) {
+    try {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : fallback;
+    } catch (error) {
+        console.warn(`Dados inválidos ignorados no armazenamento: ${key}`, error);
+        return fallback;
+    }
+}
+
 export function initLocalStorage() {
+    if (storageInitialized) return;
+    storageInitialized = true;
+
     const STORAGE_KEY = CONFIG.STORAGE_KEYS.SHEET_DATA;
     const DYNAMIC_LISTS_KEY = CONFIG.STORAGE_KEYS.DYNAMIC_LISTS;
 
@@ -29,6 +49,7 @@ export function initLocalStorage() {
 
             const identifier = field.id || field.name;
             if (!identifier) return;
+            if (identifier === 'speed') return;
 
             if (field.type === 'checkbox') {
                 data[identifier] = field.checked;
@@ -40,7 +61,7 @@ export function initLocalStorage() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
-    window.saveAllDynamicLists = function() {
+    function saveAllDynamicLists() {
         if (isInitializing) return;
         
         const listsData = {};
@@ -72,124 +93,105 @@ export function initLocalStorage() {
 
     document.addEventListener('input', (e) => {
         if (e.target.closest('.dynamicList') || e.target.closest('#inventoryItemsList')) {
-            window.saveAllDynamicLists();
+            saveAllDynamicLists();
         }
     });
 
     document.addEventListener('click', (e) => {
         if (e.target.classList.contains('removeItemBtn') || e.target.classList.contains('addItemBtn') || e.target.id === 'addInventoryItemBtn') {
-            setTimeout(window.saveAllDynamicLists, 150);
+            setTimeout(saveAllDynamicLists, 150);
         }
     });
 
     function loadData() {
-        const savedJSON = localStorage.getItem(STORAGE_KEY);
-        const savedListsJSON = localStorage.getItem(DYNAMIC_LISTS_KEY);
+        const savedData = readJSON(STORAGE_KEY, {});
+        const savedLists = readJSON(DYNAMIC_LISTS_KEY, {});
+        const data = savedData && typeof savedData === 'object' && !Array.isArray(savedData)
+            ? savedData
+            : {};
+        const listsData = savedLists && typeof savedLists === 'object' && !Array.isArray(savedLists)
+            ? savedLists
+            : {};
 
-        try {
-            if (savedListsJSON) {
-                const listsData = JSON.parse(savedListsJSON);
-                
-                Object.keys(listsData).forEach(containerId => {
-                    const container = document.getElementById(containerId);
-                    if (!container) return;
+        Object.entries(listsData).forEach(([containerId, savedItems]) => {
+            const container = document.getElementById(containerId);
+            if (!container || !Array.isArray(savedItems)) return;
 
-                    container.innerHTML = "";
-                    const items = listsData[containerId];
+            container.replaceChildren();
+            const maxItems = containerId === 'inventoryItemsList'
+                ? CONFIG.LIMITS.MAX_INVENTORY_ITEMS
+                : CONFIG.LIMITS.MAX_DYNAMIC_ITEMS;
 
-                    items.forEach(itemData => {
-                        const itemDiv = document.createElement("div");
-                        const safeText = itemData.text !== undefined && itemData.text !== null ? itemData.text : "";
-                        const safeDesc = itemData.desc !== undefined && itemData.desc !== null ? itemData.desc : "";
+            savedItems.slice(0, maxItems).forEach(itemData => {
+                const itemDiv = document.createElement('div');
+                const isInventory = containerId === 'inventoryItemsList';
+                const isCard = container.classList.contains('cardList');
 
-                        if (containerId === "inventoryItemsList") {
-                            itemDiv.className = "inventoryItemCard cardItemBox";
-                            itemDiv.innerHTML = `
-                                <div class="inventoryItemTop">
-                                    <input type="text" placeholder="Nome do item..." class="item-name-input" value="${safeText}">
-                                    <label style="font-size:0.75rem; color:#aaa;">Qtd:</label>
-                                    <input type="number" value="${itemData.qty || 1}" min="0" class="item-qty-input">
-                                    <label style="font-size:0.75rem; color:#aaa;">Peso:</label>
-                                    <input type="number" value="${itemData.weight || 0}" min="0" step="0.5" class="item-weight-input">
-                                    <button type="button" class="removeItemBtn" title="Excluir">X</button>
-                                </div>
-                                <textarea placeholder="Descrição do item...">${safeDesc}</textarea>
-                            `;
-                        } else {
-                            const isCard = container.classList.contains("cardList");
+                if (isInventory) {
+                    itemDiv.className = 'inventoryItemCard cardItemBox';
+                    itemDiv.innerHTML = `
+                        <div class="inventoryItemTop">
+                            <input type="text" placeholder="Nome do item..." class="item-name-input">
+                            <label class="itemMetaLabel">Qtd:</label>
+                            <input type="number" min="0" class="item-qty-input">
+                            <label class="itemMetaLabel">Peso:</label>
+                            <input type="number" min="0" step="0.5" class="item-weight-input">
+                            <button type="button" class="removeItemBtn" title="Excluir" aria-label="Excluir item">X</button>
+                        </div>
+                        <textarea placeholder="Descrição do item..."></textarea>
+                    `;
+                } else if (isCard) {
+                    itemDiv.className = 'cardItemBox';
+                    itemDiv.innerHTML = `
+                        <div class="cardItemTop">
+                            <input type="text" placeholder="Nome / Título..." class="personal-input">
+                            <button type="button" class="removeItemBtn" title="Remover" aria-label="Remover item">X</button>
+                        </div>
+                        <textarea placeholder="Descrição..."></textarea>
+                    `;
+                } else {
+                    itemDiv.className = 'stringItemRow';
+                    itemDiv.innerHTML = `
+                        <input type="text" placeholder="Digite o nome..." class="personal-input">
+                        <button type="button" class="removeItemBtn" title="Remover" aria-label="Remover item">X</button>
+                    `;
+                }
 
-                            if (isCard) {
-                                itemDiv.className = "cardItemBox";
-                                itemDiv.innerHTML = `
-                                    <div class="cardItemTop">
-                                        <input type="text" placeholder="Nome / Título..." class="personal-input" value="${safeText}">
-                                        <button type="button" class="removeItemBtn" title="Remover">X</button>
-                                    </div>
-                                    <textarea placeholder="Descrição...">${safeDesc}</textarea>
-                                `;
-                            } else {
-                                itemDiv.className = "stringItemRow";
-                                itemDiv.innerHTML = `
-                                    <input type="text" placeholder="Digite o nome..." class="personal-input" value="${safeText}">
-                                    <button type="button" class="removeItemBtn" title="Remover">X</button>
-                                `;
-                            }
-                        }
+                const textInput = itemDiv.querySelector('input[type="text"]');
+                const numberInputs = itemDiv.querySelectorAll('input[type="number"]');
+                const textarea = itemDiv.querySelector('textarea');
 
-                        const removeBtn = itemDiv.querySelector(".removeItemBtn");
-                        if (removeBtn) {
-                            removeBtn.addEventListener("click", () => {
-                                itemDiv.remove();
-                                window.saveAllDynamicLists();
-                            });
-                        }
+                if (textInput) textInput.value = String(itemData?.text ?? '');
+                if (numberInputs[0]) numberInputs[0].value = safeNumber(itemData?.qty, 1);
+                if (numberInputs[1]) numberInputs[1].value = safeNumber(itemData?.weight, 0);
+                if (textarea) textarea.value = String(itemData?.desc ?? '');
 
-                        itemDiv.querySelectorAll("input, textarea").forEach(input => {
-                            input.addEventListener("input", () => window.saveAllDynamicLists());
-                        });
+                container.appendChild(itemDiv);
+            });
+        });
 
-                        container.appendChild(itemDiv);
-                    });
-                });
+        Object.entries(data).forEach(([identifier, value]) => {
+            if (identifier === 'speed') return;
+
+            const normalizedIdentifier = identifier === 'chaClass'
+                ? 'characterClass'
+                : identifier;
+            const field = document.getElementById(normalizedIdentifier);
+            if (!field) return;
+
+            if (field.type === 'checkbox') {
+                field.checked = Boolean(value);
+                field.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+                field.value = String(value ?? '');
+                field.dispatchEvent(new Event('input', { bubbles: true }));
+                field.dispatchEvent(new Event('change', { bubbles: true }));
             }
+        });
 
-            if (savedJSON) {
-                const data = JSON.parse(savedJSON);
-                Object.keys(data).forEach(identifier => {
-                    const field = document.getElementById(identifier) || document.querySelector(`[name="${identifier}"]`);
-                    if (!field) return;
-
-                    if (field.type === 'checkbox') {
-                        field.checked = data[identifier];
-                        field.dispatchEvent(new Event('change', { bubbles: true }));
-                    } else if (field.tagName === 'SELECT') {
-                        field.value = data[identifier];
-                        field.dispatchEvent(new Event('change', { bubbles: true }));
-                    } else {
-                        field.value = data[identifier];
-                        field.dispatchEvent(new Event('input', { bubbles: true }));
-                        field.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                });
-            }
-
-            console.log("Dados estáticos e listas carregados.");
-        } catch (e) {
-            console.error("Erro ao carregar dados do storage:", e);
-        } finally {
-            if (typeof window.updateInventoryStatusGlobal === 'function') {
-                window.updateInventoryStatusGlobal();
-            }
-
-            setTimeout(() => {
-                isInitializing = false;
-            }, 300);
-        }
+        isInitializing = false;
+        console.log('Dados estáticos e listas carregados.');
     }
 
-    if (document.readyState === 'loading') {
-        window.addEventListener('DOMContentLoaded', loadData);
-    } else {
-        loadData();
-    }
+    loadData();
 }
