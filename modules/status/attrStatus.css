@@ -135,6 +135,19 @@
     box-sizing: border-box;
     margin-top: -13px;
 }
+
+.threatLevelControl {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.threatLevelIcon {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    flex: 0 0 28px;
+}
 .deathSaveBoxes {
     display: flex;
     justify-content: center;

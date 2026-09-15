@@ -16,6 +16,7 @@ import { initStatus } from './modules/status/status.js';
 import { initLevelEmblem } from './modules/level/levelManager.js';
 import { initCurios } from './modules/header/curios.js';
 import { startApplicationOnce } from './core/appState.js';
+import { initAudioInteractions } from './core/audio.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     if (!startApplicationOnce()) return;
@@ -42,6 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // O carregamento precisa acontecer antes dos módulos que calculam status,
     // inventário e efeitos derivados dos valores restaurados.
     safeInit("LocalStorage", initLocalStorage);
+    safeInit("AudioInteractions", initAudioInteractions);
 
     // Inicializações dependentes dos dados restaurados.
     safeInit("Status", initStatus);

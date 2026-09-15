@@ -1,3 +1,5 @@
+import { playSound, playSoundAfter } from '../../core/audio.js';
+
 export function initResources() {
     const deathFailInputs = [
         document.getElementById("deathFail1"),
@@ -8,6 +10,7 @@ export function initResources() {
     const vitalityTotalInput = document.getElementById("vitalityTotal");
     const vitalityBarFill = document.getElementById("vitalityBarFill");
     const vitalityRange = document.getElementById("vitalityRange");
+    let previousVitality = Number(vitalityCurrentInput?.value) || 0;
 
     function updateVitalityBar() {
         const current = parseFloat(vitalityCurrentInput?.value) || 0;
@@ -19,9 +22,10 @@ export function initResources() {
             vitalityRange.value = String(Math.max(0, Math.min(Number(vitalityRange.max), current)));
         }
         if (vitalityBarFill) vitalityBarFill.style.width = `${percentage}%`;
+
     }
 
-    function updateDeathSaves() {
+    function updateDeathSaves({ playDeathSound = false } = {}) {
         const allFailed = deathFailInputs.every(input => input?.checked);
 
         if (vitalityCurrentInput) {
@@ -30,10 +34,15 @@ export function initResources() {
         }
 
         updateVitalityBar();
+
+        if (allFailed && playDeathSound) {
+            const deathAudio = playSound('deathsDoor');
+            playSoundAfter('statusInZero', deathAudio, { fallbackDelay: 500 });
+        }
     }
 
     deathFailInputs.forEach(input => {
-        input?.addEventListener("change", updateDeathSaves);
+        input?.addEventListener("change", () => updateDeathSaves({ playDeathSound: true }));
     });
 
     vitalityCurrentInput?.addEventListener("input", () => {
@@ -41,12 +50,22 @@ export function initResources() {
         updateVitalityBar();
     });
 
+    function finishVitalityEdit() {
+        const current = Number(vitalityCurrentInput?.value) || 0;
+        if (current > previousVitality) playSound('vitalityHeal');
+        if (current === 0 && previousVitality > 0) playSound('statusInZero');
+        previousVitality = current;
+    }
+
+    vitalityCurrentInput?.addEventListener('change', finishVitalityEdit);
+
     vitalityTotalInput?.addEventListener("input", updateVitalityBar);
     vitalityRange?.addEventListener("input", () => {
         if (vitalityCurrentInput) vitalityCurrentInput.value = vitalityRange.value;
         updateDeathSaves();
         updateVitalityBar();
     });
+    vitalityRange?.addEventListener('change', finishVitalityEdit);
 
     const willpowerCurrentInput = document.getElementById("willpowerCurrent");
     const willpowerTotalInput = document.getElementById("willpowerTotal");
@@ -67,10 +86,21 @@ export function initResources() {
 
     willpowerCurrentInput?.addEventListener("input", updateWillpowerBar);
     willpowerTotalInput?.addEventListener("input", updateWillpowerBar);
+    let previousWillpower = Number(willpowerCurrentInput?.value) || 0;
+
+    function updateWillpowerAudio() {
+        const current = Number(willpowerCurrentInput?.value) || 0;
+        if (current > previousWillpower) playSound('willHeal');
+        if (current === 0 && previousWillpower > 0) playSound('statusInZero');
+        previousWillpower = current;
+    }
+
+    willpowerCurrentInput?.addEventListener('change', updateWillpowerAudio);
     willpowerRange?.addEventListener("input", () => {
         if (willpowerCurrentInput) willpowerCurrentInput.value = willpowerRange.value;
         updateWillpowerBar();
     });
+    willpowerRange?.addEventListener('change', updateWillpowerAudio);
 
     updateDeathSaves();
     updateVitalityBar();

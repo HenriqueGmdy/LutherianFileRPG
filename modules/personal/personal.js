@@ -1,3 +1,5 @@
+import { playSound } from '../../core/audio.js';
+
 export function initPersonalListeners() {
     const MAX_ITEMS = 10;
 
@@ -8,6 +10,7 @@ export function initPersonalListeners() {
 
         // Limita a 10 elementos por lista
         if (container.children.length >= MAX_ITEMS) {
+            playSound('clickInvalid');
             alert("Você atingiu o limite máximo de 10 itens para esta lista.");
             return;
         }

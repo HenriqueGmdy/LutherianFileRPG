@@ -1,4 +1,5 @@
 import { CONFIG } from './config.js';
+import { playSound } from './audio.js';
 
 function readJSON(key, fallback = {}) {
     try {
@@ -14,7 +15,8 @@ export function initThemeEngine() {
     const dropdown = document.getElementById('optionsDropdown');
     const themePanel = document.getElementById('themeCustomizerPanel');
     const themeOptBtn = document.getElementById('menuOptTheme');
-    const backBtn = document.getElementById('backToMenuBtn');
+    const menuCloseBtn = document.getElementById('menuCloseBtn');
+    const themeCloseBtn = document.getElementById('themeCloseBtn');
     
     // Elementos do Modal de Reset
     const resetOptBtn = document.getElementById('menuOptReset');
@@ -22,20 +24,83 @@ export function initThemeEngine() {
     const cancelResetBtn = document.getElementById('cancelResetBtn');
     const confirmResetBtn = document.getElementById('confirmResetBtn');
 
-    // Abre/fecha o menu principal de opções ao clicar nas três bolinhas
+    let dragState = null;
+    let suppressOutsideClick = false;
+
+    const closePanels = () => {
+        if (dropdown) dropdown.style.display = 'none';
+        if (themePanel) themePanel.style.display = 'none';
+    };
+
+    // Abre/fecha o menu principal de opções
     if (menuBtn && dropdown && themePanel) {
         menuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             const isOpen = dropdown.style.display === 'block' || themePanel.style.display === 'block';
             if (isOpen) {
-                dropdown.style.display = 'none';
-                themePanel.style.display = 'none';
+                closePanels();
+                playSound('closeMenu');
             } else {
                 dropdown.style.display = 'block';
                 themePanel.style.display = 'none';
+                playSound('openMenu');
             }
         });
     }
+
+    menuCloseBtn?.addEventListener('click', (event) => {
+        event.stopPropagation();
+        closePanels();
+        playSound('closeMenu');
+    });
+
+    themeCloseBtn?.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (themePanel) themePanel.style.display = 'none';
+        if (dropdown) dropdown.style.display = 'block';
+        playSound('colorClose');
+    });
+
+    const bindDrag = (panel, excludedSelectors) => {
+        panel?.addEventListener('mousedown', (event) => {
+            if (event.button !== 0 || event.target.closest(excludedSelectors)) return;
+
+            const panelRect = panel.getBoundingClientRect();
+            dragState = {
+                panel,
+                offsetX: event.clientX - panelRect.left,
+                offsetY: event.clientY - panelRect.top
+            };
+            suppressOutsideClick = false;
+            panel.style.position = 'fixed';
+            panel.style.left = `${panelRect.left}px`;
+            panel.style.top = `${panelRect.top}px`;
+            panel.style.right = 'auto';
+            event.preventDefault();
+        });
+    };
+
+    bindDrag(dropdown, 'button, input, label');
+    bindDrag(themePanel, 'button, input, label');
+
+    document.addEventListener('mousemove', (event) => {
+        if (!dragState) return;
+
+        const panel = dragState.panel;
+        const panelRect = panel.getBoundingClientRect();
+        const maxLeft = Math.max(0, window.innerWidth - panelRect.width);
+        const maxTop = Math.max(0, window.innerHeight - panelRect.height);
+        const left = Math.min(Math.max(0, event.clientX - dragState.offsetX), maxLeft);
+        const top = Math.min(Math.max(0, event.clientY - dragState.offsetY), maxTop);
+
+        suppressOutsideClick = true;
+        panel.style.left = `${left}px`;
+        panel.style.top = `${top}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+        dragState = null;
+    });
 
     // Clicar em "Personalizar Tema" esconde o menu principal e abre o painel de cores
     if (themeOptBtn && dropdown && themePanel) {
@@ -43,6 +108,7 @@ export function initThemeEngine() {
             e.stopPropagation();
             dropdown.style.display = 'none';
             themePanel.style.display = 'block';
+            playSound('colorOpen');
         });
     }
 
@@ -76,26 +142,34 @@ export function initThemeEngine() {
             sheetKeys.forEach(key => {
                 localStorage.removeItem(key);
             });
-            location.reload();
-        });
-    }
+            const resetAudio = playSound('fileReseted');
+            let hasReloaded = false;
+            const reloadAfterResetAudio = () => {
+                if (hasReloaded) return;
+                hasReloaded = true;
+                location.reload();
+            };
 
-    // Botão de "Voltar" dentro do painel de cores retorna ao menu de opções
-    if (backBtn && themePanel && dropdown) {
-        backBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            themePanel.style.display = 'none';
-            dropdown.style.display = 'block';
+            resetAudio?.addEventListener('ended', reloadAfterResetAudio, { once: true });
+            window.setTimeout(reloadAfterResetAudio, 5000);
         });
     }
 
     document.addEventListener('click', (e) => {
+        if (suppressOutsideClick) {
+            suppressOutsideClick = false;
+            return;
+        }
+
         if (resetModal && resetModal.style.display === 'flex') return;
 
         if (dropdown && themePanel && menuBtn) {
             if (!dropdown.contains(e.target) && !themePanel.contains(e.target) && e.target !== menuBtn) {
-                dropdown.style.display = 'none';
-                themePanel.style.display = 'none';
+                const wasThemeOpen = themePanel.style.display === 'block';
+                const wasMenuOpen = dropdown.style.display === 'block';
+                closePanels();
+                if (wasThemeOpen) playSound('colorClose');
+                else if (wasMenuOpen) playSound('closeMenu');
             }
         }
     });
@@ -121,6 +195,8 @@ export function initThemeEngine() {
         rootStyles.setProperty(cssVar, val);
         const input = document.getElementById(key);
         if (input) input.value = val;
+        const preview = document.getElementById(`preview${key.charAt(0).toUpperCase()}${key.slice(1)}`);
+        if (preview) preview.style.backgroundColor = val;
     };
 
     const applyAllColors = (themeSource) => {
@@ -140,6 +216,8 @@ export function initThemeEngine() {
         rootStyles.setProperty(property, value);
         savedTheme[key] = value;
         localStorage.setItem(CONFIG.STORAGE_KEYS.THEME, JSON.stringify(savedTheme));
+        const preview = document.getElementById(`preview${key.charAt(0).toUpperCase()}${key.slice(1)}`);
+        if (preview) preview.style.backgroundColor = value;
     };
 
     const bindColorInput = (id, cssVar, key) => {

@@ -1,3 +1,5 @@
+import { playSound } from '../../core/audio.js';
+
 export function initCurios() {
     const nameInput = document.getElementById("name");
     const audio = document.getElementById("easterEggAudio");
@@ -13,5 +15,9 @@ export function initCurios() {
                 audio.play().catch(err => console.log("Áudio bloqueado pelo navegador:", err));
             }
         }
+    });
+
+    nameInput.addEventListener("change", () => {
+        if (nameInput.value.trim()) playSound('nameUpdated');
     });
 }

@@ -2,6 +2,7 @@ import { CONFIG } from '../../core/config.js';
 import { registerInventoryOverloadChecker } from '../../core/appState.js';
 import { updateAllAttributes } from '../attributes/attributes.js';
 import { updateAllSkills } from '../attributes/skills.js';
+import { playSound } from '../../core/audio.js';
 
 export function initInventory() {
     const MAX_ITEMS = CONFIG.LIMITS.MAX_INVENTORY_ITEMS;
@@ -16,6 +17,8 @@ export function initInventory() {
     const sizeSelect = document.getElementById("size");
     const speedBaseInput = document.getElementById("speedBase");
     const speedInput = document.getElementById("speed");
+    const coinsInput = document.getElementById("coinsInput");
+    let previousCoins = coinsInput?.value ?? '';
 
     function getSizeSpeed() {
         if (sizeSelect?.value === "pequeno") {
@@ -140,6 +143,7 @@ export function initInventory() {
         }
 
         if (itemsContainer.children.length >= MAX_ITEMS) {
+            playSound('clickInvalid');
             alert("Limite máximo de itens atingido.");
             return;
         }
@@ -224,7 +228,15 @@ export function initInventory() {
     }
 
     [backpackCheck, bigBackpackCheck].forEach(element => {
-        element?.addEventListener("change", updateInventoryStatus);
+        element?.addEventListener("change", () => {
+            playSound('backpacks');
+            updateInventoryStatus();
+        });
+    });
+
+    coinsInput?.addEventListener('input', () => {
+        if (coinsInput.value !== previousCoins) playSound('coinsChange');
+        previousCoins = coinsInput.value;
     });
 
     sizeSelect?.addEventListener("change", () => {

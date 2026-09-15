@@ -1,4 +1,5 @@
 import { CONFIG } from '../../core/config.js';
+import { playSound } from '../../core/audio.js';
 
 const conditionsList = [
     { name: "Com medo", desc: "Você adquire desvantagem em todos os testes e sofre o dobro de estresse de todas as fontes.", type: "afflicted" },
@@ -25,6 +26,7 @@ const conditionsList = [
 
 export function initStress() {
     let isStarting = true;
+    let previousStress = Number(document.getElementById("stress")?.value) || 0;
     const stressRange = document.getElementById("stressRange");
     const stressNumberInput = document.getElementById("stress");
     const stressFill = document.getElementById("stressFill");
@@ -68,6 +70,14 @@ export function initStress() {
         if (!isStarting && stress === 0) clearActiveCondition();
     }
 
+    function finishStressEdit() {
+        const stress = Number.parseInt(stressNumberInput?.value, 10) || 0;
+        if (stress < previousStress) playSound('stressHeal');
+        if (stress > previousStress) playSound('stressIncrease');
+        if (stress === CONFIG.LIMITS.MAX_STRESS && previousStress !== stress) playSound('stressMax');
+        previousStress = stress;
+    }
+
     function applySavedCondition() {
         const savedConditionData = localStorage.getItem(CONFIG.STORAGE_KEYS.ACTIVE_CONDITION);
         const savedResolve = localStorage.getItem(CONFIG.STORAGE_KEYS.RESOLVE_STATE);
@@ -95,11 +105,13 @@ export function initStress() {
         const hasActiveCondition = localStorage.getItem(CONFIG.STORAGE_KEYS.ACTIVE_CONDITION);
 
         if (currentStress < 100) {
+            playSound('clickInvalid');
             const charName = document.getElementById("name")?.value || "o personagem";
             alert(`Por sorte, ${charName} não está estressado(a) o suficiente…`);
             return;
         }
         if (hasActiveCondition) {
+            playSound('clickInvalid');
             alert("Você já possui uma condição de estresse ativa! É preciso zerar o estresse antes de rolar novamente.");
             return;
         }
@@ -152,6 +164,8 @@ export function initStress() {
 
     stressRange?.addEventListener("input", () => updateStress(stressRange.value));
     stressNumberInput?.addEventListener("input", () => updateStress(stressNumberInput.value));
+    stressRange?.addEventListener('change', finishStressEdit);
+    stressNumberInput?.addEventListener('change', finishStressEdit);
     rollStressBtn?.addEventListener("click", resolveCondition);
 
     updateStress(stressNumberInput?.value || 0);

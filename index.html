@@ -30,64 +30,80 @@
         <!-- MENU FLUTUANTE DE OPÇÕES (Canto Superior Direito) -->
         <div class="optionsMenuWrapper">
             <button type="button" id="optionsMenuBtn" class="optionsMenuButton" title="Opções">
-                ⋮
+                <img src="assets/images/menus/options.png" alt="Abrir opções">
             </button>
             
             <!-- Menu Principal de Opções -->
             <div id="optionsDropdown" class="optionsDropdown">
+                <img class="optionsPanelBackground" src="assets/images/menus/menu.background.png" alt="">
+                <button type="button" class="optionsCloseButton" id="menuCloseBtn" title="Fechar menu" aria-label="Fechar menu">
+                    <img src="assets/images/general/icon.frame.png" alt="">
+                    <img src="assets/images/general/cancel.icon.png" alt="">
+                </button>
+                <div class="optionsPanelContent">
                 <button type="button" id="menuOptTheme" class="optionsMenuItem">
-                    ✎ Personalizar Tema
+                    <img src="assets/images/menus/icon_recolor.png" alt="">
+                    <span>Personalizar Tema</span>
                 </button>
                 
                 <button type="button" id="menuOptReset" class="optionsMenuItem optionsMenuItem--danger">
-                    🗑️ Resetar Ficha
+                    <img src="assets/images/menus/reset.file.icon.png" alt="">
+                    <span>Resetar Ficha</span>
                 </button>
+                </div>
             </div>
 
             <!-- Modal de Confirmação de Reset -->
             <div id="resetConfirmModal" class="resetModal">
                 <div class="resetModalContent">
-                    <h3 class="resetModalTitle">⚠️ Atenção</h3>
+                    <img class="resetModalBackground" src="assets/images/menus/warning.background.png" alt="">
+                    <h3 class="resetModalTitle">Atenção</h3>
                     <p class="resetModalMessage">
                         Ao confirmar, você apagará todas as informações da ficha para sempre!
                     </p>
                     <div class="resetModalActions">
-                        <button type="button" id="cancelResetBtn" class="modalButton modalButton--cancel">Cancelar</button>
-                        <button type="button" id="confirmResetBtn" class="modalButton modalButton--confirm">Confirmar</button>
+                        <button type="button" id="confirmResetBtn" class="modalButton modalButton--confirm" aria-label="Confirmar reset" title="Confirmar">
+                            <img src="assets/images/menus/activity.confirm_button.png" alt="">
+                        </button>
+                        <button type="button" id="cancelResetBtn" class="modalButton modalButton--cancel" aria-label="Cancelar reset" title="Cancelar">
+                            <img src="assets/images/menus/activity.cancel_button.png" alt="">
+                        </button>
                     </div>
                 </div>
             </div>
 
             <!-- Sub-tela de Customização de Cores -->
             <div id="themeCustomizerPanel" class="themeCustomizerPanel">
-                <h4 class="themePanelTitle">
-                    ✏ Cores do Tema
-                    <button type="button" id="backToMenuBtn" class="themePanelBack">Voltar</button>
-                </h4>
+                <img class="optionsPanelBackground" src="assets/images/menus/menu.background.png" alt="">
+                <button type="button" class="optionsCloseButton" id="themeCloseBtn" title="Fechar menu" aria-label="Fechar menu">
+                    <img src="assets/images/general/icon.frame.png" alt="">
+                    <img src="assets/images/general/cancel.icon.png" alt="">
+                </button>
+                <h4 class="themePanelTitle">Cores do Tema</h4>
                 <div id="themeControls" class="themeControls">
-                    <label class="themeControl">
-                        Fundo: <input type="color" id="colorBgMain" value="#141414">
+                    <label class="themeControl" title="Fundo">
+                        <span>Fundo</span><span class="themeColorFrame"><img src="assets/images/menus/frame_default.png" alt=""><span id="previewColorBgMain" class="themeColorPreview"></span><input type="color" id="colorBgMain" value="#141414" aria-label="Cor do fundo"></span>
                     </label>
-                    <label class="themeControl">
-                        Blocos: <input type="color" id="colorBgFieldset" value="#1c1c1c">
+                    <label class="themeControl" title="Blocos">
+                        <span>Blocos</span><span class="themeColorFrame"><img src="assets/images/menus/frame_default.png" alt=""><span id="previewColorBgFieldset" class="themeColorPreview"></span><input type="color" id="colorBgFieldset" value="#1c1c1c" aria-label="Cor dos blocos"></span>
                     </label>
-                    <label class="themeControl">
-                        Linhas: <input type="color" id="colorLines" value="#ffffff">
+                    <label class="themeControl" title="Linhas">
+                        <span>Linhas</span><span class="themeColorFrame"><img src="assets/images/menus/frame_default.png" alt=""><span id="previewColorLines" class="themeColorPreview"></span><input type="color" id="colorLines" value="#ffffff" aria-label="Cor das linhas"></span>
                     </label>
-                    <label class="themeControl">
-                        Caixas de Texto: <input type="color" id="colorBgInputs" value="#2b2b2b">
+                    <label class="themeControl" title="Caixas de texto">
+                        <span>Caixas</span><span class="themeColorFrame"><img src="assets/images/menus/frame_default.png" alt=""><span id="previewColorBgInputs" class="themeColorPreview"></span><input type="color" id="colorBgInputs" value="#2b2b2b" aria-label="Cor das caixas de texto"></span>
                     </label>
-                    <label class="themeControl">
-                        Texto Geral: <input type="color" id="colorText" value="#ffffff">
+                    <label class="themeControl" title="Texto geral">
+                        <span>Texto</span><span class="themeColorFrame"><img src="assets/images/menus/frame_default.png" alt=""><span id="previewColorText" class="themeColorPreview"></span><input type="color" id="colorText" value="#ffffff" aria-label="Cor do texto"></span>
                     </label>
-                    <label class="themeControl">
-                        Destaques: <input type="color" id="colorAccent" value="#ffffff">
+                    <label class="themeControl" title="Destaques">
+                        <span>Destaques</span><span class="themeColorFrame"><img src="assets/images/menus/frame_default.png" alt=""><span id="previewColorAccent" class="themeColorPreview"></span><input type="color" id="colorAccent" value="#ffffff" aria-label="Cor dos destaques"></span>
                     </label>
-                    <label class="themeControl">
-                        Desvantagens: <input type="color" id="colorNegative" value="#c00101">
+                    <label class="themeControl" title="Desvantagens">
+                        <span>Desvantagens</span><span class="themeColorFrame"><img src="assets/images/menus/frame_default.png" alt=""><span id="previewColorNegative" class="themeColorPreview"></span><input type="color" id="colorNegative" value="#c00101" aria-label="Cor das desvantagens"></span>
                     </label>
-                    <label class="themeControl">
-                        Vantagens: <input type="color" id="colorPositive" value="#ffcc00">
+                    <label class="themeControl" title="Vantagens">
+                        <span>Vantagens</span><span class="themeColorFrame"><img src="assets/images/menus/frame_default.png" alt=""><span id="previewColorPositive" class="themeColorPreview"></span><input type="color" id="colorPositive" value="#ffcc00" aria-label="Cor das vantagens"></span>
                     </label>
                     <button type="button" id="resetThemeBtn" class="themeResetButton">Restaurar Padrão</button>
                 </div>
@@ -333,14 +349,17 @@
 
                         <div class="inlineDataGroup threatLevelGroup">
                             <label for="threatLevel">Nível de Ameaça:</label>
-                            <select id="threatLevel" class="invisibleSelect">
-                                <option value="nulo">Nulo</option>
-                                <option value="sublime">Sublime</option>
-                                <option value="besta">Besta</option>
-                                <option value="demonio">Demônio</option>
-                                <option value="anciao">Ancião</option>
-                                <option value="radiante">Radiante</option>
-                            </select>
+                            <div class="threatLevelControl">
+                                <select id="threatLevel" class="invisibleSelect">
+                                    <option value="nulo">Nulo</option>
+                                    <option value="sublime">Sublime</option>
+                                    <option value="besta">Besta</option>
+                                    <option value="demonio">Demônio</option>
+                                    <option value="anciao">Ancião</option>
+                                    <option value="radiante">Radiante</option>
+                                </select>
+                                <img id="threatLevelIcon" class="threatLevelIcon" src="assets/images/threat/null.png" alt="Nulo">
+                            </div>
                         </div>
                     </div>
                 </div>

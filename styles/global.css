@@ -5,7 +5,7 @@
 @import url('variables.css');
 @import url('utilities.css');
 @import url('tabs.css');
-@import url('components.css');
+@import url('components.css?v=6');
 
 /* Módulos isolados por domínio */
 @import url('../modules/attributes/attributes.css?v=2');
