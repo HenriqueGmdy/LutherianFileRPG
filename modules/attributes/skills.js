@@ -51,7 +51,7 @@ export function renderSkills() {
             skillAttributeMap[skill.id] = skill.attrId;
             columnHTML += `
                 <div class="skillGroup">
-                    <label for="skill_${skill.id}">${skill.name} <span class="skillAttr">(${skill.attr})</span></label>
+                    <label for="skill_${skill.id}" data-tooltip="skill.${skill.id}">${skill.name} <span class="skillAttr">(${skill.attr})</span></label>
                     <input type="number" id="skill_${skill.id}" value="0" class="skill-input">
                     <span id="mod_skill_${skill.id}" class="skillMod">d20</span>
                 </div>

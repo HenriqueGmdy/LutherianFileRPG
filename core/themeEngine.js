@@ -137,7 +137,12 @@ export function initThemeEngine() {
                 CONFIG.STORAGE_KEYS.DYNAMIC_LISTS,
                 CONFIG.STORAGE_KEYS.IMAGE,
                 CONFIG.STORAGE_KEYS.ACTIVE_CONDITION,
-                CONFIG.STORAGE_KEYS.RESOLVE_STATE
+                CONFIG.STORAGE_KEYS.RESOLVE_STATE,
+                CONFIG.STORAGE_KEYS.SCHEMA_VERSION,
+                CONFIG.STORAGE_KEYS.BACKUP_LAST,
+                CONFIG.STORAGE_KEYS.BACKUP_PRE_MIGRATION,
+                `${CONFIG.STORAGE_KEYS.SHEET_DATA}_corrupt`,
+                `${CONFIG.STORAGE_KEYS.DYNAMIC_LISTS}_corrupt`
             ];
 
             sheetKeys.forEach(key => {

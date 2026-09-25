@@ -51,7 +51,7 @@ export const originsData = {
         name: "Desconhecido",
         skills: [],
         skillsName: "Especial (As duas primeiras a rolarem 20 natural)",
-        campfireSkill: "Gatilho sensorial: Ao descobrir um fragmento significativo de seu passado, o personagem ganha 1 de inspiração."
+        campfireSkill: "Gatilho sensorial: Ao descobrir um fragmento significativo de seu passado, o personagem ganha inspiração."
     },
     "desertor": {
         name: "Desertor",
@@ -69,7 +69,7 @@ export const originsData = {
         name: "Herói local",
         skills: ["luta", "vontade"],
         skillsName: "Luta e Força de Vontade",
-        campfireSkill: "Logo atrás de mim: Você possui +4 de moral com todas as pessoas da sua região. Em um descanso, você pode fazer um teste de Sugestão para ganhar comida ou abrigo de graça."
+        campfireSkill: "Logo atrás de mim: Você possui +4 de moral com todas as pessoas da sua região. Em um descanso, você pode fazer um teste de Autoridade para ganhar comida ou abrigo de graça."
     },
     "impostor": {
         name: "Impostor",
@@ -87,7 +87,7 @@ export const originsData = {
         name: "Mercenário",
         skills: ["pontaria"],
         skillsName: "Pontaria e +1 de sua escolha",
-        campfireSkill: "Caça remunerada: Você ganha a habilidade de firmar contratos em cenas de descanso onde seja possível."
+        campfireSkill: "Caça remunerada: Você ganha o talento Caçador conhecido."
     },
     "miliciano": {
         name: "Miliciano",
@@ -117,12 +117,12 @@ export const originsData = {
         name: "Sábio",
         skills: ["enciclopedia", "uniao"],
         skillsName: "Enciclopédia e União",
-        campfireSkill: "Conhecimento geracional: Você pode gastar 1 ponto de fogueira para adquirir +3 em testes de Enciclopédia até o próximo descanso."
+        campfireSkill: "Conhecimento geracional: Você pode gastar 1 ponto de fogueira para adquirir +2 em testes de Enciclopédia até o próximo descanso."
     },
     "refugiado": {
         name: "Refugiado",
         skills: ["sobrevivencia", "empatia"],
         skillsName: "Sobrevivência e Empatia",
-        campfireSkill: "Nossa dor é a mesma: Durante um descanso e gastando 2 pontos de fogueira, você e um aliado recuperam 100 de estresse."
+        campfireSkill: "Nossa dor é a mesma: Durante um descanso e gastando 2 pontos de fogueira, você e um aliado que tiverem o mesmo medo/fobia ou condição de estresse recuperam 100 de estresse."
     }
 };

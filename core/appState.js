@@ -1,5 +1,14 @@
 let applicationStarted = false;
 let inventoryOverloadChecker = () => false;
+let restoringData = false;
+
+export function setRestoringData(value) {
+    restoringData = Boolean(value);
+}
+
+export function isRestoringData() {
+    return restoringData;
+}
 
 export function startApplicationOnce() {
     if (applicationStarted) return false;

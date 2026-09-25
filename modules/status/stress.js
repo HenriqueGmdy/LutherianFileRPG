@@ -1,5 +1,5 @@
 import { CONFIG } from '../../core/config.js';
-import { playSound } from '../../core/audio.js';
+import { playSound, getMasterVolume } from '../../core/audio.js';
 
 const afflictedConditions = [
     { name: "Com medo", desc: "Você adquire desvantagem em todos os testes e sofre o dobro de estresse de todas as fontes.", type: "afflicted" },
@@ -53,13 +53,19 @@ export function initStress() {
     const stressConditionDesc = document.getElementById("stressConditionDesc");
     const virtuousOverlay = document.getElementById("virtuousResolveOverlay");
     const stressOverlay = document.getElementById("stressResolveOverlay");
+    const threatMeterVisual = document.getElementById("threatMeterVisual");
+
+    function setAfflictedVisuals(isAfflicted) {
+        stressSquaresContainer?.classList.toggle("is-afflicted", isAfflicted);
+        threatMeterVisual?.classList.toggle("is-afflicted", isAfflicted);
+    }
 
     function clearActiveCondition() {
         if (stressConditionName) stressConditionName.textContent = "Condições de Estresse";
         if (stressConditionDesc) stressConditionDesc.textContent = "Nenhuma condição ativa.";
         if (headerStressCondition) headerStressCondition.textContent = "Normal";
         stressConditionBox?.classList.remove("is-virtuous", "is-afflicted");
-        stressSquaresContainer?.classList.remove("is-afflicted");
+        setAfflictedVisuals(false);
         if (virtuousOverlay) virtuousOverlay.style.display = "none";
         if (stressOverlay) stressOverlay.style.display = "none";
         localStorage.removeItem(CONFIG.STORAGE_KEYS.ACTIVE_CONDITION);
@@ -108,7 +114,7 @@ export function initStress() {
             if (headerStressCondition) headerStressCondition.textContent = condition.name;
             stressConditionBox?.classList.remove("is-virtuous", "is-afflicted");
             stressConditionBox?.classList.add(`is-${condition.type}`);
-            stressSquaresContainer?.classList.toggle("is-afflicted", condition.type === "afflicted");
+            setAfflictedVisuals(condition.type === "afflicted");
             if (virtuousOverlay) virtuousOverlay.style.display = savedResolve === "virtuous" ? "block" : "none";
             if (stressOverlay) stressOverlay.style.display = savedResolve === "afflicted" ? "block" : "none";
             rollStressBtn?.classList.remove("glow-ready");
@@ -152,7 +158,7 @@ export function initStress() {
 
         const audioFile = chosen.type === "virtuous" ? "virtue.mp3" : "affliction.mp3";
         const resolveAudio = new Audio(`${window.location.origin}${basePath}/assets/audio/${audioFile}`);
-        resolveAudio.volume = 0.7;
+        resolveAudio.volume = 0.7 * getMasterVolume();
         resolveAudio.play().catch(error => console.log("Erro ao reproduzir áudio de resolução:", error));
 
         setTimeout(() => {
@@ -169,7 +175,7 @@ export function initStress() {
                 if (headerStressCondition) headerStressCondition.textContent = chosen.name;
                 stressConditionBox?.classList.remove("is-virtuous", "is-afflicted");
                 stressConditionBox?.classList.add(`is-${chosen.type}`);
-                stressSquaresContainer?.classList.toggle("is-afflicted", chosen.type === "afflicted");
+                setAfflictedVisuals(chosen.type === "afflicted");
                 if (virtuousOverlay) virtuousOverlay.style.display = chosen.type === "virtuous" ? "block" : "none";
                 if (stressOverlay) stressOverlay.style.display = chosen.type === "afflicted" ? "block" : "none";
                 localStorage.setItem(CONFIG.STORAGE_KEYS.ACTIVE_CONDITION, JSON.stringify(chosen));

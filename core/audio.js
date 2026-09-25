@@ -1,3 +1,5 @@
+import { CONFIG } from './config.js';
+
 const SOUND_PATHS = {
     deathsDoor: 'assets/audio/UI/general/character/deaths_door.wav',
     inspirationCheck: 'assets/audio/UI/general/character/inspiration_check.wav',
@@ -26,6 +28,39 @@ const SOUND_PATHS = {
     openMenu: 'assets/audio/UI/menu/open_menu.wav'
 };
 
+const DEFAULT_VOLUME = 0.7;
+
+// Ajuste fino por som, multiplicado ao volume padrão (1 = sem alteração).
+const SOUND_GAINS = {
+    inspirationCheck: 0.7
+};
+
+function readStoredMasterVolume() {
+    try {
+        const stored = localStorage.getItem(CONFIG.STORAGE_KEYS.VOLUME);
+        if (stored === null) return 1;
+        const percent = Number(stored);
+        return Number.isFinite(percent) ? Math.min(1, Math.max(0, percent / 100)) : 1;
+    } catch {
+        return 1;
+    }
+}
+
+let masterVolume = readStoredMasterVolume();
+
+export function getMasterVolume() {
+    return masterVolume;
+}
+
+export function setMasterVolume(value) {
+    masterVolume = Math.min(1, Math.max(0, Number(value) || 0));
+    try {
+        localStorage.setItem(CONFIG.STORAGE_KEYS.VOLUME, String(Math.round(masterVolume * 100)));
+    } catch (error) {
+        console.warn('Não foi possível salvar o volume:', error);
+    }
+}
+
 const audioCache = new Map();
 
 function getAudio(name) {
@@ -46,7 +81,7 @@ export function playSound(name, options = {}) {
     if (!source) return null;
 
     const audio = source.cloneNode();
-    audio.volume = options.volume ?? 0.7;
+    audio.volume = Math.min(1, (options.volume ?? DEFAULT_VOLUME) * (SOUND_GAINS[name] ?? 1) * masterVolume);
     audio.currentTime = 0;
     audio.play().catch(() => {});
     return audio;
@@ -66,6 +101,27 @@ export function playSoundAfter(name, previousAudio, options = {}) {
     const timeoutId = window.setTimeout(finish, options.fallbackDelay ?? 700);
     previousAudio.addEventListener('ended', finish, { once: true });
     return previousAudio;
+}
+
+export function initVolumeControl() {
+    const slider = document.getElementById('masterVolume');
+    const valueLabel = document.getElementById('masterVolumeValue');
+    if (!slider) return;
+
+    const render = () => {
+        if (valueLabel) valueLabel.textContent = `${slider.value}%`;
+    };
+
+    slider.value = String(Math.round(masterVolume * 100));
+    render();
+
+    slider.addEventListener('input', () => {
+        setMasterVolume(Number(slider.value) / 100);
+        render();
+    });
+
+    // Ao soltar o controle, toca um som já no novo volume para servir de referência.
+    slider.addEventListener('change', () => playSound('confirm'));
 }
 
 export function initAudioInteractions() {
@@ -104,7 +160,7 @@ export function initAudioInteractions() {
     });
 
     document.addEventListener('focusin', (event) => {
-        if (event.target.matches('input[type="text"], textarea')) playSound('textboxOpen');
+        if (event.target.matches('input[type="text"]:not([readonly]), textarea:not([readonly])')) playSound('textboxOpen');
         if (event.target.matches('select')) playSound('select');
     });
 

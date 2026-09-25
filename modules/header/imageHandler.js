@@ -1,4 +1,5 @@
 import { CONFIG } from '../../core/config.js';
+import { reportSave } from '../../core/saveIndicator.js';
 
 export function initImageHandler(options = {}) {
     // Permite configurar múltiplos slots de imagem no futuro passando seletores, 
@@ -39,8 +40,10 @@ export function initImageHandler(options = {}) {
 
                 try {
                     localStorage.setItem(storageKey, imageData);
+                    reportSave(true, 'imagem');
                 } catch (error) {
                     console.error('Não foi possível salvar a imagem:', error);
+                    reportSave(false, 'imagem');
                     alert('A imagem foi carregada, mas não pôde ser salva no navegador.');
                 }
             })

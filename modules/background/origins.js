@@ -1,5 +1,6 @@
 import { originsData } from '../background/originsData.js'; 
 import { updateAllSkills } from '../attributes/skills.js';
+import { isRestoringData } from '../../core/appState.js';
 
 let lastTrainedSkills = [];
 
@@ -67,7 +68,8 @@ export function initOrigins() {
     }
 
     originSelect.addEventListener("change", function() {
-        applyOrigin(this.value, false);
+        // Ao restaurar a ficha, as perícias salvas já incluem o bônus da origem.
+        applyOrigin(this.value, isRestoringData());
     });
 
     applyOrigin(originSelect.value, true);

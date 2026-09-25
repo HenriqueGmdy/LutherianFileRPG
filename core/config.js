@@ -8,11 +8,13 @@ export const CONFIG = {
         THEME: 'lutherian_theme',
         IMAGE: 'lutherian_char_image',
         ACTIVE_CONDITION: 'lutherian_active_condition',
-        RESOLVE_STATE: 'lutherian_resolve_state'
+        RESOLVE_STATE: 'lutherian_resolve_state',
+        SCHEMA_VERSION: 'lutherian_schema_version',
+        BACKUP_LAST: 'lutherian_backup_last',
+        BACKUP_PRE_MIGRATION: 'lutherian_backup_pre_migration',
+        VOLUME: 'lutherian_master_volume'
     },
     LIMITS: {
-        MAX_LEVEL: 9,
-        MIN_LEVEL: 1,
         MAX_STRESS: 200,
         MAX_DYNAMIC_ITEMS: 20,
         MAX_INVENTORY_ITEMS: 50

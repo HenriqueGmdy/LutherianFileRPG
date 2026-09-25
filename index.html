@@ -4,12 +4,19 @@
     <meta charset="UTF-8">
     <title>Ficha Lutherian</title>
     <link rel="icon" type="image/png" href="assets/icons/page.icon.png">
-    <link rel="stylesheet" href="styles/global.css?v=2">
+    <link rel="stylesheet" href="styles/global.css?v=6">
     <link rel="stylesheet" href="modules/level/level.css">
 </head>
 <body>
 
     <audio id="easterEggAudio" src="assets/audio/chacal.mp3" preload="auto"></audio>
+
+    <!-- Indicador discreto de salvamento (canto inferior direito) -->
+    <div id="saveIndicator" class="saveIndicator" role="status" aria-live="polite">
+        <img src="assets/images/menus/saving.png" alt="" class="saveIndicatorIcon">
+        <svg class="saveIndicatorFallback" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 3h11l4 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm2 2v5h9V5H7zm5 8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
+        <span class="saveIndicatorBadge" aria-hidden="true">!</span>
+    </div>
 
     <!-- Pop-up Cinematográfico de Resolução de Determinação -->
     <div id="resolveCinematicOverlay" class="resolve-cinematic-backdrop is-hidden">
@@ -45,6 +52,17 @@
                     <img src="assets/images/menus/icon_recolor.png" alt="">
                     <span>Personalizar Tema</span>
                 </button>
+                
+                <div class="optionsVolumeControl">
+                
+                    <img src="assets/images/menus/sound.png" alt="" title="Volume" class="optionsVolumeIcon">
+                
+                    <input type="range" id="masterVolume" min="0" max="100" step="5" value="100" aria-label="Volume dos sons">
+                
+                    <span id="masterVolumeValue" class="optionsVolumeValue">100%</span>
+                
+                </div>
+
                 
                 <button type="button" id="menuOptReset" class="optionsMenuItem optionsMenuItem--danger">
                     <img src="assets/images/menus/reset.file.icon.png" alt="">
@@ -128,7 +146,6 @@
             <div id="personagem" class="tabContent active">
                 
                 <!-- CABEÇALHO -->
-                <!-- CABEÇALHO -->
                 <div class="characterHeaderArea">
                     <div class="charNameRow">
                         <button type="button" class="headerIconBtn" onclick="document.getElementById('name').focus();" title="Focar no Nome">
@@ -137,11 +154,11 @@
                         <input type="text" id="name" class="invisibleInput titleFont charNameInput" placeholder="Nome do Personagem" autocomplete="off">
                     </div>
                     <div class="charClassRow">
-                        <button type="button" class="headerIconBtn" onclick="document.getElementById('characterClass').focus();" title="Focar na Classe">
+                        <button type="button" class="headerIconBtn" id="classPickerBtn" title="Escolher classe" aria-haspopup="listbox" aria-expanded="false">
                             <img src="assets/images/pageChar/class.png" alt="Classe" class="headerIconImg">
                         </button>
                         <div class="classSubclassWrapper">
-                            <input type="text" id="characterClass" class="invisibleInput subFont classInput" placeholder="Classe">
+                            <input type="text" id="characterClass" class="invisibleInput subFont classInput" placeholder="Classe" readonly title="Clique para escolher a classe">
                             <input type="text" id="chaSubclass" class="invisibleInput subFont subclassInput" placeholder="Subclasse">
                         </div>
                     </div>
@@ -150,7 +167,7 @@
 
                 <div class="topSplitContainer">
                    <div class="leftProfileColumn">
-                    <div class="levelEmblemWrapper" id="levelEmblemContainer">
+                    <div class="levelEmblemWrapper" id="levelEmblemContainer" data-tooltip="level">
                         <div id="virtuousResolveOverlay" class="resolveOverlay virtuousBg is-hidden"></div>
                         <input type="number" id="level" min="1" max="9" value="1" class="levelInputEmblem">
                         <div id="stressResolveOverlay" class="resolveOverlay stressTop is-hidden"></div>
@@ -210,22 +227,26 @@
                             </div>
                             <div class="basicSubRight">
                                 <div class="inlineDataCompactGroup">
-                                    <div class="inlineDataGroup">
+                                    <div class="inlineDataGroup" data-tooltip="bodyHeight">
                                         <label for="height">Altura:</label>
                                         <input type="text" id="height" class="smallBoxInput"> <span class="unit">m</span>
                                     </div>
-                                    <div class="inlineDataGroup">
+                                    <div class="inlineDataGroup" data-tooltip="bodyWeight">
                                         <label for="weight">Peso:</label>
                                         <input type="text" id="weight" class="smallBoxInput"> <span class="unit">kg</span>
                                     </div>
-                                    <div class="inlineDataGroup">
+                                    <div class="inlineDataGroup" data-tooltip="bodyAge">
                                         <label for="age">Idade:</label>
                                         <input type="number" id="age" min="1" class="smallBoxInput"> <span class="unit">anos</span>
                                     </div>
                                 </div>
                                 <div class="classCampfireBox classCampfireBox--spaced">
                                     <strong>Hab. Fogueira (Classe):</strong>
-                                    <textarea id="classCampfireSkill" placeholder="Descreva a habilidade..." class="invisibleTextarea"></textarea>
+                                    <div id="classCampfireText" class="classCampfireText is-empty" aria-live="polite">Selecione uma classe para ver a habilidade de fogueira.</div>
+                                </div>
+                                <div class="inlineDataGroup inlineDataGroup--spaced" data-tooltip="initiative">
+                                    <span class="initiativeLabel">Iniciativa:</span>
+                                    <span id="initiativeValue" class="diceToRoll">d20</span>
                                 </div>
                             </div>
                         </div>
@@ -246,17 +267,21 @@
                 <div class="statusSplitColumns">
                     <div class="statusLeftColumn">
                         <div class="resourceBlock">
-                            <h3 class="resourceTitle">Vitalidade</h3>
+                            <h3 class="resourceTitle" data-tooltip="vitality">Vitalidade</h3>
                             <div class="resourceBarContainer vitalityBarContainer">
                                 <div id="vitalityBarFill" class="vitalityFill"></div>
                                 <input type="range" id="vitalityRange" min="0" max="0" value="0" class="resourceRangeSlider" aria-label="Vitalidade atual">
                             </div>
                             <div class="resourceCounter">
+                                <button type="button" class="quickAdjustBtn quickAdjustBtn--minus" data-adjust-target="vitalityCurrent" data-adjust-max="vitalityTotal" data-adjust-delta="-5" title="Reduzir 5 de vitalidade" aria-label="Reduzir 5 de vitalidade">-5</button>
+                                <button type="button" class="quickAdjustBtn quickAdjustBtn--minus" data-adjust-target="vitalityCurrent" data-adjust-max="vitalityTotal" data-adjust-delta="-1" title="Reduzir 1 de vitalidade" aria-label="Reduzir 1 de vitalidade">-1</button>
                                 <input type="number" id="vitalityCurrent" value="0" class="invisibleInput resourceInput">
                                 <span>/</span>
                                 <input type="number" id="vitalityTotal" value="0" class="invisibleInput resourceInput">
+                                <button type="button" class="quickAdjustBtn quickAdjustBtn--plus" data-adjust-target="vitalityCurrent" data-adjust-max="vitalityTotal" data-adjust-delta="1" title="Aumentar 1 de vitalidade" aria-label="Aumentar 1 de vitalidade">+1</button>
+                                <button type="button" class="quickAdjustBtn quickAdjustBtn--plus" data-adjust-target="vitalityCurrent" data-adjust-max="vitalityTotal" data-adjust-delta="5" title="Aumentar 5 de vitalidade" aria-label="Aumentar 5 de vitalidade">+5</button>
                             </div>
-                            <div class="deathThresholdBlock">
+                            <div class="deathThresholdBlock" data-tooltip="deathThreshold">
                                 <h3 class="resourceTitle">Limiar da Morte</h3>
                                 <div class="deathSaveBoxes">
                                     <label class="deathSaveControl" aria-label="Primeira falha no limiar da morte">
@@ -276,20 +301,26 @@
                         </div>
 
                         <div class="resourceBlock stressBlock">
-                            <h3 class="resourceTitle">Estresse</h3>
+                            <h3 class="resourceTitle" data-tooltip="stress">Estresse</h3>
                             <div class="resourceBarContainer stressBarContainer">
                                 <div class="stressMark100"></div>
                                 <div id="stressFill" class="stressFill"></div>
                                 <input type="range" id="stressRange" min="0" max="200" value="0" class="stressRangeSlider">
                             </div>
                             <div class="resourceCounter">
+                                <button type="button" class="quickAdjustBtn quickAdjustBtn--minus" data-adjust-target="stress" data-adjust-max="200" data-adjust-delta="-10" title="Reduzir 10 de estresse" aria-label="Reduzir 10 de estresse">-10</button>
+                                <button type="button" class="quickAdjustBtn quickAdjustBtn--minus" data-adjust-target="stress" data-adjust-max="200" data-adjust-delta="-5" title="Reduzir 5 de estresse" aria-label="Reduzir 5 de estresse">-5</button>
+                                <button type="button" class="quickAdjustBtn quickAdjustBtn--minus" data-adjust-target="stress" data-adjust-max="200" data-adjust-delta="-1" title="Reduzir 1 de estresse" aria-label="Reduzir 1 de estresse">-1</button>
                                 <input type="number" id="stress" min="0" max="200" value="0" class="invisibleInput resourceInput">
                                 <span>/ 200</span>
+                                <button type="button" class="quickAdjustBtn quickAdjustBtn--plus" data-adjust-target="stress" data-adjust-max="200" data-adjust-delta="1" title="Aumentar 1 de estresse" aria-label="Aumentar 1 de estresse">+1</button>
+                                <button type="button" class="quickAdjustBtn quickAdjustBtn--plus" data-adjust-target="stress" data-adjust-max="200" data-adjust-delta="5" title="Aumentar 5 de estresse" aria-label="Aumentar 5 de estresse">+5</button>
+                                <button type="button" class="quickAdjustBtn quickAdjustBtn--plus" data-adjust-target="stress" data-adjust-max="200" data-adjust-delta="10" title="Aumentar 10 de estresse" aria-label="Aumentar 10 de estresse">+10</button>
                             </div>
                         </div>
 
                         <div class="statusBottomFields">
-                            <div class="inlineDataGroup">
+                            <div class="inlineDataGroup" data-tooltip="size">
                                 <label for="size">Tamanho:</label>
                                 <select id="size" class="invisibleSelect">
                                     <option value="pequeno">Pequeno</option>
@@ -297,11 +328,11 @@
                                     <option value="grande">Grande</option>
                                 </select>
                             </div>
-                            <div class="inlineDataGroup">
+                            <div class="inlineDataGroup" data-tooltip="speed">
                                 <label for="speedBase">Deslocamento base:</label>
                                 <input type="number" id="speedBase" min="0" value="6" class="smallBoxInput"> <span class="unit">qds</span>
                             </div>
-                            <div class="inlineDataGroup">
+                            <div class="inlineDataGroup" data-tooltip="speed">
                                 <label for="speed">Deslocamento final:</label>
                                 <input type="number" id="speed" min="0" value="6" class="smallBoxInput" readonly aria-label="Deslocamento final calculado"> <span class="unit">qds</span>
                             </div>
@@ -310,30 +341,32 @@
 
                     <div class="statusRightColumn">
                         <div class="resourceBlock">
-                            <h3 class="resourceTitle">Vontade</h3>
+                            <h3 class="resourceTitle" data-tooltip="willpower">Vontade</h3>
                             <div class="resourceBarContainer willpowerBarContainer">
                                 <div id="willpowerBarFill" class="willpowerFill"></div>
                                 <input type="range" id="willpowerRange" min="0" max="0" value="0" class="resourceRangeSlider" aria-label="Vontade atual">
                             </div>
                             <div class="resourceCounter">
+                                <button type="button" class="quickAdjustBtn quickAdjustBtn--minus" data-adjust-target="willpowerCurrent" data-adjust-max="willpowerTotal" data-adjust-delta="-5" title="Reduzir 5 de vontade" aria-label="Reduzir 5 de vontade">-5</button>
+                                <button type="button" class="quickAdjustBtn quickAdjustBtn--minus" data-adjust-target="willpowerCurrent" data-adjust-max="willpowerTotal" data-adjust-delta="-1" title="Reduzir 1 de vontade" aria-label="Reduzir 1 de vontade">-1</button>
                                 <input type="number" id="willpowerCurrent" value="0" class="invisibleInput resourceInput">
                                 <span>/</span>
                                 <input type="number" id="willpowerTotal" value="0" class="invisibleInput resourceInput">
+                                <button type="button" class="quickAdjustBtn quickAdjustBtn--plus" data-adjust-target="willpowerCurrent" data-adjust-max="willpowerTotal" data-adjust-delta="1" title="Aumentar 1 de vontade" aria-label="Aumentar 1 de vontade">+1</button>
+                                <button type="button" class="quickAdjustBtn quickAdjustBtn--plus" data-adjust-target="willpowerCurrent" data-adjust-max="willpowerTotal" data-adjust-delta="5" title="Aumentar 5 de vontade" aria-label="Aumentar 5 de vontade">+5</button>
+                            </div>
+                            <div class="inspirationBlock" data-tooltip="inspiration">
+                                <h3 class="resourceTitle">Inspiração</h3>
+                                <div class="inspirationCheckboxWrapper">
+                                    <label class="inspirationControl" aria-label="Inspiração">
+                                        <input type="checkbox" id="inspiration" class="inspiration-check">
+                                        <span aria-hidden="true"></span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
-
-                        <div class="inspirationBlock">
-                            <h3 class="resourceTitle">Inspiração</h3>
-                            <div class="inspirationCheckboxWrapper">
-                                <label class="inspirationControl" aria-label="Inspiração">
-                                    <input type="checkbox" id="inspiration" class="inspiration-check">
-                                    <span aria-hidden="true"></span>
-                                </label>
-                            </div>
-                        </div>
-
                         <div class="stressConditionBlock">
-                            <button type="button" id="rollStressBtn" class="d20Button" title="Rolar Condição de Estresse" aria-label="Rolar condição de estresse">
+                            <button type="button" id="rollStressBtn" class="d20Button" data-tooltip="stressRoll" aria-label="Rolar condição de estresse">
                                 <img src="assets/icons/dice.roll.png" alt="">
                             </button>
                             <div id="stressConditionBox" class="stressConditionBox">
@@ -347,15 +380,15 @@
                         </div>
 
                         <div class="defMoraleBlock">
-                            <div class="shieldContainer" title="Classe de Defesa">
+                            <div class="shieldContainer" data-tooltip="defense">
                                 <input type="number" id="defense" min="0" value="0" class="invisibleInput statusIconInput shieldInput" aria-label="Classe de Defesa">
                             </div>
-                            <div class="moraleContainer" title="Moral">
+                            <div class="moraleContainer" data-tooltip="morale">
                                 <input type="number" id="morale" value="0" class="invisibleInput statusIconInput moraleInput" aria-label="Moral">
                             </div>
                         </div>
 
-                        <div class="inlineDataGroup threatLevelGroup">
+                        <div class="inlineDataGroup threatLevelGroup" data-tooltip="threat">
                             <label for="threatLevel">Nível de Ameaça:</label>
                             <div class="threatLevelControl">
                                 <select id="threatLevel" class="invisibleSelect">

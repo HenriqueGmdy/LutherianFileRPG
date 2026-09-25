@@ -22,7 +22,6 @@ export const attributeGroups = [
     }
 ];
 
-import { updateInitiative } from '../status/status.js';
 import { updateAllSkills } from './skills.js';
 import { isCharacterOverloaded } from '../../core/appState.js';
 
@@ -41,24 +40,24 @@ export function renderAttributes() {
             <div class="attributeGroup">
                 <div class="attributeRow">
                     <div class="attribute-left">
-                        <label for="${attr1.id}">${attr1.name}:</label>
-                        <input type="number" id="${attr1.id}" min="-3" max="3" value="0" class="attr-input">
+                        <label for="${attr1.id}" data-tooltip="attr.${attr1.id}">${attr1.name}:</label>
+                        <input type="number" id="${attr1.id}" min="-4" max="4" value="0" class="attr-input">
                     </div>
                     <div class="attribute-right">
                         <label for="temp_${attr1.id}">Mod. temporário:</label>
-                        <input type="number" id="temp_${attr1.id}" min="-2" max="2" value="0" class="attr-input">
+                        <input type="number" id="temp_${attr1.id}" min="-5" max="5" value="0" class="attr-input">
                         <span id="dices_${attr1.id}" class="diceToRoll">d20</span>
                     </div>
                 </div>
 
                 <div class="attributeRow">
                     <div class="attribute-left">
-                        <label for="${attr2.id}">${attr2.name}:</label>
-                        <input type="number" id="${attr2.id}" min="-3" max="3" value="0" class="attr-input">
+                        <label for="${attr2.id}" data-tooltip="attr.${attr2.id}">${attr2.name}:</label>
+                        <input type="number" id="${attr2.id}" min="-4" max="4" value="0" class="attr-input">
                     </div>
                     <div class="attribute-right">
                         <label for="temp_${attr2.id}">Mod. temporário:</label>
-                        <input type="number" id="temp_${attr2.id}" min="-2" max="2" value="0" class="attr-input">
+                        <input type="number" id="temp_${attr2.id}" min="-5" max="5" value="0" class="attr-input">
                         <span id="dices_${attr2.id}" class="diceToRoll">d20</span>
                     </div>
                 </div>
@@ -73,6 +72,23 @@ export function renderAttributes() {
             </div>
         `;
     });
+}
+
+// Iniciativa = d20 + valor de Destreza (mesmo total usado nos dados do atributo, já com mod. temporário e penalidades).
+function syncInitiative(dexterityTotal) {
+    const initiative = document.getElementById("initiativeValue");
+    if (!initiative) return;
+
+    if (dexterityTotal === 0) {
+        initiative.textContent = "d20";
+        initiative.className = "diceToRoll dice-neutral";
+    } else if (dexterityTotal > 0) {
+        initiative.textContent = `d20 + ${dexterityTotal}`;
+        initiative.className = "diceToRoll dice-positive";
+    } else {
+        initiative.textContent = `d20 - ${Math.abs(dexterityTotal)}`;
+        initiative.className = "diceToRoll dice-negative";
+    }
 }
 
 export function updateAttributeDice(attrId) {
@@ -131,6 +147,8 @@ export function updateAttributeDice(attrId) {
             diceSpan.textContent = `d20 - ${Math.abs(total)}d6`;
             diceSpan.className = "diceToRoll dice-negative";
         }
+
+        if (attrId === "dexterity") syncInitiative(total);
     }
 }
 
@@ -147,32 +165,15 @@ export function initAttributesListeners() {
         if (e.target && e.target.classList.contains("attr-input")) {
             let attrId = e.target.id.replace("temp_", "");
             updateAttributeDice(attrId);
-            
-            if (attrId === "dexterity") {
-                updateInitiative();
-            }
             updateAllSkills();
         }
     });
 
     document.querySelectorAll(".conditionCheckbox").forEach(checkbox => {
         checkbox.addEventListener("change", function() {
-            setTimeout(() => {
-                updateAllAttributes();
-                updateAllSkills();
-            }, 10);
+            updateAllAttributes();
+            updateAllSkills();
         });
-    });
-
-    attributeGroups.forEach(group => {
-        const checkbox = document.getElementById(group.attrCondition.id);
-        if (checkbox) {
-            checkbox.addEventListener("change", function() {
-                updateAllAttributes();
-                updateInitiative();
-                updateAllSkills();
-            });
-        }
     });
 }
 

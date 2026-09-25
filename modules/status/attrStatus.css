@@ -126,7 +126,8 @@
     color: var(--text-color, #ffffff);
 }
 
-.resourceBlock .deathThresholdBlock {
+.resourceBlock .deathThresholdBlock,
+.resourceBlock .inspirationBlock {
     margin: 10px -10px -10px;
     padding: 10px;
     border: 0;
@@ -418,4 +419,54 @@
 
 .statusIconInput {
     -moz-appearance: textfield;
+}
+
+/* Controles rápidos de recurso (+1 / -1 / +5 / -5) */
+.quickAdjustBtn {
+    min-width: 30px;
+    height: 26px;
+    padding: 0 4px;
+    margin: 0 1px;
+    font-family: var(--font-sub);
+    font-weight: bold;
+    font-size: 12px;
+    line-height: 1;
+    color: var(--text-color, #ffffff);
+    background: var(--bg-inputs, #2b2b2b);
+    border: 1px solid #555;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.05s ease;
+}
+.quickAdjustBtn--minus { border-color: var(--negative-color, #c00101); }
+.quickAdjustBtn--plus { border-color: var(--positive-color, #ffcc00); }
+.quickAdjustBtn--minus:hover:not(:disabled) { background: var(--negative-color, #c00101); }
+.quickAdjustBtn--plus:hover:not(:disabled) { background: var(--positive-color, #ffcc00); color: #000; }
+.quickAdjustBtn:active:not(:disabled) { transform: scale(0.94); }
+.quickAdjustBtn:focus-visible {
+    outline: 2px solid var(--accent-color, #ffcc00);
+    outline-offset: 2px;
+}
+.quickAdjustBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Caixa do limiar da morte travada pela raça */
+.deathSaveControl input:disabled {
+    cursor: not-allowed;
+}
+.deathSaveControl input:disabled + span {
+    opacity: 0.75;
+}
+
+/* Inspiração dentro do bloco de vontade: mesmo tamanho das caixas do limiar, para alinhar com a vitalidade */
+.resourceBlock .inspirationControl {
+    width: 32px;
+    height: 32px;
+}
+
+.resourceCounter {
+    flex-wrap: wrap;
+    row-gap: 4px;
 }

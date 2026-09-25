@@ -5,15 +5,15 @@
 @import url('variables.css');
 @import url('utilities.css');
 @import url('tabs.css');
-@import url('components.css?v=6');
+@import url('components.css?v=9');
 
 /* Módulos isolados por domínio */
 @import url('../modules/attributes/attributes.css?v=2');
 @import url('../modules/attributes/skills.css');
-@import url('../modules/header/basics.css');
+@import url('../modules/header/basics.css?v=3');
 @import url('../modules/personal/personal.css');
 @import url('../modules/inventory/inventory.css');
-@import url('../modules/status/attrStatus.css?v=4');
+@import url('../modules/status/attrStatus.css?v=6');
 @import url('../modules/narrative/narrative.css');
 
 body {

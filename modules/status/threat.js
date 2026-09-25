@@ -27,8 +27,7 @@ export function initThreat() {
         };
         const height = threatHeights[threatLevelSelect?.value] || "0%";
 
-        threatMeterVisual.style.background =
-            `linear-gradient(to top, #ff4d4d ${height}, #111 ${height})`;
+        threatMeterVisual.style.setProperty('--threat-level', height);
 
         const threatIcon = threatIcons[threatLevelSelect?.value] || threatIcons.nulo;
         if (threatLevelIcon) {

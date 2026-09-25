@@ -34,12 +34,42 @@ export function initResources() {
         }
 
         updateVitalityBar();
+        syncQuickAdjustButtons();
 
         if (allFailed && playDeathSound) {
             const deathAudio = playSound('deathsDoor');
             playSoundAfter('statusInZero', deathAudio, { fallbackDelay: 500 });
         }
     }
+
+    const quickAdjustButtons = document.querySelectorAll("[data-adjust-target]");
+
+    function syncQuickAdjustButtons() {
+        quickAdjustButtons.forEach(button => {
+            button.disabled = Boolean(document.getElementById(button.dataset.adjustTarget)?.disabled);
+        });
+    }
+
+    // Botões +/- rápidos: ajustam o campo pelo mesmo caminho da digitação (input + change),
+    // então barra, sons e salvamento reagem normalmente. Nunca passa do máximo nem abaixo de 0.
+    function adjustResource(button) {
+        const input = document.getElementById(button.dataset.adjustTarget);
+        if (!input || input.disabled) return;
+
+        const current = Number(input.value) || 0;
+        const maxSource = button.dataset.adjustMax;
+        const max = Number(maxSource) || Number(document.getElementById(maxSource)?.value) || 0;
+        const next = Math.max(0, Math.min(current + Number(button.dataset.adjustDelta), Math.max(max, current)));
+        if (next === current) return;
+
+        input.value = next;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    quickAdjustButtons.forEach(button => {
+        button.addEventListener("click", () => adjustResource(button));
+    });
 
     deathFailInputs.forEach(input => {
         input?.addEventListener("change", () => updateDeathSaves({ playDeathSound: true }));

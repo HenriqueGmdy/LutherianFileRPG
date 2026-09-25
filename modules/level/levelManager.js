@@ -1,5 +1,3 @@
-import { CONFIG } from '../../core/config.js';
-
 export function initLevelEmblem() {
     const levelInput = document.getElementById('level');
     const container = document.getElementById('levelEmblemContainer');
@@ -27,20 +25,4 @@ export function initLevelEmblem() {
     });
 
     updateEmblem(levelInput.value);
-}
-
-export function setResolveState(state) {
-    const virtuousOverlay = document.getElementById('virtuousResolveOverlay');
-    const stressOverlay = document.getElementById('stressResolveOverlay');
-
-    if (virtuousOverlay) virtuousOverlay.style.display = 'none';
-    if (stressOverlay) stressOverlay.style.display = 'none';
-
-    if (state === 'virtuous' && virtuousOverlay) {
-        virtuousOverlay.style.display = 'block';
-    } else if ((state === 'afflicted' || state === 'stress') && stressOverlay) {
-        stressOverlay.style.display = 'block';
-    }
-
-    localStorage.setItem(CONFIG.STORAGE_KEYS.RESOLVE_STATE, state);
 }

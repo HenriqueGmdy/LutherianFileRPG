@@ -1,4 +1,4 @@
-import { playSound } from '../../core/audio.js';
+import { playSound, getMasterVolume } from '../../core/audio.js';
 
 export function initCurios() {
     const nameInput = document.getElementById("name");
@@ -12,6 +12,7 @@ export function initCurios() {
         if (valorDigitado.toLowerCase() === "chacal") {
             if (audio.paused) {
                 audio.currentTime = 0;
+                audio.volume = getMasterVolume();
                 audio.play().catch(err => console.log("Áudio bloqueado pelo navegador:", err));
             }
         }
