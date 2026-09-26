@@ -121,25 +121,6 @@
     padding: 4px 2px;
 }
 
-.removeItemBtn {
-    background-color: #3a1a1a;
-    color: #ff4444;
-    border: 1px solid #555;
-    border-radius: 4px;
-    width: 26px;
-    height: 26px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    cursor: pointer;
-    flex-shrink: 0;
-}
-
-.removeItemBtn:hover {
-    background-color: #5a2222;
-}
-
 .inventoryItemCard textarea {
     width: 100%;
     min-height: 45px;

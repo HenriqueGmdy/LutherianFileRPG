@@ -12,7 +12,9 @@ export const CONFIG = {
         SCHEMA_VERSION: 'lutherian_schema_version',
         BACKUP_LAST: 'lutherian_backup_last',
         BACKUP_PRE_MIGRATION: 'lutherian_backup_pre_migration',
-        VOLUME: 'lutherian_master_volume'
+        BACKUP_PRE_IMPORT: 'lutherian_backup_pre_import',
+        VOLUME: 'lutherian_master_volume',
+        LIBRARY: 'lutherian_library'
     },
     LIMITS: {
         MAX_STRESS: 200,

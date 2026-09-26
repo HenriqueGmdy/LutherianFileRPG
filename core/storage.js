@@ -1,19 +1,31 @@
 import { CONFIG } from './config.js';
 import { setRestoringData } from './appState.js';
 import { reportSave } from './saveIndicator.js';
+import { createListItem, getListItemType } from './listItems.js';
 import { CURRENT_SCHEMA_VERSION, LEGACY_SCHEMA_VERSION, migrateData } from './migrations.js';
 
 const KEYS = CONFIG.STORAGE_KEYS;
-const NON_PERSISTED_FIELDS = ['speed', 'stressRange', 'vitalityRange', 'willpowerRange', 'masterVolume'];
+// Campos que existem na página mas não pertencem à ficha: calculados, preferências do usuário
+// (volume, cores do tema) e o seletor de arquivo da imagem.
+const NON_PERSISTED_FIELDS = [
+    'speed', 'stressRange', 'vitalityRange', 'willpowerRange',
+    'masterVolume', 'charImageInput',
+    'colorBgMain', 'colorBgFieldset', 'colorBgInputs', 'colorText', 'colorAccent',
+    'colorNegative', 'colorPositive', 'colorLines', 'colorAfflictionText', 'colorVirtueText'
+];
 const BACKUP_EXTRA_KEYS = [KEYS.ACTIVE_CONDITION, KEYS.RESOLVE_STATE];
 const EXPORT_EXTRA_KEYS = [...BACKUP_EXTRA_KEYS, KEYS.THEME, KEYS.IMAGE];
+const IMPORT_BACKUP_KEYS = [KEYS.ACTIVE_CONDITION, KEYS.RESOLVE_STATE, KEYS.IMAGE];
+const RESTORABLE_KEYS = new Set([...EXPORT_EXTRA_KEYS, ...IMPORT_BACKUP_KEYS]);
+
+// Arquivo de ficha (.json): nomes lógicos, independentes das chaves do localStorage.
+const SHEET_FILE_APP = 'lutherian-sheet';
+const SHEET_FILE_FORMAT = 1;
+const MAX_IMAGE_LENGTH = 8 * 1024 * 1024;
+const CONDITION_TYPES = ['afflicted', 'virtuous'];
+const UNSAFE_KEYS = ['__proto__', 'constructor', 'prototype'];
 
 let storageInitialized = false;
-
-function safeNumber(value, fallback = 0) {
-    const number = Number(value);
-    return Number.isFinite(number) && number >= 0 ? number : fallback;
-}
 
 function isPlainObject(value) {
     return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -72,7 +84,7 @@ function buildSnapshot(sheet, lists, version, extraKeys) {
         if (value !== null) extra[key] = value;
     });
 
-    return { version, savedAt: new Date().toISOString(), sheet, lists, extra };
+    return { version, savedAt: new Date().toISOString(), sheet, lists, extra, scope: extraKeys };
 }
 
 function snapshotSize(snapshot) {
@@ -102,8 +114,17 @@ function applySnapshot(snapshot) {
     writeJSON(KEYS.DYNAMIC_LISTS, isPlainObject(snapshot.lists) ? snapshot.lists : {});
     localStorage.setItem(KEYS.SCHEMA_VERSION, String(Number(snapshot.version) || LEGACY_SCHEMA_VERSION));
 
-    Object.entries(isPlainObject(snapshot.extra) ? snapshot.extra : {}).forEach(([key, value]) => {
-        if (typeof value !== 'string') return;
+    const extra = isPlainObject(snapshot.extra) ? snapshot.extra : {};
+
+    // Chaves que o backup cobria e que não estavam presentes (ex.: ficha sem imagem) são removidas.
+    if (Array.isArray(snapshot.scope)) {
+        snapshot.scope.forEach(key => {
+            if (RESTORABLE_KEYS.has(key) && !(key in extra)) localStorage.removeItem(key);
+        });
+    }
+
+    Object.entries(extra).forEach(([key, value]) => {
+        if (typeof value !== 'string' || !RESTORABLE_KEYS.has(key)) return;
         try { localStorage.setItem(key, value); } catch (error) { console.error(`Não foi possível restaurar [${key}]:`, error); }
     });
 
@@ -111,9 +132,9 @@ function applySnapshot(snapshot) {
     return true;
 }
 
-// Recuperação manual via console: lutherian.restoreBackup('last' | 'preMigration')
+// Recuperação manual via console: lutherian.restoreBackup('last' | 'preMigration' | 'preImport')
 function restoreBackup(slot = 'last') {
-    const key = slot === 'preMigration' ? KEYS.BACKUP_PRE_MIGRATION : KEYS.BACKUP_LAST;
+    const key = { preMigration: KEYS.BACKUP_PRE_MIGRATION, preImport: KEYS.BACKUP_PRE_IMPORT }[slot] ?? KEYS.BACKUP_LAST;
     const restored = applySnapshot(readJSON(key, null));
     if (!restored) console.warn(`Nenhum backup disponível em "${slot}".`);
     return restored;
@@ -138,6 +159,142 @@ function importData(json) {
         console.warn('Dados de importação inválidos.', error);
         return false;
     }
+}
+
+// ---------- Arquivo de ficha (exportar / importar) ----------
+
+export function createSheetFile() {
+    const sheet = Object.fromEntries(
+        Object.entries(readObject(KEYS.SHEET_DATA)).filter(([key]) => !NON_PERSISTED_FIELDS.includes(key))
+    );
+    const extra = {};
+
+    const image = localStorage.getItem(KEYS.IMAGE);
+    if (image) extra.image = image;
+
+    const condition = readJSON(KEYS.ACTIVE_CONDITION, null);
+    if (isPlainObject(condition)) extra.condition = condition;
+
+    const resolve = localStorage.getItem(KEYS.RESOLVE_STATE);
+    if (resolve) extra.resolve = resolve;
+
+    return {
+        app: SHEET_FILE_APP,
+        format: SHEET_FILE_FORMAT,
+        schemaVersion: getStoredVersion(),
+        exportedAt: new Date().toISOString(),
+        character: { name: String(sheet.name ?? ''), class: String(sheet.characterClass ?? '') },
+        sheet,
+        lists: readObject(KEYS.DYNAMIC_LISTS),
+        extra
+    };
+}
+
+// Valida e higieniza um arquivo de ficha (conteúdo não confiável). Retorna { ok, data } ou { ok: false, error }.
+export function parseSheetFile(raw) {
+    const fail = error => ({ ok: false, error });
+
+    if (!isPlainObject(raw) || raw.app !== SHEET_FILE_APP) return fail('Este arquivo não é uma ficha do Lutherian.');
+    if (!Number.isInteger(raw.format) || raw.format < 1 || raw.format > SHEET_FILE_FORMAT) {
+        return fail('O formato deste arquivo é de uma versão mais nova da ficha. Atualize a ficha para importá-lo.');
+    }
+
+    const schemaVersion = raw.schemaVersion;
+    if (!Number.isInteger(schemaVersion) || schemaVersion < LEGACY_SCHEMA_VERSION) return fail('O arquivo não informa uma versão de dados válida.');
+    if (schemaVersion > CURRENT_SCHEMA_VERSION) return fail('Este arquivo foi gerado por uma versão mais nova da ficha. Atualize a ficha para importá-lo.');
+    if (!isPlainObject(raw.sheet)) return fail('O arquivo não contém os dados da ficha.');
+
+    const sheet = {};
+    Object.entries(raw.sheet).forEach(([key, value]) => {
+        if (UNSAFE_KEYS.includes(key) || NON_PERSISTED_FIELDS.includes(key)) return;
+        if (['string', 'boolean', 'number'].includes(typeof value)) sheet[key] = value;
+    });
+
+    const maxItems = Math.max(CONFIG.LIMITS.MAX_DYNAMIC_ITEMS, CONFIG.LIMITS.MAX_INVENTORY_ITEMS);
+    const lists = {};
+    Object.entries(isPlainObject(raw.lists) ? raw.lists : {}).forEach(([listId, items]) => {
+        if (UNSAFE_KEYS.includes(listId) || !Array.isArray(items)) return;
+        lists[listId] = items.slice(0, maxItems).filter(isPlainObject).map(item => ({
+            text: String(item.text ?? ''),
+            qty: String(item.qty ?? '1'),
+            weight: String(item.weight ?? '0'),
+            desc: String(item.desc ?? '')
+        }));
+    });
+
+    const extra = {};
+    const rawExtra = isPlainObject(raw.extra) ? raw.extra : {};
+
+    if (typeof rawExtra.image === 'string' && /^data:image\/(png|jpeg|webp|gif);base64,/.test(rawExtra.image) && rawExtra.image.length <= MAX_IMAGE_LENGTH) {
+        extra.image = rawExtra.image;
+    }
+    if (isPlainObject(rawExtra.condition) && typeof rawExtra.condition.name === 'string'
+        && typeof rawExtra.condition.desc === 'string' && CONDITION_TYPES.includes(rawExtra.condition.type)) {
+        extra.condition = { name: rawExtra.condition.name, desc: rawExtra.condition.desc, type: rawExtra.condition.type };
+    }
+    if (CONDITION_TYPES.includes(rawExtra.resolve)) extra.resolve = rawExtra.resolve;
+
+    const character = isPlainObject(raw.character) ? raw.character : {};
+    return {
+        ok: true,
+        data: {
+            schemaVersion,
+            exportedAt: typeof raw.exportedAt === 'string' ? raw.exportedAt : '',
+            character: { name: String(character.name ?? sheet.name ?? ''), class: String(character.class ?? sheet.characterClass ?? '') },
+            sheet,
+            lists,
+            extra
+        }
+    };
+}
+
+// Substitui a ficha atual pelo conteúdo do arquivo (já validado). Guarda backup e desfaz tudo se algo falhar.
+export function applySheetFile(data) {
+    const previous = {
+        [KEYS.SHEET_DATA]: localStorage.getItem(KEYS.SHEET_DATA),
+        [KEYS.DYNAMIC_LISTS]: localStorage.getItem(KEYS.DYNAMIC_LISTS),
+        [KEYS.SCHEMA_VERSION]: localStorage.getItem(KEYS.SCHEMA_VERSION),
+        ...Object.fromEntries(IMPORT_BACKUP_KEYS.map(key => [key, localStorage.getItem(key)]))
+    };
+
+    const backup = buildSnapshot(readObject(KEYS.SHEET_DATA), readObject(KEYS.DYNAMIC_LISTS), getStoredVersion(), IMPORT_BACKUP_KEYS);
+    if (!writeJSON(KEYS.BACKUP_PRE_IMPORT, backup)) {
+        return { ok: false, error: 'Não foi possível guardar o backup da ficha atual (armazenamento cheio?). Nada foi alterado.' };
+    }
+
+    const rollback = () => {
+        Object.entries(previous).forEach(([key, value]) => {
+            try {
+                if (value === null) localStorage.removeItem(key);
+                else localStorage.setItem(key, value);
+            } catch (error) {
+                console.error(`Falha ao desfazer a importação em [${key}]:`, error);
+            }
+        });
+    };
+
+    try {
+        // Impede o salvamento do pagehide de sobrescrever os dados recém-gravados.
+        window.__lutherianResetInProgress = true;
+
+        if (!writeJSON(KEYS.SHEET_DATA, data.sheet) || !writeJSON(KEYS.DYNAMIC_LISTS, data.lists)) {
+            throw new Error('Falha ao gravar a ficha importada.');
+        }
+        localStorage.setItem(KEYS.SCHEMA_VERSION, String(data.schemaVersion));
+
+        IMPORT_BACKUP_KEYS.forEach(key => localStorage.removeItem(key));
+        if (data.extra.image) localStorage.setItem(KEYS.IMAGE, data.extra.image);
+        if (data.extra.condition) localStorage.setItem(KEYS.ACTIVE_CONDITION, JSON.stringify(data.extra.condition));
+        if (data.extra.resolve) localStorage.setItem(KEYS.RESOLVE_STATE, data.extra.resolve);
+    } catch (error) {
+        console.error('Importação cancelada:', error);
+        rollback();
+        window.__lutherianResetInProgress = false;
+        return { ok: false, error: 'Não foi possível gravar a ficha importada (armazenamento cheio?). Nada foi alterado.' };
+    }
+
+    location.reload();
+    return { ok: true };
 }
 
 function migrateStoredData() {
@@ -257,57 +414,10 @@ export function initLocalStorage() {
     }, true);
 
     document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('removeItemBtn') || e.target.classList.contains('addItemBtn') || e.target.id === 'addInventoryItemBtn') {
+        if (e.target.closest('.removeItemBtn, .addItemBtn, #addInventoryItemBtn')) {
             setTimeout(saveAllDynamicLists, 150);
         }
     });
-
-    function buildListItem(containerId, container, itemData) {
-        const itemDiv = document.createElement('div');
-        const isInventory = containerId === 'inventoryItemsList';
-        const isCard = container.classList.contains('cardList');
-
-        if (isInventory) {
-            itemDiv.className = 'inventoryItemCard cardItemBox';
-            itemDiv.innerHTML = `
-                <div class="inventoryItemTop">
-                    <input type="text" placeholder="Nome do item..." class="item-name-input">
-                    <label class="itemMetaLabel">Qtd:</label>
-                    <input type="number" min="0" class="item-qty-input">
-                    <label class="itemMetaLabel">Peso:</label>
-                    <input type="number" min="0" step="0.5" class="item-weight-input">
-                    <button type="button" class="removeItemBtn" title="Excluir" aria-label="Excluir item">X</button>
-                </div>
-                <textarea placeholder="Descrição do item..."></textarea>
-            `;
-        } else if (isCard) {
-            itemDiv.className = 'cardItemBox';
-            itemDiv.innerHTML = `
-                <div class="cardItemTop">
-                    <input type="text" placeholder="Nome / Título..." class="personal-input">
-                    <button type="button" class="removeItemBtn" title="Remover" aria-label="Remover item">X</button>
-                </div>
-                <textarea placeholder="Descrição..."></textarea>
-            `;
-        } else {
-            itemDiv.className = 'stringItemRow';
-            itemDiv.innerHTML = `
-                <input type="text" placeholder="Digite o nome..." class="personal-input">
-                <button type="button" class="removeItemBtn" title="Remover" aria-label="Remover item">X</button>
-            `;
-        }
-
-        const textInput = itemDiv.querySelector('input[type="text"]');
-        const numberInputs = itemDiv.querySelectorAll('input[type="number"]');
-        const textarea = itemDiv.querySelector('textarea');
-
-        if (textInput) textInput.value = String(itemData?.text ?? '');
-        if (numberInputs[0]) numberInputs[0].value = safeNumber(itemData?.qty, 1);
-        if (numberInputs[1]) numberInputs[1].value = safeNumber(itemData?.weight, 0);
-        if (textarea) textarea.value = String(itemData?.desc ?? '');
-
-        return itemDiv;
-    }
 
     function restoreLists(listsData) {
         Object.entries(listsData).forEach(([containerId, savedItems]) => {
@@ -320,7 +430,7 @@ export function initLocalStorage() {
                 : CONFIG.LIMITS.MAX_DYNAMIC_ITEMS;
 
             savedItems.slice(0, maxItems).forEach(itemData => {
-                container.appendChild(buildListItem(containerId, container, itemData));
+                container.appendChild(createListItem(getListItemType(container), itemData));
             });
         });
     }

@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <title>Ficha Lutherian</title>
     <link rel="icon" type="image/png" href="assets/icons/page.icon.png">
-    <link rel="stylesheet" href="styles/global.css?v=6">
-    <link rel="stylesheet" href="modules/level/level.css">
+    <link rel="stylesheet" href="styles/global.css?v=10">
+    <link rel="stylesheet" href="modules/level/level.css?v=3">
 </head>
 <body>
 
@@ -31,6 +31,53 @@
         </div>
     </div>
 
+
+    <!-- Modal: criar novo item ou adicionar da lista global (caixa de aviso de proporção fixa) -->
+    <div id="libraryModal" class="warningModal" role="dialog" aria-modal="true" aria-labelledby="libraryModalTitle">
+        <div class="warningBox">
+            <img class="warningBoxBg" src="assets/images/menus/warning.background.png" alt="">
+            <button type="button" class="warningClose" data-library-action="close" aria-label="Fechar" title="Fechar">
+                <img src="assets/images/general/button.exit.red.png" alt="">
+            </button>
+            <div class="warningBody">
+                <div id="libraryModalChoice" class="libraryView">
+                    <h3 id="libraryModalTitle" class="warningTitle">Adicionar</h3>
+                    <div class="libraryChoiceRow">
+                        <button type="button" class="libraryChoiceBtn" data-library-action="new">Criar novo</button>
+                        <button type="button" class="libraryChoiceBtn" data-library-action="pick">Adicionar da lista</button>
+                    </div>
+                </div>
+
+                <div id="libraryModalPicker" class="libraryView libraryView--picker" hidden>
+                    <div class="libraryPickerHeader">
+                        <button type="button" class="libraryBackBtn" data-library-action="back">‹ Voltar</button>
+                        <h3 id="libraryPickerTitle" class="warningTitle">Lista</h3>
+                    </div>
+                    <div id="libraryOptions" class="libraryOptions scrollArrows"></div>
+                    <p id="libraryEmpty" class="libraryEmpty" hidden></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aviso: apagar item da lista global -->
+    <div id="libraryDeleteModal" class="warningModal warningModal--top" role="alertdialog" aria-modal="true" aria-labelledby="libraryDeleteTitle" aria-describedby="libraryDeleteMessage">
+        <div class="warningBox">
+            <img class="warningBoxBg" src="assets/images/menus/warning.background.png" alt="">
+            <div class="warningBody warningBody--center">
+                <h3 id="libraryDeleteTitle" class="warningTitle warningTitle--danger">Apagar da lista global?</h3>
+                <p id="libraryDeleteMessage" class="warningMessage"></p>
+                <div class="warningActions">
+                    <button type="button" id="libraryDeleteConfirm" class="modalButton modalButton--confirm" aria-label="Confirmar exclusão" title="Confirmar">
+                        <img src="assets/images/menus/activity.confirm_button.png" alt="">
+                    </button>
+                    <button type="button" id="libraryDeleteCancel" class="modalButton modalButton--cancel" aria-label="Cancelar exclusão" title="Cancelar">
+                        <img src="assets/images/menus/activity.cancel_button.png" alt="">
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="mainFile">
 
@@ -64,6 +111,21 @@
                 </div>
 
                 
+                <div class="optionsFileRow">
+
+                
+                    <button type="button" id="menuOptExport" class="optionsFileBtn" title="Salvar a ficha em um arquivo .json">Exportar ficha</button>
+
+                
+                    <button type="button" id="menuOptImport" class="optionsFileBtn" title="Carregar uma ficha de um arquivo .json">Importar ficha</button>
+
+                
+                    <input type="file" class="sheetFileInput" accept=".json,application/json" hidden>
+
+                
+                </div>
+
+                
                 <button type="button" id="menuOptReset" class="optionsMenuItem optionsMenuItem--danger">
                     <img src="assets/images/menus/reset.file.icon.png" alt="">
                     <span>Resetar Ficha</span>
@@ -72,20 +134,20 @@
             </div>
 
             <!-- Modal de Confirmação de Reset -->
-            <div id="resetConfirmModal" class="resetModal">
-                <div class="resetModalContent">
-                    <img class="resetModalBackground" src="assets/images/menus/warning.background.png" alt="">
-                    <h3 class="resetModalTitle">Atenção</h3>
-                    <p class="resetModalMessage">
-                        Ao confirmar, você apagará todas as informações da ficha para sempre!
-                    </p>
-                    <div class="resetModalActions">
-                        <button type="button" id="confirmResetBtn" class="modalButton modalButton--confirm" aria-label="Confirmar reset" title="Confirmar">
-                            <img src="assets/images/menus/activity.confirm_button.png" alt="">
-                        </button>
-                        <button type="button" id="cancelResetBtn" class="modalButton modalButton--cancel" aria-label="Cancelar reset" title="Cancelar">
-                            <img src="assets/images/menus/activity.cancel_button.png" alt="">
-                        </button>
+            <div id="resetConfirmModal" class="warningModal">
+                <div class="warningBox">
+                    <img class="warningBoxBg" src="assets/images/menus/warning.background.png" alt="">
+                    <div class="warningBody warningBody--center">
+                        <h3 class="warningTitle warningTitle--danger">Atenção</h3>
+                        <p class="warningMessage">Ao confirmar, você apagará todas as informações da ficha para sempre!</p>
+                        <div class="warningActions">
+                            <button type="button" id="confirmResetBtn" class="modalButton modalButton--confirm" aria-label="Confirmar reset" title="Confirmar">
+                                <img src="assets/images/menus/activity.confirm_button.png" alt="">
+                            </button>
+                            <button type="button" id="cancelResetBtn" class="modalButton modalButton--cancel" aria-label="Cancelar reset" title="Cancelar">
+                                <img src="assets/images/menus/activity.cancel_button.png" alt="">
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -441,35 +503,35 @@
                         <div class="personalSection">
                             <div class="personalSectionHeader">
                                 <h3>Proficiências</h3>
-                                <button type="button" class="addItemBtn" data-target="proficienciesList">+ Adicionar</button>
+                                <button type="button" class="addItemBtn" data-target="proficienciesList" title="Adicionar proficiência" aria-label="Adicionar proficiência"><img src="assets/images/general/add.icon.png" alt=""></button>
                             </div>
                             <div id="proficienciesList" class="dynamicList stringList"></div>
                         </div>
                         <div class="personalSection">
                             <div class="personalSectionHeader">
                                 <h3>Talentos</h3>
-                                <button type="button" class="addItemBtn" data-target="talentsList">+ Adicionar</button>
+                                <button type="button" class="addItemBtn" data-target="talentsList" title="Adicionar talento" aria-label="Adicionar talento"><img src="assets/images/general/add.icon.png" alt=""></button>
                             </div>
                             <div id="talentsList" class="dynamicList cardList"></div>
                         </div>
                         <div class="personalSection">
                             <div class="personalSectionHeader">
                                 <h3>Idiomas</h3>
-                                <button type="button" class="addItemBtn" data-target="languagesList">+ Adicionar</button>
+                                <button type="button" class="addItemBtn" data-target="languagesList" title="Adicionar idioma" aria-label="Adicionar idioma"><img src="assets/images/general/add.icon.png" alt=""></button>
                             </div>
                             <div id="languagesList" class="dynamicList stringList"></div>
                         </div>
                         <div class="personalSection">
                             <div class="personalSectionHeader">
                                 <h3>Doenças</h3>
-                                <button type="button" class="addItemBtn" data-target="diseasesList">+ Adicionar</button>
+                                <button type="button" class="addItemBtn" data-target="diseasesList" title="Adicionar doença" aria-label="Adicionar doença"><img src="assets/images/general/add.icon.png" alt=""></button>
                             </div>
                             <div id="diseasesList" class="dynamicList cardList"></div>
                         </div>
                         <div class="personalSection">
                             <div class="personalSectionHeader">
                                 <h3>Traços e Manias</h3>
-                                <button type="button" class="addItemBtn" data-target="traitsList">+ Adicionar</button>
+                                <button type="button" class="addItemBtn" data-target="traitsList" title="Adicionar traço ou mania" aria-label="Adicionar traço ou mania"><img src="assets/images/general/add.icon.png" alt=""></button>
                             </div>
                             <div id="traitsList" class="dynamicList cardList"></div>
                         </div>
@@ -519,7 +581,7 @@
                         <div id="encumbranceAlerts" class="encumbranceAlerts"></div>
                         <div class="personalSectionHeader personalSectionHeader--spaced">
                             <h3>Itens</h3>
-                            <button type="button" class="addItemBtn" id="addInventoryItemBtn">+ Adicionar Item</button>
+                            <button type="button" class="addItemBtn" id="addInventoryItemBtn" title="Adicionar item" aria-label="Adicionar item"><img src="assets/images/general/add.icon.png" alt=""></button>
                         </div>
                         <div id="inventoryItemsList" class="dynamicList"></div>
                     </div>

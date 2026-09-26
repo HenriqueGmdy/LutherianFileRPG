@@ -43,7 +43,7 @@
 
 .optionsPanelBackground { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
 
-.optionsPanelContent { position: absolute; top: 31%; left: 18%; right: 18%; display: flex; flex-direction: column; gap: 12px; }
+.optionsPanelContent { position: absolute; top: 29%; left: 18%; right: 18%; display: flex; flex-direction: column; gap: 8px; }
 
 .optionsCloseButton { position: absolute; top: 11.5%; right: 8.8%; width: 3.5%; aspect-ratio: 1; padding: 0; border: 0; background: transparent; cursor: pointer; z-index: 2; }
 .optionsCloseButton img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
@@ -66,7 +66,12 @@
 .optionsMenuItem img { width: 32px; height: 32px; object-fit: contain; flex: 0 0 32px; }
 .optionsMenuItem--danger { color: #ffffff; }
 
-.resetModal {
+/* ==========================================
+   CAIXAS DE AVISO (warning.background.png, 450x160)
+   A caixa mantém a proporção da imagem (2,8125:1) e o conteúdo se ajusta a ela: tudo dentro
+   usa cqw (1% da largura da caixa), então escala junto e nunca deforma o fundo.
+   ========================================== */
+.warningModal {
     display: none;
     position: fixed;
     inset: 0;
@@ -74,54 +79,102 @@
     align-items: center;
     justify-content: center;
     background: rgba(0, 0, 0, 0.7);
-    font-family: sans-serif;
+    font-family: var(--font-body, sans-serif);
 }
 
-.resetModalContent {
+.warningModal--top {
+    z-index: 2100;
+}
+
+.warningBox {
     position: relative;
-    width: 90%;
-    max-width: 380px;
-    min-height: 225px;
-    padding: 42px 42px 30px;
-    box-sizing: border-box;
-    background: transparent;
-    color: #fff;
+    width: min(450px, 92vw);
+    aspect-ratio: 450 / 160;
+    container-type: inline-size;
+    color: #ffffff;
+}
+
+.warningBoxBg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    pointer-events: none;
+}
+
+.warningBody {
+    position: absolute;
+    inset: 3.8cqw 5.5cqw;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.warningBody--center {
+    align-items: center;
+    justify-content: center;
+    gap: 1.8cqw;
     text-align: center;
 }
 
-.resetModalBackground { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
+.warningTitle {
+    margin: 0;
+    color: var(--accent-color, #ffcc00);
+    font-size: 5cqw;
+    line-height: 1.1;
+}
 
-.resetModalTitle {
-    position: relative;
-    margin: 0 0 12px;
+.warningTitle--danger {
     color: #ff4d4d;
-    font-size: 18px;
 }
 
-.resetModalMessage {
-    position: relative;
-    margin-bottom: 20px;
-    color: #ccc;
-    font-size: 14px;
-    line-height: 1.5;
+.warningMessage {
+    margin: 0;
+    color: #cccccc;
+    font-size: 3.2cqw;
+    line-height: 1.35;
 }
 
-.resetModalActions {
-    position: relative;
+.warningActions {
     display: flex;
-    gap: 10px;
+    gap: 3cqw;
     justify-content: center;
+    margin-top: 1cqw;
 }
 
 .modalButton {
-    width: 62px;
-    height: 42px;
+    height: 8.5cqw;
     padding: 0;
     border: none;
     background: transparent;
     cursor: pointer;
 }
-.modalButton img { width: 100%; height: 100%; object-fit: contain; }
+
+.modalButton img {
+    display: block;
+    height: 100%;
+    width: auto;
+}
+
+.warningClose {
+    position: absolute;
+    top: 2.4cqw;
+    right: 2.4cqw;
+    z-index: 2;
+    width: 6.4cqw;
+    height: 6.4cqw;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.warningClose img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
 
 .themeCustomizerPanel {
     min-height: 0;
@@ -129,7 +182,7 @@
     cursor: move;
 }
 
-.optionsDropdown { cursor: move; }
+.optionsDropdown { cursor: move; width: min(440px, calc(100vw - 24px)); }
 
 .themePanelTitle {
     position: absolute;
@@ -414,4 +467,264 @@
 @keyframes appTooltipIn {
     from { opacity: 0; transform: translateY(-2px); }
     to { opacity: 1; transform: none; }
+}
+
+
+/* Exportar / Importar ficha (menu de opções) */
+.optionsFileRow {
+    display: flex;
+    gap: 8px;
+}
+
+.optionsFileBtn {
+    flex: 1;
+    padding: 5px 6px;
+    background: rgba(25, 25, 25, 0.85);
+    color: #ffffff;
+    border: 1px solid #666;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.optionsFileBtn:hover,
+.optionsFileBtn:focus-visible {
+    border-color: var(--accent-color, #ffcc00);
+    color: var(--accent-color, #ffcc00);
+    outline: none;
+}
+
+/* Modal de adicionar (dentro da caixa de aviso; os botões se ajustam a ela) */
+.libraryView {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2.6cqw;
+    height: 100%;
+    min-height: 0;
+}
+
+.libraryView[hidden] {
+    display: none;
+}
+
+.libraryView > .warningTitle {
+    text-align: center;
+}
+
+.libraryView--picker {
+    justify-content: flex-start;
+    gap: 1.4cqw;
+}
+
+.libraryChoiceRow {
+    display: flex;
+    gap: 3cqw;
+    justify-content: center;
+}
+
+.libraryChoiceBtn {
+    flex: 1 1 0;
+    max-width: 40cqw;
+    height: 9.5cqw;
+    padding: 0 2cqw;
+    background: rgba(25, 25, 25, 0.85);
+    color: #ffffff;
+    border: 1px solid #666;
+    border-radius: 4px;
+    font-size: 3.4cqw;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.libraryChoiceBtn:hover,
+.libraryChoiceBtn:focus-visible,
+.libraryBackBtn:hover,
+.libraryBackBtn:focus-visible {
+    border-color: var(--accent-color, #ffcc00);
+    color: var(--accent-color, #ffcc00);
+    outline: none;
+}
+
+.libraryPickerHeader {
+    position: relative;
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    height: 7cqw;
+    padding: 0 9cqw;
+}
+
+.libraryPickerHeader .warningTitle {
+    font-size: 4.2cqw;
+}
+
+.libraryBackBtn {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0.6cqw 2cqw;
+    background: transparent;
+    color: #bbbbbb;
+    border: 1px solid #555;
+    border-radius: 4px;
+    font-size: 3cqw;
+    cursor: pointer;
+}
+
+.libraryOptions {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 1cqw;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.libraryOptions[hidden] {
+    display: none;
+}
+
+.libraryRow {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 1.5cqw;
+}
+
+.libraryOption {
+    display: flex;
+    flex: 1;
+    align-items: baseline;
+    gap: 2cqw;
+    min-width: 0;
+    height: 7cqw;
+    padding: 0 2.5cqw;
+    overflow: hidden;
+    background: rgba(25, 25, 25, 0.85);
+    color: #ffffff;
+    border: 1px solid #555;
+    border-radius: 4px;
+    font-size: 3.4cqw;
+    text-align: left;
+    cursor: pointer;
+}
+
+.libraryOption:hover,
+.libraryOption:focus-visible {
+    border-color: var(--accent-color, #ffcc00);
+    color: var(--accent-color, #ffcc00);
+    outline: none;
+}
+
+.libraryOptionName {
+    flex: 0 0 auto;
+    max-width: 55%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 7cqw;
+}
+
+.libraryOptionDesc {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: #999999;
+    font-size: 2.6cqw;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.libraryRemoveBtn {
+    flex: 0 0 auto;
+    width: 6.4cqw;
+    height: 6.4cqw;
+    padding: 0;
+    background: transparent;
+    border: none;
+    opacity: 0.85;
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.libraryRemoveBtn:hover,
+.libraryRemoveBtn:focus-visible {
+    opacity: 1;
+    outline: none;
+}
+
+.libraryRemoveBtn:active {
+    transform: scale(0.92);
+}
+
+.libraryRemoveBtn img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.libraryEmpty {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    color: #cccccc;
+    font-size: 3cqw;
+    line-height: 1.35;
+    text-align: center;
+}
+
+.libraryEmpty[hidden] {
+    display: none;
+}
+
+/* Barras de rolagem de listas de opções: setas com select.up / select.down */
+.scrollArrows::-webkit-scrollbar {
+    width: 16px;
+}
+
+.scrollArrows::-webkit-scrollbar-track {
+    background: #0d0d0d;
+    border: 1px solid #333;
+}
+
+.scrollArrows::-webkit-scrollbar-thumb {
+    background: #555555;
+    border: 1px solid #888888;
+    border-radius: 2px;
+}
+
+.scrollArrows::-webkit-scrollbar-thumb:hover {
+    background: #777777;
+}
+
+.scrollArrows::-webkit-scrollbar-button:single-button {
+    display: block;
+    width: 16px;
+    height: 15px;
+    background-color: #111111;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+
+.scrollArrows::-webkit-scrollbar-button:single-button:vertical:decrement {
+    background-image: url('../assets/images/general/select.up.png');
+}
+
+.scrollArrows::-webkit-scrollbar-button:single-button:vertical:increment {
+    background-image: url('../assets/images/general/select.down.png');
+}
+
+@supports not selector(::-webkit-scrollbar) {
+    .scrollArrows {
+        scrollbar-width: thin;
+        scrollbar-color: #666666 #111111;
+    }
 }

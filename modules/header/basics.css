@@ -410,3 +410,8 @@
     color: #999;
     font-size: 0.9rem;
 }
+
+.classPickerMenu {
+    max-height: 55vh;
+    overflow-y: auto;
+}

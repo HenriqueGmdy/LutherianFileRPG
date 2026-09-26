@@ -1,0 +1,69 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+Idioma: o usuário fala português do Brasil; responda em pt-BR. UI e comentários do projeto também estão em pt-BR.
+
+## O projeto
+
+"Ficha Lutherian": ficha de personagem de RPG de mesa em HTML/CSS/JS puro (ES modules, sem build, sem dependências, sem testes, sem lint). Todo o estado vive no `localStorage`.
+
+**Rodar:** módulos ES não carregam via `file://`; sirva a raiz com qualquer servidor estático (Node está instalado, Python não; ex.: `npx serve .`) e abra a URL indicada. Não há suíte de testes: valide no navegador.
+
+## Economia de tokens
+
+- **Não leia** arquivos em `assets/` (binários). `repomix-output.xml` é ignorado pelo `.gitignore`; se reaparecer, também não leia.
+- Todo o código-fonte usa **CRLF** (`autocrlf=true`). O `Edit` falha em `old_string` multilinha; para blocos, use `Write` no arquivo inteiro e restaure com `sed -i 's/\r$//; s/$/\r/' arquivo`.
+- `modules/background/originsData.js` e `racesData.js` são só dados (texto longo de regras); use Grep, não Read completo.
+- Para achar onde algo é usado, pesquise por `id` de elemento: o acoplamento é quase todo via `document.getElementById`.
+
+## Arquitetura (o que exige ler vários arquivos)
+
+**Ponto de entrada:** `index.html` (todo o markup das 3 abas, estático) carrega `script.js`, que chama cada `initX()` dentro de `safeInit` (um módulo que quebra não derruba os outros). **A ordem em `script.js` é intencional:**
+1. Renderizam DOM dinâmico (atributos, perícias, select de origem) e ligam listeners.
+2. `initLocalStorage` restaura os valores salvos, disparando eventos `input`/`change` nos campos.
+3. Só depois `initStatus`, `initInventory` etc., que calculam valores derivados dos dados restaurados.
+
+Reordenar quebra a restauração. Durante a restauração, `storage.js` liga a flag `isRestoringData()` (`core/appState.js`); handlers com efeito colateral em `change` (ex.: origem, que soma +1 nas perícias) devem consultá-la para não reaplicar o efeito sobre valores já salvos.
+
+**Camadas:**
+- `core/` — infraestrutura: `config.js` (chaves de storage, limites, velocidades: única fonte de constantes), `storage.js`, `router.js` (abas), `themeEngine.js` (menu de opções, tema, reset), `audio.js` (`SOUND_PATHS` + `playSound`; efeitos sonoros globais por delegação de eventos), `appState.js`.
+- `modules/<dominio>/` — um domínio por pasta, cada um com `initX()` exportado, seu CSS e, quando há, um `*Data.js`.
+- `styles/global.css` é o orquestrador de `@import` de todo o CSS (exceto `modules/level/level.css`, linkado direto no `index.html`). Cores do tema são variáveis CSS em `styles/variables.css`, sobrescritas em runtime pelo `themeEngine`.
+
+**Persistência (`core/storage.js`):** dois blobs em `localStorage`:
+- Campos estáticos: salvos por `id`/`name` de qualquer `input/select/textarea` fora de `.dynamicList` e `#inventoryItemsList`. Por isso **todo campo persistente precisa de `id` único**. Campos calculados (`speed`, `stressRange`, `vitalityRange`, `willpowerRange`) são excluídos explicitamente.
+- Listas dinâmicas (`.dynamicList`): salvas como `{text, qty, weight, desc}` por container e **reconstruídas com HTML próprio dentro do `storage.js`**, que duplica os templates de `personal.js` e `inventory.js`. Mudar o markup de um item exige alterar os três. Como itens restaurados não passam pelos criadores, remoção/edição deve usar **delegação de eventos** no container (como `personal.js` e `inventory.js` fazem). Limite por lista: `CONFIG.LIMITS.MAX_DYNAMIC_ITEMS` (inventário: `MAX_INVENTORY_ITEMS`).
+- **Proteção contra perda de dados (não regredir):** o salvamento **mescla** no que já está gravado (nunca reescreve o blob só a partir do DOM), então chaves desconhecidas sobrevivem a renomeações/quebras. Os dados têm versão de esquema (`core/migrations.js`, `CURRENT_SCHEMA_VERSION`). **Ao renomear/remover o `id` de um campo ou container de lista, ou mudar o formato salvo: incremente a versão e adicione a migração** (`renameField`/`renameList`). Antes de migrar é gravado `BACKUP_PRE_MIGRATION`; há também `BACKUP_LAST` (rotativo, só é trocado por estado igual ou mais completo). Se a carga falhar, o salvamento fica bloqueado na sessão. JSON corrompido é copiado para `<chave>_corrupt`.
+- Console (para recuperação): `lutherian.restoreBackup('last' | 'preMigration')`, `copy(lutherian.exportData())` e `lutherian.importData(json)` (útil ao trocar de origem: `localhost` × `127.0.0.1`, portas diferentes têm `localStorage` separados).
+- **Arquivo de ficha (`core/sheetFile.js` + `createSheetFile`/`parseSheetFile`/`applySheetFile` em `storage.js`):** o menu tem "Exportar ficha" (baixa `<nome>-<data>.json`) e "Importar ficha". Formato: `{ app: 'lutherian-sheet', format, schemaVersion, exportedAt, character: {name, class}, sheet, lists, extra: { image?, condition?, resolve? } }` com **nomes lógicos** (não as chaves do `localStorage`), pensado para virar o formato de sincronização futuro. Não inclui tema, volume nem a lista global. A importação trata o arquivo como **não confiável** (`parseSheetFile` higieniza chaves, tipos, imagem `data:image/...`, condição e limita listas), pede confirmação, guarda `BACKUP_PRE_IMPORT`, e desfaz tudo se qualquer gravação falhar; arquivos de versão antiga passam pelas migrações no carregamento. Desfazer: `lutherian.restoreBackup('preImport')`. Se mudar o formato, incremente `SHEET_FILE_FORMAT`.
+- Fora desses blobs, `IMAGE`, `THEME`, `ACTIVE_TAB`, `ACTIVE_CONDITION` e `RESOLVE_STATE` (ver `CONFIG.STORAGE_KEYS`) são gravadas pelos próprios módulos. O reset (`themeEngine`) remove chaves específicas e ativa `window.__lutherianResetInProgress` para o `pagehide` não regravar.
+
+**Estado derivado compartilhado:**
+- `core/appState.js` guarda um *checker* de sobrecarga registrado por `inventory.js` (`registerInventoryOverloadChecker`); `attributes.js` e `skills.js` consultam `isCharacterOverloaded()`. Isso evita import circular entre inventário e atributos.
+- As penalidades (condições Enfraquecido/Indisposto/Miserável, sobrecarga em For/Des, mochila grande em For) estão **copiadas** em `updateAttributeDice` (`attributes.js`) e `updateSkillModifier` (`skills.js`); qualquer regra nova deve ser aplicada nos dois. A **iniciativa** (`#initiativeValue`, abaixo da habilidade de fogueira) não tem cálculo próprio: `updateAttributeDice` passa o total da Destreza (já com mod. temporário e penalidades) para ela, exibido como `d20 + N` (não como d6).
+- Inventário (`inventory.js`) recalcula carga, capacidade (Força × 6, +10 / +22 por mochila), deslocamento final e chama `updateAllAttributes`/`updateAllSkills`.
+
+**Efeitos de raça (dirigidos por dados):** `racesData.js` aceita `defenseBase: { attributes: [ids], bonus }` (Basilisco: `#defense` é preenchida com a soma dos atributos *puros* + bônus, recalculada quando raça/Força/Constituição mudam; continua editável, e é ignorada durante a restauração) e `lockedDeathFails: N` (Ressonante: as N primeiras caixas do limiar ficam marcadas e desabilitadas). A lógica está em `races.js`; novos efeitos raciais devem seguir o mesmo padrão em vez de `if` por raça.
+
+**Listas pessoais e lista global (`core/library.js`, `core/listItems.js`, `modules/personal/`):** os blocos das listas (proficiências, talentos, idiomas, doenças, traços e o inventário) são criados **só** por `createListItem(tipo, dados)` em `core/listItems.js` (usado ao adicionar, restaurar e no inventário). O botão "+ Adicionar" de cada lista abre `#libraryModal` ("Criar novo" / "Adicionar da lista"); cada bloco tem um botão "+ Lista" que grava o item na **lista global** (`core/library.js`: cache em memória, `getLibraryEntries`/`addLibraryEntry` assíncrono/`onLibraryChange`; duplicata por nome sem caixa/acento). Fica no `localStorage` (`LIBRARY`), **não é apagada no reset da ficha**, e é semeada na primeira vez por `libraryData.js` (itens de exemplo). A categoria de cada lista está em `PERSONAL_LISTS` (`personal.js`). Para trocar por um backend remoto (ex.: Firestore) basta reimplementar `core/library.js` mantendo essa API. Na etapa "Adicionar da lista" cada item tem um botão de remover (`removeLibraryEntry`), que pede confirmação em `#libraryDeleteModal`.
+
+**Caixas de aviso (`.warningModal` / `.warningBox` em `components.css`):** o fundo `warning.background.png` tem 450×160 e **nunca pode ser esticado**. A caixa tem `aspect-ratio: 450/160` (largura `min(450px, 92vw)`) e `container-type: inline-size`; **todo o conteúdo interno usa `cqw`** (1% da largura da caixa) para escalar junto, e listas rolam dentro de altura fixa (o conteúdo se ajusta à caixa, nunca o contrário). Modais de aviso novos devem reutilizar essas classes (`warningBoxBg`, `warningBody`, `warningTitle`, `warningMessage`, `warningActions`, `modalButton` com `activity.confirm/cancel`); o de reset e os da lista global já usam.
+
+**Botões com imagem na aba Detalhes:** remover = `button.exit.red.png` (`.removeItemBtn`, definição única em `personal.css`); adicionar = `add.icon.png` (recorte de `add.png`; `remove.icon.png` é o de `remove.png`, ambos recortados do canvas 129×44 para 42×39). Como o clique pode cair na `<img>` dentro do botão, use sempre `event.target.closest('.removeItemBtn')`, nunca `classList.contains`. Listas de opções roláveis usam a classe `scrollArrows` (setas `select.up` / `select.down` via `::-webkit-scrollbar-button`; sem efeito no Firefox).
+
+**Tooltips (`core/tooltip.js` + `modules/help/tooltipsData.js`):** qualquer elemento com `data-tooltip="chave"` mostra, após 250 ms de hover (ou foco por teclado), uma caixa estilizada com `{title, attr?, tagline?, text}` vinda do registro. Um único `#appTooltip` e listeners delegados no `document`, então elementos criados via JS só precisam do atributo (perícias/atributos usam `skill.<id>` / `attr.<id>`). **Não use `title` nativo no mesmo elemento** (duplica). Conteúdo dinâmico via `setTooltipContent(chave, conteúdo)`: `races.js` o usa para altura/peso/idade (`bodyHeight`/`bodyWeight`/`bodyAge`), lidos de `racesData[raça].body`. Novo tooltip = entrada em `tooltipsData.js` + `data-tooltip` no HTML.
+
+**Classe (`modules/background/classes.js` + `classesData.js`):** o botão `#classPickerBtn` (e o campo `#characterClass`, agora `readonly`) abre um seletor com as 9 classes; escolher grava o nome em `#characterClass` (que continua sendo o dado persistido) e dispara `input`+`change`. A caixa `#classCampfireText` é **somente exibição, derivada do nome** (não é um campo, não é salva) e é redesenhada no `change` — inclusive na restauração. O nome é comparado sem acento/caixa; classes antigas de texto livre mostram "Classe personalizada". Nova classe = nova entrada em `classesData.js`. Campos `readonly` de texto não tocam o som de foco (`audio.js`).
+
+**Botões rápidos de recurso:** qualquer `<button data-adjust-target="idDoInput" data-adjust-max="idDoMaximo" data-adjust-delta="±N">` é tratado por `resources.js` (clamp 0..máximo; dispara `input`+`change` no campo, então barra, som e salvamento reagem como na digitação; desabilita se o campo estiver desabilitado). Usados por vitalidade, vontade (±1/±5) e estresse (±1/±5/±10); `data-adjust-max` aceita o id de um campo ou um número fixo (estresse: `200`).
+
+**Estresse (`modules/status/stress.js`):** o estado aflito (`is-afflicted`) é aplicado por `setAfflictedVisuals` às caixinhas de estresse **e** à barra de ameaça (`threat.js` só define `--threat-level`; cor/pulso são CSS). O brilho virtuoso (`.virtuousBg`, `level.css`) usa `virtuousGlow.png`, um PNG quadrado com o brilho **no centro exato** (gerado do `virtuousResolve.png` original, que tinha o brilho fora do centro); por isso gira só com `rotate()` em `50% 50%`, sem `translate`. A coroa de aflição (`.stressTop`) são **duas camadas** geradas do `stressResolve.png` original: `stressGlow.png` (halo já tingido de vermelho, `::before`) e `stressCrown.png` (coroa preta, `::after`); pulsam com `stressCrownPulse`/`stressGlowPulse` no mesmo ciclo de 1,55 s (pico em 42%) de `afflictedStressPulse`, mantenha os três sincronizados. condições Aflitas/Virtuosas são dados inline no arquivo; a cinemática usa timeouts encadeados (2,6 s + 2,5 s) e áudio via `new Audio` fora do `audio.js`.
+
+## Convenções
+
+- Comunicação entre módulos: imports diretos para funções `updateX`, `document.getElementById` para o DOM, `CONFIG` para constantes. Não há framework nem estado central.
+- Novo som: adicionar em `SOUND_PATHS` (`core/audio.js`) e tocar com `playSound('chave')`. Todo volume passa pelo **volume mestre** (`getMasterVolume`, slider `#masterVolume` no menu, chave `VOLUME`, preservada no reset); áudio fora do `playSound` (`new Audio`, `<audio>`) deve multiplicar por `getMasterVolume()`. Ajuste por som em `SOUND_GAINS`.
+- **Indicador de salvamento** (`core/saveIndicator.js`, `#saveIndicator`, ícone `assets/images/menus/saving.png` com fallback SVG): o `storage.js` só grava quando o conteúdo mudou (`writeIfChanged`) e confere a gravação lendo de volta; cada gravação real chama `reportSave(ok, detalhe)`. Pulsa enquanto salva, some ao assentar (700 ms sem novos saves; sem som, de propósito) e fica em erro até um lote salvar sem falhas. Novo dado persistente que deva aparecer no indicador: chamar `reportSave`.
+- Todo `input/select/textarea` **com `id`** é salvo como campo da ficha. Os que não pertencem a ela (preferências como `masterVolume` e as cores do tema, campos calculados, o `<input type=file>` da imagem) devem estar em `NON_PERSISTED_FIELDS` no `storage.js`, senão viram parte da ficha, são apagados no reset e vazam para o arquivo exportado. Controles novos sem necessidade de persistência: não dê `id`/`name`.
+- Query strings `?v=N` em `@import`/`<link>` são cache-busting manual; incremente ao alterar o CSS correspondente.

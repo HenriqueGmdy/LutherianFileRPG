@@ -141,6 +141,7 @@ export function initThemeEngine() {
                 CONFIG.STORAGE_KEYS.SCHEMA_VERSION,
                 CONFIG.STORAGE_KEYS.BACKUP_LAST,
                 CONFIG.STORAGE_KEYS.BACKUP_PRE_MIGRATION,
+                CONFIG.STORAGE_KEYS.BACKUP_PRE_IMPORT,
                 `${CONFIG.STORAGE_KEYS.SHEET_DATA}_corrupt`,
                 `${CONFIG.STORAGE_KEYS.DYNAMIC_LISTS}_corrupt`
             ];

@@ -3,6 +3,7 @@ import { registerInventoryOverloadChecker } from '../../core/appState.js';
 import { updateAllAttributes } from '../attributes/attributes.js';
 import { updateAllSkills } from '../attributes/skills.js';
 import { playSound } from '../../core/audio.js';
+import { createListItem } from '../../core/listItems.js';
 
 export function initInventory() {
     const MAX_ITEMS = CONFIG.LIMITS.MAX_INVENTORY_ITEMS;
@@ -148,54 +149,7 @@ export function initInventory() {
             return;
         }
 
-        const card = document.createElement("div");
-        card.className = "inventoryItemCard cardItemBox";
-
-        card.innerHTML = `
-            <div class="inventoryItemTop">
-                <input
-                    type="text"
-                    placeholder="Nome do item..."
-                    class="item-name-input"
-                >
-
-                    <label class="itemMetaLabel">
-                    Qtd:
-                </label>
-
-                <input
-                    type="number"
-                    value="1"
-                    min="0"
-                    class="item-qty-input"
-                >
-
-                    <label class="itemMetaLabel">
-                    Peso:
-                </label>
-
-                <input
-                    type="number"
-                    value="0"
-                    min="0"
-                    step="0.5"
-                    class="item-weight-input"
-                >
-
-                <button
-                    type="button"
-                    class="removeItemBtn"
-                    title="Excluir"
-                    aria-label="Excluir item"
-                >
-                    X
-                </button>
-            </div>
-
-            <textarea placeholder="Descrição do item..."></textarea>
-        `;
-
-        itemsContainer.appendChild(card);
+        itemsContainer.appendChild(createListItem("inventory", { qty: 1, weight: 0 }));
         updateInventoryStatus();
     }
 

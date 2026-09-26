@@ -42,7 +42,7 @@ export function initClasses() {
 
     const menu = document.createElement('div');
     menu.id = 'classPickerMenu';
-    menu.className = 'classPickerMenu';
+    menu.className = 'classPickerMenu scrollArrows';
     menu.setAttribute('role', 'listbox');
     menu.setAttribute('aria-label', 'Classes');
     menu.hidden = true;

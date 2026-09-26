@@ -10,7 +10,9 @@ import { initRaces } from './modules/background/races.js';
 import { initOrigins } from './modules/background/origins.js';
 import { initClasses } from './modules/background/classes.js';
 import { initImageHandler } from './modules/header/imageHandler.js';
-import { initPersonalListeners } from './modules/personal/personal.js';
+import { initPersonalListeners, refreshAllLibraryButtons } from './modules/personal/personal.js';
+import { initLibrary } from './core/library.js';
+import { librarySeeds } from './modules/personal/libraryData.js';
 import { initInventory } from './modules/inventory/inventory.js';
 import { initStatus } from './modules/status/status.js';
 import { initLevelEmblem } from './modules/level/levelManager.js';
@@ -18,6 +20,7 @@ import { initCurios } from './modules/header/curios.js';
 import { startApplicationOnce } from './core/appState.js';
 import { initAudioInteractions, initVolumeControl } from './core/audio.js';
 import { initSaveIndicator } from './core/saveIndicator.js';
+import { initSheetFile } from './core/sheetFile.js';
 import { initTooltips } from './core/tooltip.js';
 import { tooltipsData } from './modules/help/tooltipsData.js';
 
@@ -39,6 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Renderiza os campos dinâmicos antes de restaurar os dados persistidos.
     safeInit("ImageHandler", initImageHandler);
+    safeInit("Library", () => initLibrary(librarySeeds));
     safeInit("PersonalListeners", initPersonalListeners);
     safeInit("Attributes", initAttributes);
     safeInit("Skills", initSkills);
@@ -49,9 +53,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // O carregamento precisa acontecer antes dos módulos que calculam status,
     // inventário e efeitos derivados dos valores restaurados.
     safeInit("LocalStorage", initLocalStorage);
+    safeInit("LibraryButtons", refreshAllLibraryButtons);
     safeInit("AudioInteractions", initAudioInteractions);
     safeInit("VolumeControl", initVolumeControl);
     safeInit("SaveIndicator", initSaveIndicator);
+    safeInit("SheetFile", initSheetFile);
     safeInit("Tooltips", () => initTooltips(tooltipsData));
 
     // Inicializações dependentes dos dados restaurados.

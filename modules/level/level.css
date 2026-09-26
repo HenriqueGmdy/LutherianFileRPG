@@ -21,22 +21,46 @@
     pointer-events: none;
 }
 
+/* O PNG é um quadrado centrado exatamente no brilho: gira em torno do próprio centro, concêntrico ao emblema. */
 .virtuousBg {
-    background-image: url('../../assets/images/levels/virtuousResolve.png');
+    background-image: url('../../assets/images/levels/virtuousGlow.png');
     z-index: -1; /* O valor negativo joga a imagem para trás do background (emblema) da div pai */
-    bottom: -20px; 
-    left: -8px;
+    top: 50%;
+    left: 50%;
+    width: 367px;
+    height: 367px;
+    margin: -183.5px 0 0 -183.5px;
+    transform-origin: 50% 50%;
     animation: spinVirtue 30s linear infinite;
-    transform-origin: 50% 40%;
 }
 
-/* Aflição fica posicionada por cima do emblema e mais alta */
+/* Aflição: fica por cima do emblema e mais alta. Duas camadas (halo vermelho + coroa preta) pulsando
+   no mesmo ritmo (1,55 s, pico em 42%) das caixinhas de estresse e da barra de ameaça. */
 .stressTop {
-    background-image: url('../../assets/images/levels/stressResolve.png');
-    z-index: 3; 
+    z-index: 3;
     top: -17px; /* Sobe a imagem */
-    transform: scale(1.6); 
     left: -2px;
+    transform: scale(1.6);
+    animation: stressCrownPulse 1.55s ease-in-out infinite;
+}
+
+.stressTop::before,
+.stressTop::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.stressTop::before {
+    background-image: url('../../assets/images/levels/stressGlow.png');
+    animation: stressGlowPulse 1.55s ease-in-out infinite;
+}
+
+.stressTop::after {
+    background-image: url('../../assets/images/levels/stressCrown.png');
 }
 
 .levelInputEmblem::-webkit-inner-spin-button, 
@@ -62,11 +86,29 @@
     z-index: 2;
 }
 
-/* Cria a animação de rotação mantendo a escala de 6x */
+/* Rotação pura em torno do centro: nenhum deslocamento, para o brilho não oscilar */
 @keyframes spinVirtue {
-    0% { transform: scale(6) translate(0px, 0px) rotate(0deg); }
-    25% { transform: scale(6) translate(0px, -2px) rotate(90deg); }
-    50% { transform: scale(6) translate(0px, -4px) rotate(180deg); }
-    75% { transform: scale(6) translate(3px, 0px) rotate(270deg); }
-    100% { transform: scale(6) translate(0px, 0px) rotate(360deg); }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+/* Aflição: a coroa pulsa e o halo brilha em vermelho */
+@keyframes stressCrownPulse {
+    0%, 100% { transform: scale(1.6); }
+    42% { transform: scale(1.7); }
+    58% { transform: scale(1.64); }
+}
+
+@keyframes stressGlowPulse {
+    0%, 100% {
+        opacity: 0.45;
+        filter: drop-shadow(0 0 1px rgba(120, 0, 0, 0.5)) drop-shadow(0 0 2px rgba(80, 0, 0, 0.3));
+    }
+    42% {
+        opacity: 1;
+        filter: drop-shadow(0 0 5px rgba(255, 20, 20, 0.95)) drop-shadow(0 0 11px rgba(170, 0, 0, 0.75));
+    }
+    58% {
+        opacity: 0.7;
+        filter: drop-shadow(0 0 3px rgba(190, 0, 0, 0.7)) drop-shadow(0 0 6px rgba(110, 0, 0, 0.5));
+    }
 }
